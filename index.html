@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>強化脳汁ゲー（仮）— ブラウザ試作 v0.49.1（天井は演出内で開示）</title>
+<title>強化脳汁ゲー（仮）— ブラウザ試作 v0.50（狩り勢ON維持＋枠価格調整＋長寿修正＋爆発値演出復活）</title>
 <style>
   :root{ --navy:#000a5a; --navy2:#001080; --gold:#ffd24a; --edge:#6b7bd6; --panel:#00104a; --track:#00003a; }
   *{ box-sizing:border-box; }
@@ -47,6 +47,11 @@
   .animpct.pop{ animation:pop .28s; }
   @keyframes pop{ 0%{transform:scale(1)}45%{transform:scale(1.45); color:#ff3b6b}100%{transform:scale(1)} }
   .animpct.fever{ color:#ff3b6b; text-shadow:0 0 12px #ff00cc; }
+  /* v0.50 爆発値カウント演出の復活（社長指示）：ゲージ下の爆発値を大きな金色数字にし、札ごとにポップして増える */
+  .animex2{ font-size:12px; color:#9fb0ff; margin-top:6px; }
+  .animex2 b{ font-size:26px; color:#ffd24a; display:inline-block; }
+  .animex2 b.expop{ animation:pop .28s; }
+  .animex2 b.exfever{ color:#ff3b6b; text-shadow:0 0 10px #ff00cc; }
   .animchips{ display:flex; flex-direction:column; gap:5px; align-items:center; margin-top:12px; min-height:24px; }
   .animchip{ background:var(--panel); border:2px solid var(--gold); border-radius:6px; padding:4px 10px; font-size:12px; animation:drop .34s ease-out; }
   .animchip .up{ color:#8dff9a; font-weight:bold; }
@@ -80,7 +85,7 @@
 </head>
 <body>
 <div id="app">
-  <h1>◆ 強化脳汁ゲー（仮）◆ ブラウザ試作 v0.49.1 — 天井（赤線）は事前に見せず演出の中で動かす</h1>
+  <h1>◆ 強化脳汁ゲー（仮）◆ ブラウザ試作 v0.50 — 狩り勢ON維持＋装備枠の価格調整＋長寿の自己回復廃止＋爆発値カウント演出復活</h1>
 
   <div class="win">
     <div class="row" style="align-items:center; margin-bottom:8px;">
@@ -118,6 +123,7 @@
   <div class="sub">名称・数値は仮の手触り確認用。設計元：20260702_設計_爆発値システム。</div>
   <details style="margin-top:4px"><summary class="sub" style="cursor:pointer;list-style-position:inside;opacity:.55">開発メモ（版ごとの実装履歴・クリックで開く）</summary>
   <div class="sub" style="text-align:left">
+  ※v0.50【社長フィードバック4件（2026-07-11・v0.49.1プレイ中）】：①<b>狩り勢トグルはON維持</b>＝一度ONにしたらOFFにするまで毎ターン持続（毎回ONにし直す手間を廃止・寿命は使った狩りごとに-1のまま）。②<b>装備枠の価格を段連動に</b>＝固定60億×1.2^n → <b>狩り収入(その段)×35×1.6^n</b>【仮】＝シルバーが潤沢になる裏後半〜爆でも「2グレードに1枠」ペースを狙う。③<b>長寿の自己回復を廃止</b>＝lifeOnEnhの対象から長寿自身を除外（自身の寿命-1は回復されず実質無限が直る。説明文も「他アイテムの寿命+」に修正）。④<b>爆発値カウント演出を復活</b>＝ゲージ下の爆発値を大きな金色の数字にし、札が積まれるたびポップしながら増えていく（v0.40系の脳汁演出をゲージ演出に併設）。<br>
   ※v0.49.1【天井のネタバレ防止（社長指摘「結果のネタバレ・演出の上げ下げの意味がなくなる」）】：①強化画面の「⛰成功率天井○○%」の<b>事前表示を削除</b>。②ゲージの赤線は<b>99%からスタート</b>し、演出の中で動かす＝「🗡武器の抵抗！」で赤線がグッと下がる→「🧊抗/😤意地」で押し返して戻る→「⚡オーバーキル」でさらに戻る→最終確率。天井の上下そのものをドラマの一部に（判定ロジック不変・見せ方のみ）。<br>
   ※v0.49【社長メモ5件（2026-07-11・51段ログ解析で裏取り済み）＋減衰天井式（仮・要社長確認）】：①<b>勢いを弱体化</b>＝連続成功1回ごとの減衰軽減[4,6,8,10,13]%→<b>[2,3,4,5,7]%</b>・上限60%→<b>30%</b>（ログ実測＝装備中ずっと上限60%張り付き）。②<b>抗の合算軽減に総上限85%</b>を新設（勢い＋威光で軽減100%＝減衰完全無効が13段連続していた穴を封じ、完全無効はFEVERマニア専権に）。③<b>純白の砥石を廃止</b>（購入0・使用0＝不要）。④<b>連鎖の跳ねを廃止</b>（購入0・発動0）。⑤<b>スーパーヒーローを倉庫アイテム化</b>＝装備せず、強化フェーズの「🦸使う」トグルで任意の1回に合わせて使用（使うと燃え尽き＝買い直し。ログ実測＝L2投資したのに装備0回：枠が常時系で埋まる構造問題への処方）。⑥<b>減衰もっともっと強く</b>＝DECAY_R 0.050→<b>0.065</b>、さらに<b>減衰が成功率の天井を下げる方式を仮実装</b>（天井=99%−12pt×(1−実効d)＋OK押し返し：深いほど99%の天井が下がり、抗・意地・オーバーキルが天井を押し返す＝<b>Ⅰ〜Ⅶ帯でも減衰が見える</b>）。⚠天井式は未回答案件の仮実装＝NGなら<b>CEIL_ON=false</b>で即オフ。数値は全て【仮】。<br>
   ※v0.48.2【延命＝加算式に訂正（社長）】：延命1回＝<b>+元の寿命ぶん回復</b>・<b>上限＝元の寿命の3倍</b>（v0.48.1の「1回で3倍まで全快」は誤解釈＝訂正）。超過中（健康法等）は減らない。ボタン表記も「寿命+N（上限3N）」に。<br>
@@ -199,7 +205,7 @@ const stackGain=()=> Math.round(FL(g.stage,g.cycle)*STACK_FRAC);
 // v0.16 「強化ブースト」消耗品は撤去→アイテム「段跳ねのお守り」(bst)にLv制で移行（agg().bonusP／onSuccessで判定）
 const SKIP_SILVER=5, SKIP_CLONE=14;          // 助走スキップ時の付与（普通プレイの中央値：総獲得シルバー≒5億・クロン≒14）
 const EQUIP_SLOTS=4, EQUIP_SLOTS_MAX=8;      // 装備枠（初期4／増枠アイテムで最大8）v0.6.1で6→8
-const slotExpandOku=()=> (60*Math.pow(1.2, ( (g?g.slots:EQUIP_SLOTS) - EQUIP_SLOTS)))*SCALE*20; // 増枠1回の価格（枠が増えるほど高い）
+const slotExpandOku=()=> incomeOku(g?g.stage:1)*35*Math.pow(1.6, ( (g?g.slots:EQUIP_SLOTS) - EQUIP_SLOTS)); // v0.50 段連動価格（社長指示「裏後半〜爆で一気に買えてしまう→2グレードに1枠ペースに」）＝その段の狩り収入×35・枠ごと×1.6【仮】。旧＝固定60億×1.2^n
 // v0.8 装備の寿命：装備中のみ1ターンずつ減り、0で破損。同一装備は別個体として重複所持OK（買うたび新個体）
 // v0.12 Lv制：寿命は一律（tier廃止）。シルバーで延長。Lvはアイテム種ごとに永続保持。
 const LIFE_LV=9;                             // v0.45.2 社長「寿命もうちょい長く（尽きるのが早くて操作がめんどう）」＝基準6→9（約1.5倍）【仮・シミュで調整】
@@ -331,7 +337,7 @@ const KEI={"爆":{t:"爆",c:"#ff7a7a"},"条":{t:"条",c:"#c9a0ff"},"狩":{t:"狩
 function kei(id){ return KEI[CHMAP[id][2]]||KEI["爆"]; }
 const priceOf=(id,S)=> CHMAP[id][3]*kneePow(1.05,S,PRICE_LIN);   // 段で微増（v0.24膝折れ・延長費extendCostもここ経由で自動連動）
 function fxText(id,L){ const fx=CHMAP[id][5][(L||1)-1]; const pc=v=>Math.round(v*100)+'%';
-  if(id==='choju') return '自身の寿命が長い(12ターン)＋強化するたび装備中の全アイテムの寿命+'+fx.lifeOnEnh+'（元の寿命まで・延命用途）';
+  if(id==='choju') return '自身の寿命が長い('+lifeOf('choju')+'ターン)＋強化するたび装備中の他アイテムの寿命+'+fx.lifeOnEnh+'（自身は回復しない・元の寿命まで・延命用途）';   // v0.50 自己回復廃止＋寿命表記を実値に
   if(id==='amp') return '爆発値 ×'+fx.mult+'＋2ターンに1回モチベ+1';
   if(id==='bigaku') return '爆発値 ×'+fx.mult+'（超短命2ターン＝買い直し前提の逆張り火力）';
   if(id==='hero') return '倉庫から任意使用：使った強化1回だけ爆発値 ×'+fx.mult+'（装備不要・一度使えば燃え尽きる＝買い直しのみ）';   // v0.49 倉庫アイテム化
@@ -390,7 +396,7 @@ let g;
 function newGame(){
   g={ stage:1, cycle:1, silver:0, motiv:MOTIV_START, motivMax:MOTIV_MAX, _kks:"", clone:0, dur:8, maxDur:8, combo:0,
       turn:0, score:0, maxStage:1, maxCycle:1, inv:[], equipped:[], levels:{}, slots:EQUIP_SLOTS, shop:[], kept:[], _uid:0,
-      snow:1.0, stack:0, health:0, luckGauge:0, drinks:0, _migaki:false, _useHero:false, drankThisTurn:false, rerolledThisTurn:false, lastFailed:false, actedThisTurn:false, _haisui:null, _iji:false, _allin:false, _ijiShield:0, kksCount:0, elian:false, elianUsed:false, feverMania:0, _feverArmed:0, wabiOffer:false, invSort:{key:'kei',dir:1},
+      snow:1.0, stack:0, health:0, luckGauge:0, drinks:0, _migaki:false, _useHero:false, _useHun:false, drankThisTurn:false, rerolledThisTurn:false, lastFailed:false, actedThisTurn:false, _haisui:null, _iji:false, _allin:false, _ijiShield:0, kksCount:0, elian:false, elianUsed:false, feverMania:0, _feverArmed:0, wabiOffer:false, invSort:{key:'kei',dir:1},
       name:(lsGet("kyoka_name")||"名無し"), phase:"intro", ended:false };
   render(); showIntro();
 }
@@ -613,7 +619,7 @@ function successRateEX(ex){ if(guarStage()) return 1.0;
   return rate; }
 
 // ===== 画面遷移 =====
-function startTurn(){ g.turn++; g.actedThisTurn=false; g.drankThisTurn=false; g.rerolledThisTurn=false; g._haisui=null; g._iji=false; g._allin=false; g._migaki=false; g._useHun=false; g._useHero=false; /* v0.49 狩り勢/スーパーヒーローの使用トグルは毎ターンOFFに戻す（使うときだけON）。磨きの儀も毎ターンリセット */  // v0.43 寿命はターン開始では減らさない（使ったら減る方式）。能動系（背水/意地/オールイン）は毎ターンリセット・意地のシールドは次の強化で使うので残す
+function startTurn(){ g.turn++; g.actedThisTurn=false; g.drankThisTurn=false; g.rerolledThisTurn=false; g._haisui=null; g._iji=false; g._allin=false; g._migaki=false; g._useHero=false; /* v0.50 狩り勢トグル(_useHun)はON維持＝OFFにするまで持続（社長指示「毎回ONがめんどい」）。ヒーロー/磨きの儀は使い切り系なので毎ターンリセット */  // v0.43 寿命はターン開始では減らさない（使ったら減る方式）。能動系（背水/意地/オールイン）は毎ターンリセット・意地のシールドは次の強化で使うので残す
   { const a=agg(); if(a.turn4Life>0 && g.turn%4===0) g.equipped.forEach(u=>{ const it=invById(u); if(it) it.life+=a.turn4Life; }); }   // v0.41 寿命の恵み：4の倍数ターンで装備の寿命+
   if(g.turn%2===0 && g.equipped.some(u=>{ const it=invById(u); return it && it.c==='amp'; })) g.motiv=Math.min(g.motivMax, g.motiv+1);   // v0.42 魅惑の衣装：2ターンに1回モチベ+1（Lv不問・一律）
   showPrep(); }
@@ -1016,7 +1022,7 @@ function tryEnh(gamble){
     g._useHero=false; }
   // v0.43 使ったら減る：強化実行で非狩系アイテムの寿命-1（成否問わず1回）→長寿(choju)で延命→破損チェック。カウント(onSuccessのkks等)後に減算＝6回目が消える事故を回避。周回でequippedが空なら自動でno-op
   g.equipped.slice().forEach(u=>{ const it=invById(u); if(it && CHMAP[it.c][2]!=='狩') it.life--; });
-  if(a0.lifeOnEnh>0) g.equipped.forEach(u=>{ const it=invById(u); if(it && it.c!=='bigaku' && it.c!=='hero') it.life=Math.min(lifeOf(it.c), it.life+a0.lifeOnEnh); });   // 長寿：元の寿命を超えない・使い捨ての美学／スーパーヒーロー(v0.45)は回復不可
+  if(a0.lifeOnEnh>0) g.equipped.forEach(u=>{ const it=invById(u); if(it && it.c!=='bigaku' && it.c!=='hero' && it.c!=='choju') it.life=Math.min(lifeOf(it.c), it.life+a0.lifeOnEnh); });   // 長寿：元の寿命を超えない・bigaku/heroは回復不可／v0.50 長寿自身も対象外（自己回復で実質無限だった・社長指摘）
   breakCheck();
   if(ijiActive){ g.motiv=Math.max(0,g.motiv-3); g._ijiShield=a0.ijiShield; }   // v0.42 意地：モチベ-3を払い、次の強化で武器の抵抗をLv%無効化（onSuccess/Failの後に立てる＝startTurnでは消えない）
   if(forceFever) g._feverArmed=Math.max(0,g._feverArmed-1);   // v0.22 無条件FEVERを1回ぶん消費（残り1回は次の強化へ＝計2回で自動終了）
@@ -1098,7 +1104,11 @@ function setGauge(rate, cls){ const f=document.getElementById('gaugefill'); if(!
   f.style.width=Math.max(0,Math.min(100,rate*100))+'%';
   f.style.background=col[cls]||'#ffd24a';
 }
-function setExSub(ex,cap){ const e=document.getElementById('animex'); if(e) e.textContent='爆発値 '+Math.round(ex).toLocaleString()+' ／ FEVER壁 '+Math.round(cap).toLocaleString(); }
+// v0.50 爆発値カウント演出：札が積まれるたび金色の大きな数字がポップして増える（FEVER壁到達でピンク発光）
+function setExSub(ex,cap){ const e=document.getElementById('animex'); if(!e) return;
+  const fever=ex>=cap;
+  e.innerHTML='爆発値 <b id="exnum" class="expop'+(fever?' exfever':'')+'">'+Math.round(Math.min(ex,cap)).toLocaleString()+'</b> ／ FEVER壁 '+Math.round(cap).toLocaleString()+(fever?' <span style="color:#ff3b6b;font-weight:bold">★到達!!</span>':'');
+  const b=document.getElementById('exnum'); if(b && b.classList){ b.classList.remove('expop'); void b.offsetWidth; b.classList.add('expop'); } }
 // v0.49.1 赤線（天井）を演出内で動かす：CSSのleftを書き換え（transitionはgaugefillと同じ体感になるようinlineで付与）
 function setGaugeCap(rate){ const c=document.getElementById('gaugecap'); if(!c) return;
   c.style.transition='left .45s ease'; c.style.left=Math.max(0,Math.min(100,rate*100)).toFixed(1)+'%'; }
@@ -1123,7 +1133,7 @@ function renderAnimStage(gamble){ let s='<div id="animstage">';
   s+='<div class="animpct" id="animpct" style="color:#ffd24a;font-size:34px">成功率 …</div>';
   // v0.49.1 赤線＝天井。開始は99%（CSS既定）に置き、演出（🗡抵抗/🧊抗/⚡OK）の中で上下させる＝事前ネタバレ防止（社長指摘）
   s+='<div class="gaugewrap"><div class="gaugescale"><span>0</span><span>50</span><span>100</span></div><div class="gaugetrack"><div class="gaugefill" id="gaugefill"></div><div class="gaugegrid"></div><div class="gaugecap" id="gaugecap"></div></div></div>';
-  s+='<div class="sub" id="animex" style="font-size:11px;color:#9fb0ff">爆発値 100 ／ FEVER壁 '+Math.round(FL(g.stage,g.cycle)).toLocaleString()+'</div>';
+  s+='<div class="animex2 center" id="animex">爆発値 <b>100</b> ／ FEVER壁 '+Math.round(FL(g.stage,g.cycle)).toLocaleString()+'</div>';   // v0.50 爆発値を大きな数字で（カウントアップ演出の復活）
   s+='<div class="animchips" id="animchips"></div>';
   s+='<div class="menu" id="animctl" style="margin-top:12px"><button class="btn center" onclick="skipEnhance('+gamble+')">⏩ 一気に判定</button></div>';
   scr(s+'</div>');
@@ -1385,7 +1395,7 @@ function buildSnap(){ try{ return {
 function togglePlog(){ const t=document.getElementById('plogArea'); if(t) t.style.display=(t.style.display==='none'?'block':'none'); }
 function exportPlaylog(){
   const mx=Math.max((g&&g.maxStage)||0, PLAYLOG.reduce((m,e)=>Math.max(m,e.st||0),0));   // v0.24 直前に新しいランを始めていてもログ全体の最高段で書き出す（「1段」ファイル名バグ修正）
-  const data=JSON.stringify({ name:(g&&g.name)||'noname', ver:'v0.49.1', maxStage:mx, score:(g&&g.score)||0, turns:(g&&g.turn)||0, log:PLAYLOG });
+  const data=JSON.stringify({ name:(g&&g.name)||'noname', ver:'v0.50', maxStage:mx, score:(g&&g.score)||0, turns:(g&&g.turn)||0, log:PLAYLOG });
   try{ const blob=new Blob([data],{type:'application/json'}); const a=document.createElement('a');
     a.href=URL.createObjectURL(blob); a.download='playlog_'+((g&&g.name)||'noname')+'_'+mx+'段.json'; document.body.appendChild(a); a.click(); a.remove();
   }catch(e){}
