@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>強化脳汁ゲー（仮）— ブラウザ試作 v0.50（狩り勢ON維持＋枠価格調整＋長寿修正＋爆発値演出復活）</title>
+<title>強化脳汁ゲー（仮）— ブラウザ試作 v0.51（装備コスト制）</title>
 <style>
   :root{ --navy:#000a5a; --navy2:#001080; --gold:#ffd24a; --edge:#6b7bd6; --panel:#00104a; --track:#00003a; }
   *{ box-sizing:border-box; }
@@ -85,7 +85,7 @@
 </head>
 <body>
 <div id="app">
-  <h1>◆ 強化脳汁ゲー（仮）◆ ブラウザ試作 v0.50 — 狩り勢ON維持＋装備枠の価格調整＋長寿の自己回復廃止＋爆発値カウント演出復活</h1>
+  <h1>◆ 強化脳汁ゲー（仮）◆ ブラウザ試作 v0.51 — 装備コスト制（強い装備はコストが重い・上限内でやりくり）</h1>
 
   <div class="win">
     <div class="row" style="align-items:center; margin-bottom:8px;">
@@ -123,6 +123,7 @@
   <div class="sub">名称・数値は仮の手触り確認用。設計元：20260702_設計_爆発値システム。</div>
   <details style="margin-top:4px"><summary class="sub" style="cursor:pointer;list-style-position:inside;opacity:.55">開発メモ（版ごとの実装履歴・クリックで開く）</summary>
   <div class="sub" style="text-align:left">
+  ※v0.51【装備コスト制（社長発案 2026-07-11「コスト上限内でやりくり＝強いアイテムを装備すると他が少ししか装備できない」）】：全装備にコスト（Tier準拠 S:7/A:5/B:4/C:3/D:2/E・F:1【仮】）を設定し、<b>装備中の合計コスト≦上限</b>のみ装備可。上限＝初期<b>12</b>・商店で<b>+2ずつ拡張（最大24・価格は旧枠拡張の段連動式を流用）</b>・周回で12に戻る。<b>物理枠は8固定</b>（旧・枠4〜8の拡張制を廃止＝制限をコスト1本に）。[持]と狩り勢/ヒーロー（倉庫在住）はコスト外。Lvはコスト無関係。狙い＝①最強全部盛りの構造的封じ（上限MAX24でも最強級4枚まで）②安いE/F帯が「隙間の札」として復活 ③一点豪華vs横並べ（コレクター型＝安物敷き詰め）のビルド個性。検算＝ランダム4枚の期待コスト11.4≒初期上限12＝序盤の手触りは現行同等。設計書＝Output/20260711_設計_装備コスト制_v0.51.md。<br>
   ※v0.50【社長フィードバック4件（2026-07-11・v0.49.1プレイ中）】：①<b>狩り勢トグルはON維持</b>＝一度ONにしたらOFFにするまで毎ターン持続（毎回ONにし直す手間を廃止・寿命は使った狩りごとに-1のまま）。②<b>装備枠の価格を段連動に</b>＝固定60億×1.2^n → <b>狩り収入(その段)×35×1.6^n</b>【仮】＝シルバーが潤沢になる裏後半〜爆でも「2グレードに1枠」ペースを狙う。③<b>長寿の自己回復を廃止</b>＝lifeOnEnhの対象から長寿自身を除外（自身の寿命-1は回復されず実質無限が直る。説明文も「他アイテムの寿命+」に修正）。④<b>爆発値カウント演出を復活</b>＝ゲージ下の爆発値を大きな金色の数字にし、札が積まれるたびポップしながら増えていく（v0.40系の脳汁演出をゲージ演出に併設）。<br>
   ※v0.49.1【天井のネタバレ防止（社長指摘「結果のネタバレ・演出の上げ下げの意味がなくなる」）】：①強化画面の「⛰成功率天井○○%」の<b>事前表示を削除</b>。②ゲージの赤線は<b>99%からスタート</b>し、演出の中で動かす＝「🗡武器の抵抗！」で赤線がグッと下がる→「🧊抗/😤意地」で押し返して戻る→「⚡オーバーキル」でさらに戻る→最終確率。天井の上下そのものをドラマの一部に（判定ロジック不変・見せ方のみ）。<br>
   ※v0.49【社長メモ5件（2026-07-11・51段ログ解析で裏取り済み）＋減衰天井式（仮・要社長確認）】：①<b>勢いを弱体化</b>＝連続成功1回ごとの減衰軽減[4,6,8,10,13]%→<b>[2,3,4,5,7]%</b>・上限60%→<b>30%</b>（ログ実測＝装備中ずっと上限60%張り付き）。②<b>抗の合算軽減に総上限85%</b>を新設（勢い＋威光で軽減100%＝減衰完全無効が13段連続していた穴を封じ、完全無効はFEVERマニア専権に）。③<b>純白の砥石を廃止</b>（購入0・使用0＝不要）。④<b>連鎖の跳ねを廃止</b>（購入0・発動0）。⑤<b>スーパーヒーローを倉庫アイテム化</b>＝装備せず、強化フェーズの「🦸使う」トグルで任意の1回に合わせて使用（使うと燃え尽き＝買い直し。ログ実測＝L2投資したのに装備0回：枠が常時系で埋まる構造問題への処方）。⑥<b>減衰もっともっと強く</b>＝DECAY_R 0.050→<b>0.065</b>、さらに<b>減衰が成功率の天井を下げる方式を仮実装</b>（天井=99%−12pt×(1−実効d)＋OK押し返し：深いほど99%の天井が下がり、抗・意地・オーバーキルが天井を押し返す＝<b>Ⅰ〜Ⅶ帯でも減衰が見える</b>）。⚠天井式は未回答案件の仮実装＝NGなら<b>CEIL_ON=false</b>で即オフ。数値は全て【仮】。<br>
@@ -204,8 +205,17 @@ const STACK_FRAC=0.5;                         // 失敗1回で貯まる爆発値
 const stackGain=()=> Math.round(FL(g.stage,g.cycle)*STACK_FRAC);
 // v0.16 「強化ブースト」消耗品は撤去→アイテム「段跳ねのお守り」(bst)にLv制で移行（agg().bonusP／onSuccessで判定）
 const SKIP_SILVER=5, SKIP_CLONE=14;          // 助走スキップ時の付与（普通プレイの中央値：総獲得シルバー≒5億・クロン≒14）
-const EQUIP_SLOTS=4, EQUIP_SLOTS_MAX=8;      // 装備枠（初期4／増枠アイテムで最大8）v0.6.1で6→8
-const slotExpandOku=()=> incomeOku(g?g.stage:1)*35*Math.pow(1.6, ( (g?g.slots:EQUIP_SLOTS) - EQUIP_SLOTS)); // v0.50 段連動価格（社長指示「裏後半〜爆で一気に買えてしまう→2グレードに1枠ペースに」）＝その段の狩り収入×35・枠ごと×1.6【仮】。旧＝固定60億×1.2^n
+const EQUIP_SLOTS=8;                         // v0.51 物理枠は8固定（制限はコストに一本化・旧＝初期4/拡張で最大8）
+// ===== v0.51 装備コスト制（社長発案「コスト上限内でやりくり」・設計書=Output/20260711_設計_装備コスト制_v0.51.md・数値は全て【仮】）=====
+// Tier表(2026-07-11)準拠：S:7/A:5/B:4/C:3/D:2/E・F:1。[持]/狩り勢/ヒーロー（倉庫在住）はコスト外・Lvはコスト無関係
+const COST={cos:7,iji:7, kenma:5,snw:5,bigaku:5,ikou:5,ins:5, col:4,bst:4,migaki:4,rec:4,rev:4,shunen:4,kaji:4,
+  ippatsu:3,bossmk:3,mul:3,cmb:3,amp:3,luck:3,setuyaku:3,clv:3,sanren:3,ikioi:3,
+  choju:2,renb:2,pay:2,ogane:2,cfugo:2, tsumi:1,wabikaze:1,fushime:1,feverecho:1,jumyo:1,hso:1,
+  baigake:1,guuf:1,kks:1,slt:1,megami:1,ain:1,hai:1};
+const COST_CAP_BASE=12, COST_CAP_MAX=24, COST_CAP_STEP=2;   // 上限：初期12・商店で+2ずつ拡張・最大24（=最強級4枚まで）・周回で12に戻る【仮】
+const costOf=id=> NOEQUIP[id]?0:(COST[id]!=null?COST[id]:3);   // 未登録の新アイテムはC相当=3
+function costUsed(){ return g.equipped.reduce((s,u)=>{ const it=invById(u); return s+(it?costOf(it.c):0); },0); }
+const slotExpandOku=()=> incomeOku(g?g.stage:1)*35*Math.pow(1.6, g?((g.costCap-COST_CAP_BASE)/COST_CAP_STEP):0); // v0.51 コスト上限拡張の価格（v0.50の段連動式を流用＝収入×35・拡張ごと×1.6【仮】）
 // v0.8 装備の寿命：装備中のみ1ターンずつ減り、0で破損。同一装備は別個体として重複所持OK（買うたび新個体）
 // v0.12 Lv制：寿命は一律（tier廃止）。シルバーで延長。Lvはアイテム種ごとに永続保持。
 const LIFE_LV=9;                             // v0.45.2 社長「寿命もうちょい長く（尽きるのが早くて操作がめんどう）」＝基準6→9（約1.5倍）【仮・シミュで調整】
@@ -395,7 +405,7 @@ function lsSet(k,v){ try{ if(typeof localStorage!=="undefined") localStorage.set
 let g;
 function newGame(){
   g={ stage:1, cycle:1, silver:0, motiv:MOTIV_START, motivMax:MOTIV_MAX, _kks:"", clone:0, dur:8, maxDur:8, combo:0,
-      turn:0, score:0, maxStage:1, maxCycle:1, inv:[], equipped:[], levels:{}, slots:EQUIP_SLOTS, shop:[], kept:[], _uid:0,
+      turn:0, score:0, maxStage:1, maxCycle:1, inv:[], equipped:[], levels:{}, slots:EQUIP_SLOTS, costCap:COST_CAP_BASE, shop:[], kept:[], _uid:0,
       snow:1.0, stack:0, health:0, luckGauge:0, drinks:0, _migaki:false, _useHero:false, _useHun:false, drankThisTurn:false, rerolledThisTurn:false, lastFailed:false, actedThisTurn:false, _haisui:null, _iji:false, _allin:false, _ijiShield:0, kksCount:0, elian:false, elianUsed:false, feverMania:0, _feverArmed:0, wabiOffer:false, invSort:{key:'kei',dir:1},
       name:(lsGet("kyoka_name")||"名無し"), phase:"intro", ended:false };
   render(); showIntro();
@@ -407,7 +417,7 @@ function showIntro(){ g.phase="intro"; render();
   s+='<div style="font-size:13px;line-height:1.8">'
     +'・1ターンは【準備】→【強化】の流れ。<br>'
     +'・<b>準備</b>：<span style="color:#8dff9a">狩り</span>でシルバーを稼ぎ（モチベ-）、<span style="color:#8dff9a">商店</span>で装備の購入/Lv上げ・クロン・記録の欠片（耐久回復）。<br>'
-    +'・<b>装備</b>：買った装備は倉庫に貯まるが、<b>効くのは装備した'+EQUIP_SLOTS+'枠だけ</b>。何を積むかがビルドの核（🔴爆発/💰狩り/💚回復/🛡保険）。枠は増やせる。<br>'
+    +'・<b>装備</b>：買った装備は倉庫に貯まるが、効くのは装備した分だけ。<b>⚖強い装備ほどコストが重く、合計コスト'+COST_CAP_BASE+'以内でやりくり</b>する（上限は商店で拡張可）。何を積むかがビルドの核（🔴爆発/💰狩り/💚回復/🛡保険）。<br>'
     +'・<b>Lv/寿命</b>：装備は<b>クロンでLv上げ</b>（効果が伸びる・Lvは永続）。装備中は寿命が減り0で破損（Lvは保持・シルバーで延長）。<br>'
     +'・<span style="color:#8ecbff">🛡クロン</span>は<b>保護とLv上げの両方</b>に要る希少資源。商店でシルバーから購入して確保しろ。<br>'
     +'・<b>強化</b>：装備の倍率で【<span style="color:#ffd24a">爆発値</span>】を高めるほど、<b>成功率もスコアも上がる</b>。<br>'
@@ -687,7 +697,7 @@ function doHunt(h, use){ g.actedThisTurn=true;
 function goShop(){ g.phase="shop"; render();
   const cc=cloneCost(); const ks=keepSlots();
   let s='<div class="center" style="margin-bottom:6px">～ 商店（棚4種＋キープ枠'+ks+'／棚は強化後に更新）～</div>'
-    +'<div class="sub" style="margin:0 0 6px">買った装備は倉庫へ（空き枠は自動装着）。効くのは装備中'+g.slots+'枠だけ。色＝系統(🔴爆/💰狩/💚回/🛡保/⚪条/🟠跳/🧊抗)。<span style="color:#7fd4ff">[持]</span>＝装備せず持つだけで発動。</div><div class="grid">';
+    +'<div class="sub" style="margin:0 0 6px">買った装備は倉庫へ（コストが収まれば自動装着）。効くのは装備中だけ＝<b style="color:#ffca7a">⚖コスト '+costUsed()+'/'+g.costCap+'</b>。色＝系統(🔴爆/💰狩/💚回/🛡保/⚪条/🟠跳/🧊抗)。<span style="color:#7fd4ff">[持]</span>＝装備せず持つだけで発動。</div><div class="grid">';
   g.shop.forEach((id,i)=>{ if(id===null){ s+='<div class="charm" style="opacity:.35">―</div>'; return;}
     if(HELD[id]){ const h=HELD[id]; const hp=h.price(g.stage);   // v0.22 [持]所持発動型のカード（Lv/寿命/キープなし）
       s+='<div class="charm" style="border-color:#2f6fa0"><span style="color:#7fd4ff;font-weight:bold">[持]</span><span class="nm">'+h.name+'</span><br>'
@@ -696,7 +706,7 @@ function goShop(){ g.phase="shop"; render();
       return; }
     const c=CHMAP[id]; const own=g.inv.find(x=>x.c===id); const owned=!!own; const kept=g.kept.includes(id); const k=kei(id); const L=levelOf(id); const price=priceOf(id,g.stage); const rc=price/2;
     s+='<div class="charm"><span style="color:'+k.c+';font-weight:bold">['+k.t+']</span><span class="nm">'+c[1]+'</span> <span style="color:#9fb0ff;font-size:11px">Lv'+L+'</span>'
-      +' <span style="color:#ffca7a;font-size:11px">⏳'+(owned?own.life:lifeOf(id))+'</span>'
+      +' <span style="color:#ffca7a;font-size:11px">⏳'+(owned?own.life:lifeOf(id))+'</span>'+(NOEQUIP[id]?'':' <span style="color:#ffca7a;font-size:11px">⚖'+costOf(id)+'</span>')
       +(kept?' <span style="color:#ff8">🔖keep</span>':'')+'<br>'
       +'<span style="color:#cdd">'+fxText(id,L)+'</span><br>'
       +(owned
@@ -729,7 +739,7 @@ function goShop(){ g.phase="shop"; render();
   if(g.elian) s+='<div class="sub" style="color:#7fd4ff;margin:4px 0">💧 エリアンの涙 所持中（倒れても1度だけ復活）</div>';
   if(g.feverMania>0) s+='<div class="sub" style="color:#ff8ad0;margin:4px 0">🔥 FEVERマニア 所持'+g.feverMania+'個（強化フェーズで任意発動＝この強化＋次の強化を無条件FEVER）</div>';
   // v0.15 商店の「装備を替える」も撤去（右パネルの「装備変更」に一本化）
-  if(g.slots<EQUIP_SLOTS_MAX) s+=btn("➕ 装備枠を増やす","枠を1つ恒久追加（今"+g.slots+"→"+(g.slots+1)+"）・"+fmtOku(slotExpandOku()),"buySlot()", g.silver<slotExpandOku()?"シルバー不足":"");
+  if(g.costCap<COST_CAP_MAX) s+=btn("⚖ コスト上限を増やす","装備コスト上限+"+COST_CAP_STEP+"（今"+g.costCap+"→"+(g.costCap+COST_CAP_STEP)+"・最大"+COST_CAP_MAX+"）・"+fmtOku(slotExpandOku()),"buySlot()", g.silver<slotExpandOku()?"シルバー不足":"");   // v0.51 枠拡張→コスト上限拡張に置換
   s+=btn("🥤 赤POTを買う","モチベ+"+DRINK_RECOVER+"（所持1本まで・使用は1ターン1本）・"+fmtOku(drinkOku(g.stage))+"（所持"+g.drinks+"本）","buyDrink()", g.drinks>=DRINK_MAX_HOLD?"所持上限（1本）":(g.silver<drinkOku(g.stage)?"シルバー不足":""));
   if(g.health>0) s+='<div class="sub" style="margin:2px 0">🩹 健康法 所持'+g.health+'（準備画面で使用）／[持]は棚にたまに並ぶ</div>';
   s+=btn("📜 記録の欠片（耐久+"+shardDur+"）","耐久回復（今"+g.dur+"/"+maxDur()+"）・モチベ消費なし・"+fmtOku(shardOku(g.stage)),"buyShard()", g.dur>=maxDur()?"耐久満タン":(g.silver<shardOku(g.stage)?"シルバー不足":""));
@@ -775,8 +785,8 @@ function buyCharm(i){ const id=g.shop[i]; if(!id)return;
   g.shop[i]=null; g.kept=g.kept.filter(k=>k!==id);
   let eq="";
   if(NOEQUIP[id]) eq="\n→ 倉庫へ（装備せず、"+(id==='hero'?"強化のときに使うか選ぶ":"狩りのたびに使うか選ぶ")+"）";   // v0.48 狩り勢／v0.49 スーパーヒーローは装備しない
-  else if(g.equipped.length<g.slots){ g.equipped.push(u); eq="\n→ 空き枠に装着（"+g.equipped.length+"/"+g.slots+"）"; }
-  else eq="\n→ 倉庫へ（装備枠が満杯）";
+  else if(g.equipped.length<g.slots && costUsed()+costOf(id)<=g.costCap){ g.equipped.push(u); eq="\n→ 自動装着（⚖コスト "+costUsed()+"/"+g.costCap+"）"; }   // v0.51 コストが収まる時だけ自動装着
+  else eq="\n→ 倉庫へ（"+(g.equipped.length>=g.slots?"枠が満杯":"⚖コスト上限オーバー："+costUsed()+"+"+costOf(id)+">"+g.costCap)+"）";
   setMsg("✨【"+c[1]+"】購入！（Lv"+g.levels[id]+"・寿命"+lifeOf(id)+"）\n"+fxText(id,g.levels[id])+eq); beep(880,.08); goShop();
 }
 function levelUp(cid){ if(HELD[cid])return; const L=levelOf(cid); if(L>=LV_CAP)return; const cost=lvupCost(L); if(g.clone<cost)return;  // Lv上げ＝クロン消費（v0.23 [持]はLvを持たない＝空fx配列でfxTextが例外を投げるのを防ぐガード）
@@ -818,15 +828,17 @@ function sortedBench(bench){
 }
 function setInvSort(key){ if(!g.invSort) g.invSort={key:'kei',dir:1}; if(g.invSort.key===key) g.invSort.dir=(g.invSort.dir<0?1:-1); else { g.invSort.key=key; g.invSort.dir=1; } goEquip(g.prevPhase); }
 function goEquip(from){ g.prevPhase=(from==="shop"?"shop":"prep"); g.phase="equip"; render();
-  let s='<div class="center" style="margin-bottom:4px;color:#ffd24a">🎒 装備（'+g.equipped.length+'/'+g.slots+' 枠）</div>';
-  s+='<div class="sub" style="margin:0 0 6px">効くのは装備中だけ。寿命-1/ターン、0で破損（Lvは保持・買い直しで復活）。⬆Lv＝クロン。<b style="color:#ffca7a">延命は商店で（再登場時に半額）＝随時の金延長は廃止</b>／健康法で全装備+3。色＝系統(🔴爆/💰狩/💚回/🛡保/⚪条/🟠跳/🧊抗)。</div>';
+  const cu=costUsed();
+  let s='<div class="center" style="margin-bottom:4px;color:#ffd24a">🎒 装備（'+g.equipped.length+'/'+g.slots+' 枠・⚖コスト <b style="color:'+(cu>=g.costCap?'#ff8a8a':'#8dff9a')+'">'+cu+'</b>/'+g.costCap+'）</div>';
+  s+='<div class="barwrap" style="height:10px;max-width:340px;margin:0 auto 6px"><div class="bar'+(cu/g.costCap>0.99?' dang':cu/g.costCap>0.75?' warn':'')+'" style="width:'+Math.min(100,cu/g.costCap*100)+'%"></div></div>';   // v0.51 コストバー
+  s+='<div class="sub" style="margin:0 0 6px">効くのは装備中だけ。<b style="color:#ffca7a">⚖強い装備ほどコストが重い＝上限'+g.costCap+'内でやりくり</b>（上限は商店で拡張）。寿命は使うと-1、0で破損（Lvは保持・買い直しで復活）。⬆Lv＝クロン（コストは不変）。延命は商店で半額／健康法で全装備+3。色＝系統(🔴爆/💰狩/💚回/🛡保/⚪条/🟠跳/🧊抗)。</div>';
   // 装備中スロット（田の字：枠番号・Lv・名前・効果・寿命・Lv上げ/延長）
   s+='<div class="eqgrid">';
   for(let i=0;i<g.slots;i++){ const u=g.equipped[i]; const it=(u!==undefined)?invById(u):null;
     if(it){ const c=CHMAP[it.c],k=kei(it.c); const lf=it.life; const lc=lf<=2?'#ff8a8a':lf<=3?'#ffca7a':'#9fb0ff';
       const L=levelOf(it.c), cost=lvupCost(L);
       s+='<div class="eqslot" style="border-color:'+k.c+'">'
-        +'<span class="slotno">枠'+(i+1)+'・Lv'+L+'</span><span class="life" style="color:'+lc+'">⏳'+lf+'</span>'
+        +'<span class="slotno">枠'+(i+1)+'・Lv'+L+'・⚖'+costOf(it.c)+'</span><span class="life" style="color:'+lc+'">⏳'+lf+'</span>'
         +'<span class="enm"><span style="color:'+k.c+'">['+k.t+']</span>'+c[1]+'</span>'
         +'<span style="color:#cdd;font-size:11px;display:block;margin:3px 0 6px">'+fxText(it.c,L)+'</span>'
         +'<button class="btn" style="display:inline-block;padding:2px 8px" onclick="unequip('+i+')">外す</button> '
@@ -844,7 +856,7 @@ function goEquip(from){ g.prevPhase=(from==="shop"?"shop":"prep"); g.phase="equi
     s+='<div class="sub" style="margin:0 0 4px">並び替え：'+sb('kei','種別')+sb('life','寿命')+sb('lv','Lv')+sb('name','名前')+'</div>';
     s+='<div class="grid">';
     sortedBench(bench).forEach(it=>{ const c=CHMAP[it.c],k=kei(it.c); const full=g.equipped.length>=g.slots; const lc=it.life<=3?'#ff8a8a':'#9fb0ff'; const L=levelOf(it.c), cost=lvupCost(L);
-      s+='<div class="charm"><span style="color:'+k.c+';font-weight:bold">['+k.t+']</span><span class="nm">'+c[1]+'</span> <span style="color:#9fb0ff;font-size:11px">Lv'+L+'</span> <span style="color:'+lc+';font-size:11px">⏳'+it.life+'</span><br>'
+      s+='<div class="charm"><span style="color:'+k.c+';font-weight:bold">['+k.t+']</span><span class="nm">'+c[1]+'</span> <span style="color:#9fb0ff;font-size:11px">Lv'+L+'</span> <span style="color:'+lc+';font-size:11px">⏳'+it.life+'</span>'+(NOEQUIP[it.c]?'':' <span style="color:#ffca7a;font-size:11px">⚖'+costOf(it.c)+'</span>')+'<br>'
         +'<span style="color:#cdd;font-size:11px">'+fxText(it.c,L)+'</span><br>'
         +(NOEQUIP[it.c]?'<span style="color:#ffd24a;font-size:11px">'+(it.c==='hero'?'🦸強化で使用（装備不要）':'💰狩りで使用（装備不要）')+'</span>':'<button class="btn" style="display:inline-block;padding:2px 8px" onclick="equip('+it.u+')" '+(full?'disabled':'')+'>'+(full?'枠満杯':'装備')+'</button>')
         +(L<LV_CAP?' <button class="btn" style="display:inline-block;padding:2px 8px" onclick="levelUp(\''+it.c+'\')" '+(g.clone<cost?'disabled':'')+'>⬆Lv(ｸﾛﾝ'+cost+')</button>':'')+'</div>';
@@ -855,14 +867,15 @@ function goEquip(from){ g.prevPhase=(from==="shop"?"shop":"prep"); g.phase="equi
   scr(s);
 }
 function equip(u){ const it=invById(u); if(!it||g.equipped.includes(u))return; if(NOEQUIP[it.c])return; if(g.equipped.length>=g.slots)return;   // v0.48 狩り勢は装備不可
-  g.equipped.push(u); setMsg("装着：【"+CHMAP[it.c][1]+"】"); beep(720,.05); goEquip();
+  if(costUsed()+costOf(it.c)>g.costCap){ setMsg("⚖ コスト上限オーバー！【"+CHMAP[it.c][1]+"】(コスト"+costOf(it.c)+")は入らない（今 "+costUsed()+"/"+g.costCap+"）。\n何かを外すか、商店でコスト上限を拡張しろ。"); beep(200,.1); goEquip(); return; }   // v0.51 装備コスト制
+  g.equipped.push(u); setMsg("装着：【"+CHMAP[it.c][1]+"】（⚖コスト "+costUsed()+"/"+g.costCap+"）"); beep(720,.05); goEquip();
 }
 function unequip(i){ const u=g.equipped[i]; if(u===undefined)return; g.equipped.splice(i,1);
   const it=invById(u); if(it && it.c==='kks') g.kksCount=0;   // v0.24 カカシ放置は外すとカウンタもリセット（直前だけ装備の小技防止）
   setMsg("外した：【"+(it?CHMAP[it.c][1]:"?")+"】（倉庫へ）"); beep(360,.05); goEquip();
 }
-function buySlot(){ if(g.slots>=EQUIP_SLOTS_MAX)return; const c=slotExpandOku(); if(g.silver<c)return;
-  g.silver-=c; g.slots++; setMsg("➕ 装備枠を増やした！（"+(g.slots-1)+"→"+g.slots+"枠）"); beep(900,.1); goShop();
+function buySlot(){ if(g.costCap>=COST_CAP_MAX)return; const c=slotExpandOku(); if(g.silver<c)return;   // v0.51 コスト上限の拡張に置換（関数名はボット互換のため維持）
+  g.silver-=c; g.costCap+=COST_CAP_STEP; setMsg("⚖ コスト上限を拡張した！（"+(g.costCap-COST_CAP_STEP)+"→"+g.costCap+"・最大"+COST_CAP_MAX+"）"); beep(900,.1); goShop();
 }
 function keepCharm(i){ const id=g.shop[i]; if(!id||HELD[id])return; if(g.clone<1||g.kept.includes(id))return;   // v0.23 [持]はキープ対象外（g.keptに混ざるとrollShopのキープ優先でavail無視の再注入＝ゴースト枠を防ぐ）
   g.clone-=1; g.kept.push(id);
@@ -1191,7 +1204,7 @@ function onSuccess(gamble,guaranteed,ex){
   if(g.stage>100){
     g.cycle++; g.maxCycle=Math.max(g.maxCycle,g.cycle); g.stage=1; g.motiv=g.motivMax;
     g.clone=0; g.dur=maxDur(); g.combo=0; g.lastFailed=false; g.kept=[]; g._feverArmed=0; g.elianUsed=false;   // Lvは持ち越し（永続投資）／発動中の無条件FEVER・エリアン使用済は周回でリセット（周回ごとに保険を1回復活）
-    g.silver=0; g.inv=[]; g.equipped=[]; g.slots=EQUIP_SLOTS; g.kksCount=0;   // v0.43 周回リセット：シルバー0・装備/倉庫リセット・枠4に戻す（Lv/score/turnは持ち越し＝再購入で持ち越しLvから復活）
+    g.silver=0; g.inv=[]; g.equipped=[]; g.slots=EQUIP_SLOTS; g.costCap=COST_CAP_BASE; g.kksCount=0;   // v0.43 周回リセット：シルバー0・装備/倉庫リセット／v0.51 コスト上限も12に戻す（Lv/score/turnは持ち越し）
     beep(1500,.5);
     setMsg("🎊🎊🎊 神Ⅹ到達！！ "+g.cycle+"周目へ突入！\n強くてニューゲーム（Lv・スコアは引き継ぎ／シルバー・装備はリセット・壁は2.0倍に）。"+extra);
     return;
@@ -1310,7 +1323,7 @@ function updateBossBg(){
 }
 // 右パネル：装備枠を常時表示（田の字ミニ）。全画面共通・強化フェーズ/演出中も見える
 function renderEquipPanel(){ const el=document.getElementById("equippanel"); if(!el)return;
-  let s='<div class="eqpanel-title">🎒 装備 '+g.equipped.length+'/'+g.slots+'</div><div class="eqmini">';
+  let s='<div class="eqpanel-title">🎒 装備 '+g.equipped.length+'/'+g.slots+'　⚖'+costUsed()+'/'+g.costCap+'</div><div class="eqmini">';
   for(let i=0;i<g.slots;i++){ const u=g.equipped[i]; const it=(u!==undefined)?invById(u):null;
     if(it){ const c=CHMAP[it.c],k=kei(it.c); const lf=it.life; const lc=lf<=2?'#ff8a8a':lf<=3?'#ffca7a':'#9fb0ff';
       s+='<div class="eqmslot" style="border-color:'+k.c+'"><span class="ml" style="color:'+lc+'">⏳'+lf+'</span><span class="mn"><span style="color:'+k.c+'">['+k.t+']</span>'+c[1]+'<br><span style="color:#9fb0ff;font-size:10px">Lv'+levelOf(it.c)+'</span></span></div>';
@@ -1348,7 +1361,7 @@ function beep(freq,dur){ try{ actx=actx||new (window.AudioContext||window.webkit
 var PLAYLOG=[];
 function plog(ev){ try{ PLAYLOG.push(Object.assign({t:g.turn, st:g.stage, seg:(typeof stageName==='function'?stageName(g.stage):g.stage)}, ev)); }catch(e){} }
 function buildSnap(){ try{ return {
-  motiv:g.motiv, motivMax:g.motivMax, clone:g.clone, silver:Math.round(g.silver), combo:g.combo, snow:+(g.snow||1).toFixed(2), slots:g.slots,
+  motiv:g.motiv, motivMax:g.motivMax, clone:g.clone, silver:Math.round(g.silver), combo:g.combo, snow:+(g.snow||1).toFixed(2), slots:g.slots, cost:costUsed()+'/'+g.costCap,
   equip:g.equipped.map(u=>{const it=invById(u);return it?(CHMAP[it.c][1]+':L'+levelOf(it.c)):'';}).filter(Boolean),
   bench:g.inv.filter(x=>g.equipped.indexOf(x.u)<0).map(x=>CHMAP[x.c][1]+':L'+levelOf(x.c)),
   elian:!!g.elian, elianUsed:!!g.elianUsed, fmn:(g.feverMania|0)
@@ -1365,7 +1378,7 @@ function buildSnap(){ try{ return {
   wrap('unkeepCharm', i=>{const id=g.shop[i]; plog({act:'キープ解除', id:(id&&CHMAP[id]?CHMAP[id][1]:id)});});
   wrap('buyClone', n=>plog({act:'クロン購入', n:n, cloneAfter:g.clone}));
   wrap('rerollShelf', ()=>plog({act:'棚リロール', cloneBefore:g.clone}));
-  wrap('buySlot', ()=>plog({act:'装備枠拡張'}));
+  wrap('buySlot', ()=>plog({act:'コスト上限拡張', to:(g.costCap+COST_CAP_STEP)}));   // v0.51
   wrap('buyShard', ()=>plog({act:'記録の欠片'}));
   wrap('buyDrink', ()=>plog({act:'赤POT購入'}));
   wrap('useDrink', ()=>plog({act:'赤POT使用'}));
@@ -1395,7 +1408,7 @@ function buildSnap(){ try{ return {
 function togglePlog(){ const t=document.getElementById('plogArea'); if(t) t.style.display=(t.style.display==='none'?'block':'none'); }
 function exportPlaylog(){
   const mx=Math.max((g&&g.maxStage)||0, PLAYLOG.reduce((m,e)=>Math.max(m,e.st||0),0));   // v0.24 直前に新しいランを始めていてもログ全体の最高段で書き出す（「1段」ファイル名バグ修正）
-  const data=JSON.stringify({ name:(g&&g.name)||'noname', ver:'v0.50', maxStage:mx, score:(g&&g.score)||0, turns:(g&&g.turn)||0, log:PLAYLOG });
+  const data=JSON.stringify({ name:(g&&g.name)||'noname', ver:'v0.51', maxStage:mx, score:(g&&g.score)||0, turns:(g&&g.turn)||0, log:PLAYLOG });
   try{ const blob=new Blob([data],{type:'application/json'}); const a=document.createElement('a');
     a.href=URL.createObjectURL(blob); a.download='playlog_'+((g&&g.name)||'noname')+'_'+mx+'段.json'; document.body.appendChild(a); a.click(); a.remove();
   }catch(e){}
