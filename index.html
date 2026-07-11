@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>強化脳汁ゲー（仮）— ブラウザ試作 v0.54（商店コンパクト化＋左寄りバグ修正＋リロール廃止）</title>
+<title>強化脳汁ゲー（仮）— ブラウザ試作 v0.55（商店ヘッダ整理＋コストをHUDへ＋装備欄を上に）</title>
 <style>
   :root{ --navy:#000a5a; --navy2:#001080; --gold:#ffd24a; --edge:#6b7bd6; --panel:#00104a; --track:#00003a; }
   *{ box-sizing:border-box; }
@@ -87,7 +87,8 @@
   .eqmslot .mn{ color:var(--gold); font-weight:bold; display:block; margin-top:9px; line-height:1.2; word-break:break-all; }
   /* v0.53 スマホ最適化（社長指示「iPhone基準で1画面に」）：余白/フォント/ボタン圧縮・補足説明(.verbose)非表示・右パネル4列化・演出チップ横並び */
   @media(max-width:560px){
-    .maincols{ flex-direction:column; align-items:stretch; } #screen{ width:100%; } #equippanel{ width:auto; border-left:none; border-top:1px solid var(--edge); padding-left:0; padding-top:5px; }   /* v0.54 左寄りバグ修正＝縦積み時はalign-items:flex-startだと子が縮んで左に寄る→stretchに */
+    .maincols{ flex-direction:column; align-items:stretch; } #screen{ width:100%; }
+    #equippanel{ order:-1; width:auto; border-left:none; border-bottom:1px solid var(--edge); padding-left:0; padding-bottom:5px; margin-bottom:2px; }   /* v0.55 装備欄を画面（商品棚等）の上に配置（社長指示）／v0.54 左寄り修正＝stretch */
     body{ padding:4px; }
     h1{ font-size:10px; margin:1px 0 4px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
     .win{ padding:5px 7px; margin-bottom:5px; border-width:2px; box-shadow:0 0 0 2px #000, inset 0 0 0 1px var(--edge); }
@@ -118,7 +119,7 @@
 </head>
 <body>
 <div id="app">
-  <h1>◆ 強化脳汁ゲー（仮）◆ ブラウザ試作 v0.54 — 商店コンパクト化・左寄り修正・リロール廃止</h1>
+  <h1>◆ 強化脳汁ゲー（仮）◆ ブラウザ試作 v0.55 — 表示整理（コストはHUD・装備欄は棚の上）</h1>
 
   <div class="win">
     <div class="row" style="align-items:center; margin-bottom:8px;">
@@ -141,7 +142,7 @@
     <div class="row">
       <span class="stat">🔥スタック<b id="stack">0</b></span>
       <span class="stat">🥤ドリンク<b id="drinks">0</b></span>
-      <span class="stat" style="margin-left:auto;">🎯素の成功率<b id="rawrate">100%</b></span>
+      <span class="stat" style="margin-left:auto;">⚖コスト<b id="cost">0/12</b></span><!-- v0.55 素の成功率→⚖コストに差し替え（社長指示：コストは最上段へ合流・素の率は強化画面で見える） -->
     </div>
   </div>
 
@@ -156,6 +157,7 @@
   <div class="sub verbose">名称・数値は仮の手触り確認用。設計元：20260702_設計_爆発値システム。</div>
   <details style="margin-top:4px"><summary class="sub" style="cursor:pointer;list-style-position:inside;opacity:.55">開発メモ（版ごとの実装履歴・クリックで開く）</summary>
   <div class="sub" style="text-align:left">
+  ※v0.55【表示整理（社長指示5件・PC/スマホ共通）】：①商店ヘッダ「～商店（棚4種＋キープ枠…）～」撤去。②<b>⚖コストを最上段HUDへ合流</b>（商店内のコスト行と「収まれば自動装着」注記を撤去）。③色凡例「色＝系統(🔴爆…)・[持]＝…」を撤去（使ってるうちに分かる）。④<b>装備欄を商品棚の上に配置</b>（スマホ＝装備ミニパネルをorder:-1で画面上部へ。PCは従来どおり右側に常時表示）。⑤HUDの「🎯素の成功率」撤去（強化画面の先見せで足りる）→跡地に⚖コスト。<br>
   ※v0.54【UI配置の改善（社長指示4件・2026-07-11）】：①<b>スマホで初期表示のメニューが左に寄るバグ修正</b>＝縦積みレイアウト時にalign-items:flex-startで子要素が縮んで左寄りになっていた→stretchに（演出後に直って見えたのはゲージの横幅が画面を押し広げていたため）。②<b>クロン購入を横1列</b>（5/20/100/1000個×価格の正方形4連）。③<b>赤POT・⚖コスト上限・📜記録の欠片を正方形ボタン3連に</b>（名前/効果/価格の3行・説明は必要最低限）。④<b>商品棚リロール廃止</b>（機能ごと撤去。※延命ナーフ論点「案B＝リロールをナシに」が結果的に採用）。<br>
   ※v0.53【スマホ1画面対応（社長指示「iPhone基準でスクロールなしに」）】：560px以下のモバイルCSSを本格化＝余白/フォント/ボタン/HUDを圧縮・右パネルのミニ装備を2列→<b>4列</b>・演出の札を縦積み→<b>横並び折返し</b>・大数字を縮小。<b>補足説明はスマホでは非表示</b>（.verboseクラス＝商店/装備/強化画面の色凡例・仕組み解説など。PCでは従来どおり表示）。判定・バランスは不変。<br>
   ※v0.52.1【装備変更画面：装備中カードにLv/寿命/コストを明示（社長指示）】：装備中スロットの表示を「枠番号の隅に小さく」→<b>名前の下に Lv・⏳寿命・⚖コスト の1行</b>に変更（倉庫カードと同じ見やすさに）。右パネルのミニ表示にも⚖コストを追加。<br>
@@ -737,8 +739,7 @@ function doHunt(h, use){ g.actedThisTurn=true;
 
 function goShop(){ g.phase="shop"; render();
   const cc=cloneCost(); const ks=keepSlots();
-  let s='<div class="center" style="margin-bottom:6px">～ 商店（棚4種＋キープ枠'+ks+'／棚は強化後に更新）～</div>'
-    +'<div class="sub" style="margin:0 0 6px"><b style="color:#ffca7a">⚖コスト '+costUsed()+'/'+g.costCap+'</b>（収まれば自動装着）<span class="verbose">。色＝系統(🔴爆/💰狩/💚回/🛡保/⚪条/🟠跳/🧊抗)・<span style="color:#7fd4ff">[持]</span>＝装備せず持つだけで発動</span></div><div class="grid">';
+  let s='<div class="grid">';   // v0.55 商店ヘッダ・コスト行・色凡例を撤去（社長指示：コストは最上段HUDへ合流・凡例は使ってるうちに分かる）
   g.shop.forEach((id,i)=>{ if(id===null){ s+='<div class="charm" style="opacity:.35">―</div>'; return;}
     if(HELD[id]){ const h=HELD[id]; const hp=h.price(g.stage);   // v0.22 [持]所持発動型のカード（Lv/寿命/キープなし）
       s+='<div class="charm" style="border-color:#2f6fa0"><span style="color:#7fd4ff;font-weight:bold">[持]</span><span class="nm">'+h.name+'</span><br>'
@@ -876,7 +877,7 @@ function goEquip(from){ g.prevPhase=(from==="shop"?"shop":"prep"); g.phase="equi
   const cu=costUsed();
   let s='<div class="center" style="margin-bottom:4px;color:#ffd24a">🎒 装備（'+g.equipped.length+'/'+g.slots+' 枠・⚖コスト <b style="color:'+(cu>=g.costCap?'#ff8a8a':'#8dff9a')+'">'+cu+'</b>/'+g.costCap+'）</div>';
   s+='<div class="barwrap" style="height:10px;max-width:340px;margin:0 auto 6px"><div class="bar'+(cu/g.costCap>0.99?' dang':cu/g.costCap>0.75?' warn':'')+'" style="width:'+Math.min(100,cu/g.costCap*100)+'%"></div></div>';   // v0.51 コストバー
-  s+='<div class="sub" style="margin:0 0 6px"><b style="color:#ffca7a">⚖強い装備ほど重い＝上限内でやりくり</b>（拡張は商店）<span class="verbose">。寿命は使うと-1・0で破損（Lv保持・買い直しで復活）。⬆Lv＝クロン（コスト不変）。延命は商店で半額／健康法で全装備+3。色＝系統(🔴爆/💰狩/💚回/🛡保/⚪条/🟠跳/🧊抗)</span></div>';   // v0.53 スマホでは補足を隠す
+  s+='<div class="sub" style="margin:0 0 6px"><b style="color:#ffca7a">⚖強い装備ほど重い＝上限内でやりくり</b>（拡張は商店）<span class="verbose">。寿命は使うと-1・0で破損（Lv保持・買い直しで復活）。⬆Lv＝クロン（コスト不変）。延命は商店で半額／健康法で全装備+3</span></div>';   // v0.53 スマホでは補足を隠す
   // 装備中スロット（田の字：枠番号・Lv・名前・効果・寿命・Lv上げ/延長）
   s+='<div class="eqgrid">';
   for(let i=0;i<g.slots;i++){ const u=g.equipped[i]; const it=(u!==undefined)?invById(u):null;
@@ -1325,7 +1326,7 @@ function render(){ if(!g)return;
   document.getElementById("turn").textContent=g.turn;
   document.getElementById("stack").textContent=Math.round(g.stack);   // v0.40 HUDは成長ボーナス→失敗スタックに変更（成長ボーナスは爆発値の内訳でのみ表示）
   document.getElementById("drinks").textContent=g.drinks;
-  document.getElementById("rawrate").textContent=(guarStage()? "100%(助走)" : Math.round(Math.min(CAP_RATE,100/(100+K(g.stage,g.cycle)))*100)+"%");  // 素＝装備/条件を除いた成功率（常時表示・準備中の判断材料）
+  { const ce=document.getElementById("cost"); if(ce) ce.textContent=costUsed()+"/"+g.costCap; }   // v0.55 HUDに⚖コスト（素の成功率は撤去＝強化画面で見える）
   const mb=document.getElementById("mbar"); const pct=Math.max(0,Math.min(100,g.motiv/g.motivMax*100));
   mb.style.width=pct+"%"; mb.className="bar"+(pct<=20?" dang":pct<=45?" warn":"");
   updateBossBg();       // v0.14 Ⅹ接近で背景を深紅（ラスボス色）へ
@@ -1451,7 +1452,7 @@ function buildSnap(){ try{ return {
 function togglePlog(){ const t=document.getElementById('plogArea'); if(t) t.style.display=(t.style.display==='none'?'block':'none'); }
 function exportPlaylog(){
   const mx=Math.max((g&&g.maxStage)||0, PLAYLOG.reduce((m,e)=>Math.max(m,e.st||0),0));   // v0.24 直前に新しいランを始めていてもログ全体の最高段で書き出す（「1段」ファイル名バグ修正）
-  const data=JSON.stringify({ name:(g&&g.name)||'noname', ver:'v0.54', maxStage:mx, score:(g&&g.score)||0, turns:(g&&g.turn)||0, log:PLAYLOG });
+  const data=JSON.stringify({ name:(g&&g.name)||'noname', ver:'v0.55', maxStage:mx, score:(g&&g.score)||0, turns:(g&&g.turn)||0, log:PLAYLOG });
   try{ const blob=new Blob([data],{type:'application/json'}); const a=document.createElement('a');
     a.href=URL.createObjectURL(blob); a.download='playlog_'+((g&&g.name)||'noname')+'_'+mx+'段.json'; document.body.appendChild(a); a.click(); a.remove();
   }catch(e){}
