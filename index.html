@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>強化脳汁ゲー（仮）— ブラウザ試作 v0.52（失敗ペナのグレード加算＋コストソート）</title>
+<title>強化脳汁ゲー（仮）— ブラウザ試作 v0.52.1（装備中カードにLv/寿命/コスト表示）</title>
 <style>
   :root{ --navy:#000a5a; --navy2:#001080; --gold:#ffd24a; --edge:#6b7bd6; --panel:#00104a; --track:#00003a; }
   *{ box-sizing:border-box; }
@@ -85,7 +85,7 @@
 </head>
 <body>
 <div id="app">
-  <h1>◆ 強化脳汁ゲー（仮）◆ ブラウザ試作 v0.52 — 深部の失敗ほどモチベが痛い（グレード帯加算）＋倉庫のコストソート</h1>
+  <h1>◆ 強化脳汁ゲー（仮）◆ ブラウザ試作 v0.52.1 — 装備中カードにLv・寿命・コストを明示</h1>
 
   <div class="win">
     <div class="row" style="align-items:center; margin-bottom:8px;">
@@ -123,6 +123,7 @@
   <div class="sub">名称・数値は仮の手触り確認用。設計元：20260702_設計_爆発値システム。</div>
   <details style="margin-top:4px"><summary class="sub" style="cursor:pointer;list-style-position:inside;opacity:.55">開発メモ（版ごとの実装履歴・クリックで開く）</summary>
   <div class="sub" style="text-align:left">
+  ※v0.52.1【装備変更画面：装備中カードにLv/寿命/コストを明示（社長指示）】：装備中スロットの表示を「枠番号の隅に小さく」→<b>名前の下に Lv・⏳寿命・⚖コスト の1行</b>に変更（倉庫カードと同じ見やすさに）。右パネルのミニ表示にも⚖コストを追加。<br>
   ※v0.52【社長指示2件（2026-07-11）】：①<b>失敗時のモチベ減にグレード帯の加算</b>＝無印・真・裏(1〜30段)<b>+1</b>／爆・虚・命(31〜60段)<b>+2</b>／無・界・卍(61〜90段)<b>+3</b>／神(91〜100段)<b>+4</b>（従来の上限4の外側に乗る＝深部の失敗ほど本当に痛い・助走は0・基準は挑んだ段【仮】）。②<b>倉庫ソートに「⚖コスト」キー追加</b>（種別/寿命/Lv/コスト/名前・昇降切替）。<br>
   ※v0.51.3【ゲージの赤線を非表示（社長指示）】：成功率ゲージの赤線（天井の目印）を撤去。天井の存在は「ゲージが99%まで伸びない」挙動と最終確率の数字で体感させる（天井の計算ロジック自体は不変）。<br>
   ※v0.51.2【コストを最大4に圧縮（社長指示「S:7では爆を並べられずFEVERが出なくなる」）】：コスト値を S:7/A:5/B:4/C:3/D:2/E・F:1 → <b>S:4／A・B:3／C・D:2／E・F:1</b>に再割り当て（上限12/拡張+2/最大24は据え置き）。初期上限12でも「S級2枚＋中堅1枚」や「爆3枚＋小物」が組める＝FEVERラインに届くビルドを確保しつつ、格差（S=F×4）は維持。数値は【仮】。<br>
@@ -845,8 +846,9 @@ function goEquip(from){ g.prevPhase=(from==="shop"?"shop":"prep"); g.phase="equi
     if(it){ const c=CHMAP[it.c],k=kei(it.c); const lf=it.life; const lc=lf<=2?'#ff8a8a':lf<=3?'#ffca7a':'#9fb0ff';
       const L=levelOf(it.c), cost=lvupCost(L);
       s+='<div class="eqslot" style="border-color:'+k.c+'">'
-        +'<span class="slotno">枠'+(i+1)+'・Lv'+L+'・⚖'+costOf(it.c)+'</span><span class="life" style="color:'+lc+'">⏳'+lf+'</span>'
+        +'<span class="slotno">枠'+(i+1)+'</span>'
         +'<span class="enm"><span style="color:'+k.c+'">['+k.t+']</span>'+c[1]+'</span>'
+        +'<span style="font-size:12px;display:block;margin:3px 0 1px"><span style="color:#9fb0ff">Lv'+L+'</span>　<span style="color:'+lc+'">⏳'+lf+'</span>　<span style="color:#ffca7a">⚖'+costOf(it.c)+'</span></span>'   // v0.52.1 装備中にもLv/寿命/コストを見やすく（社長指示・隅の小表示から名前下の1行へ）
         +'<span style="color:#cdd;font-size:11px;display:block;margin:3px 0 6px">'+fxText(it.c,L)+'</span>'
         +'<button class="btn" style="display:inline-block;padding:2px 8px" onclick="unequip('+i+')">外す</button> '
         +(L<LV_CAP?'<button class="btn" style="display:inline-block;padding:2px 8px" onclick="levelUp(\''+it.c+'\')" '+(g.clone<cost?'disabled':'')+'>⬆Lv(ｸﾛﾝ'+cost+')</button>':'<span class="sub" style="margin:0">Lv MAX </span>')
@@ -1335,7 +1337,7 @@ function renderEquipPanel(){ const el=document.getElementById("equippanel"); if(
   let s='<div class="eqpanel-title">🎒 装備 '+g.equipped.length+'/'+g.slots+'　⚖'+costUsed()+'/'+g.costCap+'</div><div class="eqmini">';
   for(let i=0;i<g.slots;i++){ const u=g.equipped[i]; const it=(u!==undefined)?invById(u):null;
     if(it){ const c=CHMAP[it.c],k=kei(it.c); const lf=it.life; const lc=lf<=2?'#ff8a8a':lf<=3?'#ffca7a':'#9fb0ff';
-      s+='<div class="eqmslot" style="border-color:'+k.c+'"><span class="ml" style="color:'+lc+'">⏳'+lf+'</span><span class="mn"><span style="color:'+k.c+'">['+k.t+']</span>'+c[1]+'<br><span style="color:#9fb0ff;font-size:10px">Lv'+levelOf(it.c)+'</span></span></div>';
+      s+='<div class="eqmslot" style="border-color:'+k.c+'"><span class="ml" style="color:'+lc+'">⏳'+lf+'</span><span class="mn"><span style="color:'+k.c+'">['+k.t+']</span>'+c[1]+'<br><span style="color:#9fb0ff;font-size:10px">Lv'+levelOf(it.c)+'・<span style="color:#ffca7a">⚖'+costOf(it.c)+'</span></span></span></div>';   // v0.52.1 右パネルにもコスト
     } else s+='<div class="eqmslot empty">空</div>';
   }
   s+='</div>';
@@ -1417,7 +1419,7 @@ function buildSnap(){ try{ return {
 function togglePlog(){ const t=document.getElementById('plogArea'); if(t) t.style.display=(t.style.display==='none'?'block':'none'); }
 function exportPlaylog(){
   const mx=Math.max((g&&g.maxStage)||0, PLAYLOG.reduce((m,e)=>Math.max(m,e.st||0),0));   // v0.24 直前に新しいランを始めていてもログ全体の最高段で書き出す（「1段」ファイル名バグ修正）
-  const data=JSON.stringify({ name:(g&&g.name)||'noname', ver:'v0.52', maxStage:mx, score:(g&&g.score)||0, turns:(g&&g.turn)||0, log:PLAYLOG });
+  const data=JSON.stringify({ name:(g&&g.name)||'noname', ver:'v0.52.1', maxStage:mx, score:(g&&g.score)||0, turns:(g&&g.turn)||0, log:PLAYLOG });
   try{ const blob=new Blob([data],{type:'application/json'}); const a=document.createElement('a');
     a.href=URL.createObjectURL(blob); a.download='playlog_'+((g&&g.name)||'noname')+'_'+mx+'段.json'; document.body.appendChild(a); a.click(); a.remove();
   }catch(e){}
