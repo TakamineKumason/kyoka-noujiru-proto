@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>強化脳汁ゲー（仮）— ブラウザ試作 v0.58.2（送信表示なし）</title>
+<title>強化脳汁ゲー（仮）— ブラウザ試作 v0.58.3（保存ボタン＝送信のみ）</title>
 <style>
   :root{ --navy:#000a5a; --navy2:#001080; --gold:#ffd24a; --edge:#6b7bd6; --panel:#00104a; --track:#00003a; }
   *{ box-sizing:border-box; }
@@ -116,7 +116,7 @@
 </head>
 <body>
 <div id="app">
-  <h1>◆ 強化脳汁ゲー（仮）◆ ブラウザ試作 v0.58.2 — プレイログ自動送信（表示なし）</h1>
+  <h1>◆ 強化脳汁ゲー（仮）◆ ブラウザ試作 v0.58.3 — 保存ボタンも送信のみ（ゲームオーバー時と同挙動）</h1>
 
   <div class="win">
     <div class="row" style="align-items:center; margin-bottom:8px;">
@@ -1447,7 +1447,8 @@ function buildSnap(){ try{ return {
     return r;
   };
 })();
-function togglePlog(){ const t=document.getElementById('plogArea'); if(t) t.style.display=(t.style.display==='none'?'block':'none'); }
+function togglePlog(){ const t=document.getElementById('plogArea'); if(!t) return;   // v0.58.3 表示切替＝開くときに最新ログを流し込む（保存ボタンがダウンロードしなくなったため目視/手動コピーの経路として維持）
+  if(t.style.display==='none'){ t.value=buildPlaylogData('view'); t.style.display='block'; } else t.style.display='none'; }
 // ===== v0.58 プレイログ自動収集（社長承認・方式B＝Google Apps Script→ドライブ） =====
 // ゲームオーバー時（ラン1回につき1度）と保存ボタン押下時に自動送信。URL未設定なら無効（従来のダウンロード保存のみ）。
 // no-cors＝送りっぱなし（応答は読めない）。送信内容＝家名・版・到達段・スコア・ログ本体のみ。失敗してもゲームに影響しない。
@@ -1455,7 +1456,7 @@ const PLAYLOG_POST_URL="https://script.google.com/macros/s/AKfycbxKl7-VZalPPJyHw
 var _plogSentThisRun=false;
 function buildPlaylogData(reason){
   const mx=Math.max((g&&g.maxStage)||0, PLAYLOG.reduce((m,e)=>Math.max(m,e.st||0),0));
-  return JSON.stringify({ name:(g&&g.name)||'noname', ver:'v0.58.2', maxStage:mx, score:(g&&g.score)||0, turns:(g&&g.turn)||0, sent:(reason||'manual'), log:PLAYLOG });
+  return JSON.stringify({ name:(g&&g.name)||'noname', ver:'v0.58.3', maxStage:mx, score:(g&&g.score)||0, turns:(g&&g.turn)||0, sent:(reason||'manual'), log:PLAYLOG });
 }
 function uploadPlaylog(reason){
   try{
@@ -1464,16 +1465,7 @@ function uploadPlaylog(reason){
     return true;
   }catch(e){ return false; }
 }
-function exportPlaylog(){
-  uploadPlaylog('manual');   // v0.58 保存ボタン＝自動送信＋従来のダウンロード
-  const mx=Math.max((g&&g.maxStage)||0, PLAYLOG.reduce((m,e)=>Math.max(m,e.st||0),0));   // v0.24 ログ全体の最高段でファイル名
-  const data=buildPlaylogData('manual');
-  try{ const blob=new Blob([data],{type:'application/json'}); const a=document.createElement('a');
-    a.href=URL.createObjectURL(blob); a.download='playlog_'+((g&&g.name)||'noname')+'_'+mx+'段.json'; document.body.appendChild(a); a.click(); a.remove();
-  }catch(e){}
-  try{ if(navigator.clipboard) navigator.clipboard.writeText(data); }catch(e){}
-  const ta=document.getElementById('plogArea'); if(ta){ ta.value=data; ta.style.display='block'; ta.focus(); ta.select(); }
-}
+function exportPlaylog(){ uploadPlaylog('manual'); }   // v0.58.3 保存ボタン＝ゲームオーバー時と同じ挙動（送信のみ・無表示・社長指示）。ダウンロード/クリップボードは廃止・目視は「表示切替」で
 (function(){ try{
   if(typeof window==='undefined' || typeof document==='undefined' || !document.body) return;   // ブラウザ実行のみ
   const wrapd=document.createElement('div'); wrapd.id='plogbtns'; wrapd.style.cssText='position:fixed;right:8px;bottom:8px;z-index:9999;text-align:right';   // v0.53 スマホでは縮小（#plogbtns）
