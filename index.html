@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>強化脳汁ゲー（仮）— ブラウザ試作 v0.58（プレイログ自動送信）</title>
+<title>強化脳汁ゲー（仮）— ブラウザ試作 v0.58.1（プレイログ自動送信・有効）</title>
 <style>
   :root{ --navy:#000a5a; --navy2:#001080; --gold:#ffd24a; --edge:#6b7bd6; --panel:#00104a; --track:#00003a; }
   *{ box-sizing:border-box; }
@@ -116,7 +116,7 @@
 </head>
 <body>
 <div id="app">
-  <h1>◆ 強化脳汁ゲー（仮）◆ ブラウザ試作 v0.58 — プレイログ自動送信（ゲームオーバー時／保存ボタン時）</h1>
+  <h1>◆ 強化脳汁ゲー（仮）◆ ブラウザ試作 v0.58.1 — プレイログ自動送信・有効化済み</h1>
 
   <div class="win">
     <div class="row" style="align-items:center; margin-bottom:8px;">
@@ -1453,11 +1453,11 @@ function togglePlog(){ const t=document.getElementById('plogArea'); if(t) t.styl
 // ===== v0.58 プレイログ自動収集（社長承認・方式B＝Google Apps Script→ドライブ） =====
 // ゲームオーバー時（ラン1回につき1度）と保存ボタン押下時に自動送信。URL未設定なら無効（従来のダウンロード保存のみ）。
 // no-cors＝送りっぱなし（応答は読めない）。送信内容＝家名・版・到達段・スコア・ログ本体のみ。失敗してもゲームに影響しない。
-const PLAYLOG_POST_URL="";   // ←GASウェブアプリURL（手順書＝Output/手順_プレイログ自動収集_GAS設定.md）を設定すると有効化
+const PLAYLOG_POST_URL="https://script.google.com/macros/s/AKfycbxKl7-VZalPPJyHw_uddHQeH3ClGK15pQTAulENG0pElxobkGvG9DyOOj9Be5-fezMK/exec";   // v0.58.1 収集先GAS（2026-07-11疎通確認済み・ドライブ「強化脳汁ゲー_プレイログ」へ保存）
 var _plogSentThisRun=false;
 function buildPlaylogData(reason){
   const mx=Math.max((g&&g.maxStage)||0, PLAYLOG.reduce((m,e)=>Math.max(m,e.st||0),0));
-  return JSON.stringify({ name:(g&&g.name)||'noname', ver:'v0.58', maxStage:mx, score:(g&&g.score)||0, turns:(g&&g.turn)||0, sent:(reason||'manual'), log:PLAYLOG });
+  return JSON.stringify({ name:(g&&g.name)||'noname', ver:'v0.58.1', maxStage:mx, score:(g&&g.score)||0, turns:(g&&g.turn)||0, sent:(reason||'manual'), log:PLAYLOG });
 }
 function uploadPlaylog(reason){
   try{
