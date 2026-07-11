@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>強化脳汁ゲー（仮）— ブラウザ試作 v0.56（装備欄4×2統一＋狩場名＋枠表記削除）</title>
+<title>強化脳汁ゲー（仮）— ブラウザ試作 v0.57（プレイログの延命記録バグ修正）</title>
 <style>
   :root{ --navy:#000a5a; --navy2:#001080; --gold:#ffd24a; --edge:#6b7bd6; --panel:#00104a; --track:#00003a; }
   *{ box-sizing:border-box; }
@@ -116,7 +116,7 @@
 </head>
 <body>
 <div id="app">
-  <h1>◆ 強化脳汁ゲー（仮）◆ ブラウザ試作 v0.56 — 装備欄はログ下4×2（クリックで変更）・狩場名</h1>
+  <h1>◆ 強化脳汁ゲー（仮）◆ ブラウザ試作 v0.57 — プレイログ計測修正（延命の記録）</h1>
 
   <div class="win">
     <div class="row" style="align-items:center; margin-bottom:8px;">
@@ -150,6 +150,7 @@
   <div class="sub verbose">名称・数値は仮の手触り確認用。設計元：20260702_設計_爆発値システム。</div>
   <details style="margin-top:4px"><summary class="sub" style="cursor:pointer;list-style-position:inside;opacity:.55">開発メモ（版ごとの実装履歴・クリックで開く）</summary>
   <div class="sub" style="text-align:left">
+  ※v0.57【計測バグ修正】：プレイログの延命記録＝wrap対象が旧関数名buyExtendのままで<b>延命（reviveItem）が一切記録されていなかった</b>のを修正（アヲハタ氏ログ解析で発見）。ゲーム挙動は不変。※コスト上限拡張の値下げは社長判断で見送り（拡張は無限化を生む懸念＝アイテムの作り替えとセットで今後の論点）。<br>
   ※v0.56【UI改善3件（社長指示・2026-07-11）】：①装備変更メニューの「枠1,2…」「空き枠」表記を撤去（点線囲みで分かる）。②狩りメニューを狩場名に＝<b>休息をとる／ドケビの森／ガイピンラーシア寺院(地下)／ジェピロス城</b>（奥ほど稼げる・ログの狩り表示も狩場名に）。③<b>装備欄をPC/スマホ共通でログ（メッセージ窓）の下に横4×縦2で配置</b>（旧・PC右サイドパネル構造を廃止）。<b>装備変更ボタンは削除＝装備欄のスロット（空き枠含む）をクリックで装備変更メニューが開く</b>。<br>
   ※v0.55【表示整理（社長指示5件・PC/スマホ共通）】：①商店ヘッダ「～商店（棚4種＋キープ枠…）～」撤去。②<b>⚖コストを最上段HUDへ合流</b>（商店内のコスト行と「収まれば自動装着」注記を撤去）。③色凡例「色＝系統(🔴爆…)・[持]＝…」を撤去（使ってるうちに分かる）。④<b>装備欄を商品棚の上に配置</b>（スマホ＝装備ミニパネルをorder:-1で画面上部へ。PCは従来どおり右側に常時表示）。⑤HUDの「🎯素の成功率」撤去（強化画面の先見せで足りる）→跡地に⚖コスト。<br>
   ※v0.54【UI配置の改善（社長指示4件・2026-07-11）】：①<b>スマホで初期表示のメニューが左に寄るバグ修正</b>＝縦積みレイアウト時にalign-items:flex-startで子要素が縮んで左寄りになっていた→stretchに（演出後に直って見えたのはゲージの横幅が画面を押し広げていたため）。②<b>クロン購入を横1列</b>（5/20/100/1000個×価格の正方形4連）。③<b>赤POT・⚖コスト上限・📜記録の欠片を正方形ボタン3連に</b>（名前/効果/価格の3行・説明は必要最低限）。④<b>商品棚リロール廃止</b>（機能ごと撤去。※延命ナーフ論点「案B＝リロールをナシに」が結果的に採用）。<br>
@@ -1422,7 +1423,7 @@ function buildSnap(){ try{ return {
   wrap('useDrink', ()=>plog({act:'赤POT使用'}));
   wrap('toggleHero', ()=>plog({act:'スーパーヒーロートグル'}));   // v0.49（砥石のwrapは廃止に伴い撤去）
   wrap('toggleMigaki', ()=>plog({act:'磨きの儀トグル'}));
-  wrap('buyExtend', ()=>plog({act:'寿命延長'}));
+  wrap('reviveItem', id=>plog({act:'延命', id:(CHMAP[id]?CHMAP[id][1]:id)}));   // v0.57 計測バグ修正：旧関数名buyExtendのままで延命が未記録だった（アヲハタログ解析で発見）
   wrap('takeWabi', ()=>plog({act:'詫びクロン受取'}));
   wrap('activateFmn', ()=>plog({act:'FEVERマニア発動'}));
   wrap('toggleIji', ()=>plog({act:'意地トグル'}));
@@ -1446,7 +1447,7 @@ function buildSnap(){ try{ return {
 function togglePlog(){ const t=document.getElementById('plogArea'); if(t) t.style.display=(t.style.display==='none'?'block':'none'); }
 function exportPlaylog(){
   const mx=Math.max((g&&g.maxStage)||0, PLAYLOG.reduce((m,e)=>Math.max(m,e.st||0),0));   // v0.24 直前に新しいランを始めていてもログ全体の最高段で書き出す（「1段」ファイル名バグ修正）
-  const data=JSON.stringify({ name:(g&&g.name)||'noname', ver:'v0.56', maxStage:mx, score:(g&&g.score)||0, turns:(g&&g.turn)||0, log:PLAYLOG });
+  const data=JSON.stringify({ name:(g&&g.name)||'noname', ver:'v0.57', maxStage:mx, score:(g&&g.score)||0, turns:(g&&g.turn)||0, log:PLAYLOG });
   try{ const blob=new Blob([data],{type:'application/json'}); const a=document.createElement('a');
     a.href=URL.createObjectURL(blob); a.download='playlog_'+((g&&g.name)||'noname')+'_'+mx+'段.json'; document.body.appendChild(a); a.click(); a.remove();
   }catch(e){}
