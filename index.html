@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>強化脳汁ゲー（仮）— ブラウザ試作 v0.53（スマホ1画面対応）</title>
+<title>強化脳汁ゲー（仮）— ブラウザ試作 v0.54（商店コンパクト化＋左寄りバグ修正＋リロール廃止）</title>
 <style>
   :root{ --navy:#000a5a; --navy2:#001080; --gold:#ffd24a; --edge:#6b7bd6; --panel:#00104a; --track:#00003a; }
   *{ box-sizing:border-box; }
@@ -34,6 +34,11 @@
   .btn:disabled{ opacity:.4; cursor:not-allowed; }
   .btn small{ color:#b9c4ff; }
   .grid{ display:grid; grid-template-columns:1fr 1fr; gap:7px; }
+  /* v0.54 正方形コンパクトボタン（商店の消耗品・クロン列用） */
+  .sqgrid{ display:grid; gap:5px; margin-top:4px; }
+  .btn.sq{ text-align:center; padding:8px 3px; font-size:13px; }
+  .btn.sq small{ display:block; color:#b9c4ff; margin-top:1px; font-size:11px; }
+  .btn.sq:hover:not(:disabled)::before{ content:none; }
   .charm{ background:var(--panel); border:2px solid #fff; border-radius:6px; padding:7px; font-size:12px; }
   .charm .nm{ color:var(--gold); font-weight:bold; } .charm .pr{ color:#8dff9a; }
   .flash{ animation:fl .5s; } @keyframes fl{ 0%{background:#3a5}50%{background:var(--navy)} }
@@ -82,7 +87,7 @@
   .eqmslot .mn{ color:var(--gold); font-weight:bold; display:block; margin-top:9px; line-height:1.2; word-break:break-all; }
   /* v0.53 スマホ最適化（社長指示「iPhone基準で1画面に」）：余白/フォント/ボタン圧縮・補足説明(.verbose)非表示・右パネル4列化・演出チップ横並び */
   @media(max-width:560px){
-    .maincols{ flex-direction:column; } #equippanel{ width:auto; border-left:none; border-top:1px solid var(--edge); padding-left:0; padding-top:5px; }
+    .maincols{ flex-direction:column; align-items:stretch; } #screen{ width:100%; } #equippanel{ width:auto; border-left:none; border-top:1px solid var(--edge); padding-left:0; padding-top:5px; }   /* v0.54 左寄りバグ修正＝縦積み時はalign-items:flex-startだと子が縮んで左に寄る→stretchに */
     body{ padding:4px; }
     h1{ font-size:10px; margin:1px 0 4px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
     .win{ padding:5px 7px; margin-bottom:5px; border-width:2px; box-shadow:0 0 0 2px #000, inset 0 0 0 1px var(--edge); }
@@ -106,13 +111,14 @@
     .gaugewrap{ margin:5px auto 1px; } .gaugetrack{ height:15px; }
     .animchips{ flex-direction:row; flex-wrap:wrap; justify-content:center; gap:3px; margin-top:6px; min-height:18px; }
     .animchip{ font-size:9.5px; padding:2px 5px; border-width:1px; }
+    .btn.sq{ font-size:11px; padding:5px 2px; } .btn.sq small{ font-size:9px; }
     #plogbtns button{ padding:4px 7px !important; font-size:10px !important; }
   }
 </style>
 </head>
 <body>
 <div id="app">
-  <h1>◆ 強化脳汁ゲー（仮）◆ ブラウザ試作 v0.53 — スマホ1画面対応（コンパクトUI）</h1>
+  <h1>◆ 強化脳汁ゲー（仮）◆ ブラウザ試作 v0.54 — 商店コンパクト化・左寄り修正・リロール廃止</h1>
 
   <div class="win">
     <div class="row" style="align-items:center; margin-bottom:8px;">
@@ -150,6 +156,7 @@
   <div class="sub verbose">名称・数値は仮の手触り確認用。設計元：20260702_設計_爆発値システム。</div>
   <details style="margin-top:4px"><summary class="sub" style="cursor:pointer;list-style-position:inside;opacity:.55">開発メモ（版ごとの実装履歴・クリックで開く）</summary>
   <div class="sub" style="text-align:left">
+  ※v0.54【UI配置の改善（社長指示4件・2026-07-11）】：①<b>スマホで初期表示のメニューが左に寄るバグ修正</b>＝縦積みレイアウト時にalign-items:flex-startで子要素が縮んで左寄りになっていた→stretchに（演出後に直って見えたのはゲージの横幅が画面を押し広げていたため）。②<b>クロン購入を横1列</b>（5/20/100/1000個×価格の正方形4連）。③<b>赤POT・⚖コスト上限・📜記録の欠片を正方形ボタン3連に</b>（名前/効果/価格の3行・説明は必要最低限）。④<b>商品棚リロール廃止</b>（機能ごと撤去。※延命ナーフ論点「案B＝リロールをナシに」が結果的に採用）。<br>
   ※v0.53【スマホ1画面対応（社長指示「iPhone基準でスクロールなしに」）】：560px以下のモバイルCSSを本格化＝余白/フォント/ボタン/HUDを圧縮・右パネルのミニ装備を2列→<b>4列</b>・演出の札を縦積み→<b>横並び折返し</b>・大数字を縮小。<b>補足説明はスマホでは非表示</b>（.verboseクラス＝商店/装備/強化画面の色凡例・仕組み解説など。PCでは従来どおり表示）。判定・バランスは不変。<br>
   ※v0.52.1【装備変更画面：装備中カードにLv/寿命/コストを明示（社長指示）】：装備中スロットの表示を「枠番号の隅に小さく」→<b>名前の下に Lv・⏳寿命・⚖コスト の1行</b>に変更（倉庫カードと同じ見やすさに）。右パネルのミニ表示にも⚖コストを追加。<br>
   ※v0.52【社長指示2件（2026-07-11）】：①<b>失敗時のモチベ減にグレード帯の加算</b>＝無印・真・裏(1〜30段)<b>+1</b>／爆・虚・命(31〜60段)<b>+2</b>／無・界・卍(61〜90段)<b>+3</b>／神(91〜100段)<b>+4</b>（従来の上限4の外側に乗る＝深部の失敗ほど本当に痛い・助走は0・基準は挑んだ段【仮】）。②<b>倉庫ソートに「⚖コスト」キー追加</b>（種別/寿命/Lv/コスト/名前・昇降切替）。<br>
@@ -306,8 +313,7 @@ const incomeOku=S=> (14*kneePow(1.10,S,INC_LIN))*SCALE;    // v0.40 狩り収入
 const repairOku=S=> (30*kneePow(1.05,S,PRICE_LIN))*SCALE;
 const CLONE_R=1.13, CLONE_FLAT=WALL_FLAT;                  // クロン消費の指数＋高段で頭打ち（壁と同様40段〜プラトー＝神への道を保つ）
 const cloneNeed=S=> S<=GUAR?0 : Math.ceil(Math.pow(CLONE_R,Math.min(S-8,CLONE_FLAT))) + (S>CLN_KNEE? Math.round(CLN_LIN*(S-CLN_KNEE)) : 0);  // 保護1回の必要クロン（指数急増→上限52。v0.24 第2膝＝段40超は+5個/段で線形加算）
-// v0.40 棚リロールのクロン費：初期10・後半で段階的に増える（保護コスト曲線の約半分・1ターン1回）。「払えないほどじゃないが少し苦しい」【仮・調整可】
-const rerollClone=S=> Math.max(10, Math.round(cloneNeed(S)*0.5));
+// v0.54 棚リロール（rerollClone/rerollShelf）は廃止（社長指示）。※延命ナーフ論点の「案B＝リロールをナシに」が結果的に採用された形
 const failMotiv=S=> S<=GUAR?0 : Math.min(4, 0.5+0.11*S);   // 失敗のモチベ減（上限4：高段の一撃死を防ぎ神への長い道を可能に。v0.6.1で10→4）
 // v0.52 社長指示「3ステージごとに失敗時のモチベ減を+1ずつ」＝無印・真・裏(1〜30)+1／爆・虚・命(31〜60)+2／無・界・卍(61〜90)+3／神(91〜100)+4。助走は0。上限4とは別枠の加算＝深部の失敗ほど重い【仮】
 const failGradeAdd=S=> S<=GUAR?0 : 1+Math.floor(Math.floor((Math.min(S,100)-1)/10)/3);
@@ -441,7 +447,7 @@ let g;
 function newGame(){
   g={ stage:1, cycle:1, silver:0, motiv:MOTIV_START, motivMax:MOTIV_MAX, _kks:"", clone:0, dur:8, maxDur:8, combo:0,
       turn:0, score:0, maxStage:1, maxCycle:1, inv:[], equipped:[], levels:{}, slots:EQUIP_SLOTS, costCap:COST_CAP_BASE, shop:[], kept:[], _uid:0,
-      snow:1.0, stack:0, health:0, luckGauge:0, drinks:0, _migaki:false, _useHero:false, _useHun:false, drankThisTurn:false, rerolledThisTurn:false, lastFailed:false, actedThisTurn:false, _haisui:null, _iji:false, _allin:false, _ijiShield:0, kksCount:0, elian:false, elianUsed:false, feverMania:0, _feverArmed:0, wabiOffer:false, invSort:{key:'kei',dir:1},
+      snow:1.0, stack:0, health:0, luckGauge:0, drinks:0, _migaki:false, _useHero:false, _useHun:false, drankThisTurn:false, lastFailed:false, actedThisTurn:false, _haisui:null, _iji:false, _allin:false, _ijiShield:0, kksCount:0, elian:false, elianUsed:false, feverMania:0, _feverArmed:0, wabiOffer:false, invSort:{key:'kei',dir:1},
       name:(lsGet("kyoka_name")||"名無し"), phase:"intro", ended:false };
   render(); showIntro();
 }
@@ -664,7 +670,7 @@ function successRateEX(ex){ if(guarStage()) return 1.0;
   return rate; }
 
 // ===== 画面遷移 =====
-function startTurn(){ g.turn++; g.actedThisTurn=false; g.drankThisTurn=false; g.rerolledThisTurn=false; g._haisui=null; g._iji=false; g._allin=false; g._migaki=false; g._useHero=false; /* v0.50 狩り勢トグル(_useHun)はON維持＝OFFにするまで持続（社長指示「毎回ONがめんどい」）。ヒーロー/磨きの儀は使い切り系なので毎ターンリセット */  // v0.43 寿命はターン開始では減らさない（使ったら減る方式）。能動系（背水/意地/オールイン）は毎ターンリセット・意地のシールドは次の強化で使うので残す
+function startTurn(){ g.turn++; g.actedThisTurn=false; g.drankThisTurn=false; g._haisui=null; g._iji=false; g._allin=false; g._migaki=false; g._useHero=false; /* v0.50 狩り勢トグル(_useHun)はON維持＝OFFにするまで持続（社長指示「毎回ONがめんどい」）。ヒーロー/磨きの儀は使い切り系なので毎ターンリセット */  // v0.43 寿命はターン開始では減らさない（使ったら減る方式）。能動系（背水/意地/オールイン）は毎ターンリセット・意地のシールドは次の強化で使うので残す
   { const a=agg(); if(a.turn4Life>0 && g.turn%4===0) g.equipped.forEach(u=>{ const it=invById(u); if(it) it.life+=a.turn4Life; }); }   // v0.41 寿命の恵み：4の倍数ターンで装備の寿命+
   if(g.turn%2===0 && g.equipped.some(u=>{ const it=invById(u); return it && it.c==='amp'; })) g.motiv=Math.min(g.motivMax, g.motiv+1);   // v0.42 魅惑の衣装：2ターンに1回モチベ+1（Lv不問・一律）
   showPrep(); }
@@ -756,13 +762,19 @@ function goShop(){ g.phase="shop"; render();
       +'</div>';
   });
   s+='</div>';
-  s+='<div class="menu" style="margin-top:8px">';
-  s+=btn("🔄 商品棚リロール","商品棚を更新（クロン-"+rerollClone(g.stage)+"・1ターン1回）","rerollShelf()", g.rerolledThisTurn?"このターンは使用済":(g.clone<rerollClone(g.stage)?"クロン不足":""));
-  s+=btn("クロンを買う ×5","下落防止（"+fmtOku(cc*5)+"）","buyClone(5)", g.silver<cc*5?"シルバー不足":"");
-  s+=btn("クロンを買う ×20","まとめ買い（"+fmtOku(cc*20)+"）","buyClone(20)", g.silver<cc*20?"シルバー不足":"");
-  s+=btn("クロンを買う ×100","がっつり補充（"+fmtOku(cc*100)+"）","buyClone(100)", g.silver<cc*100?"シルバー不足":"");
-  s+=btn("クロンを買う ×1000","沼に沈む（"+fmtOku(cc*1000)+"）","buyClone(1000)", g.silver<cc*1000?"シルバー不足":"");
-  s+='<div class="sub">'+stageName(g.stage)+'→'+stageName(g.stage+1)+' 保護1回に必要クロン'+needClone(g.stage)+'個（所持'+g.clone+'）／キープ中'+g.kept.length+'/'+ks+'</div>';
+  // v0.54 クロン購入を横1列に・棚リロールは廃止（社長指示）
+  s+='<div class="sub" style="margin:7px 0 2px">🛡クロン購入（保護1回='+needClone(g.stage)+'個・所持'+g.clone+'）'+(ks>0?'／キープ'+g.kept.length+'/'+ks:'')+'</div>';
+  s+='<div class="sqgrid" style="grid-template-columns:repeat(4,1fr)">';
+  [5,20,100,1000].forEach(n=>{ s+='<button class="btn sq" onclick="buyClone('+n+')" '+(g.silver<cc*n?'disabled':'')+'>'+n+'個<small>'+fmtOku(cc*n)+'</small></button>'; });
+  s+='</div>';
+  // v0.54 赤POT／⚖コスト上限／📜欠片＝正方形ボタン（説明は必要最低限）
+  s+='<div class="sqgrid" style="grid-template-columns:repeat(3,1fr)">';
+  s+='<button class="btn sq" onclick="buyDrink()" '+((g.drinks>=DRINK_MAX_HOLD||g.silver<drinkOku(g.stage))?'disabled':'')+'>🥤赤POT'+(g.drinks>0?'（所持'+g.drinks+'）':'')+'<small>モチベ+'+DRINK_RECOVER+'</small><small>'+fmtOku(drinkOku(g.stage))+'</small></button>';
+  if(g.costCap<COST_CAP_MAX) s+='<button class="btn sq" onclick="buySlot()" '+(g.silver<slotExpandOku()?'disabled':'')+'>⚖上限+'+COST_CAP_STEP+'<small>'+g.costCap+'→'+(g.costCap+COST_CAP_STEP)+'</small><small>'+fmtOku(slotExpandOku())+'</small></button>';
+  else s+='<button class="btn sq" disabled>⚖上限MAX<small>'+g.costCap+'/'+COST_CAP_MAX+'</small><small>—</small></button>';
+  s+='<button class="btn sq" onclick="buyShard()" '+((g.dur>=maxDur()||g.silver<shardOku(g.stage))?'disabled':'')+'>📜欠片<small>耐久+'+shardDur+'（'+g.dur+'/'+maxDur()+'）</small><small>'+fmtOku(shardOku(g.stage))+'</small></button>';
+  s+='</div>';
+  s+='<div class="menu" style="margin-top:6px">';
   if(g.wabiOffer){ const wl=levelOf('wabi'), amt=wabiAmt(wl), wc=lvupCost(wl);   // v0.24 支給は進行にスケール（保護N回ぶん）
     s+='<div style="margin:6px 0;padding:7px;background:#14180a;border:1px solid #7a6410;border-radius:4px">'
       +'<div class="center" style="color:#ffd24a">🎁 運営からの詫びクロン（無料）Lv'+wl+'</div>'
@@ -774,10 +786,7 @@ function goShop(){ g.phase="shop"; render();
   if(g.elian) s+='<div class="sub" style="color:#7fd4ff;margin:4px 0">💧 エリアンの涙 所持中（倒れても1度だけ復活）</div>';
   if(g.feverMania>0) s+='<div class="sub" style="color:#ff8ad0;margin:4px 0">🔥 FEVERマニア 所持'+g.feverMania+'個（強化フェーズで任意発動＝この強化＋次の強化を無条件FEVER）</div>';
   // v0.15 商店の「装備を替える」も撤去（右パネルの「装備変更」に一本化）
-  if(g.costCap<COST_CAP_MAX) s+=btn("⚖ コスト上限を増やす","装備コスト上限+"+COST_CAP_STEP+"（今"+g.costCap+"→"+(g.costCap+COST_CAP_STEP)+"・最大"+COST_CAP_MAX+"）・"+fmtOku(slotExpandOku()),"buySlot()", g.silver<slotExpandOku()?"シルバー不足":"");   // v0.51 枠拡張→コスト上限拡張に置換
-  s+=btn("🥤 赤POTを買う","モチベ+"+DRINK_RECOVER+"（所持1本まで・使用は1ターン1本）・"+fmtOku(drinkOku(g.stage))+"（所持"+g.drinks+"本）","buyDrink()", g.drinks>=DRINK_MAX_HOLD?"所持上限（1本）":(g.silver<drinkOku(g.stage)?"シルバー不足":""));
-  if(g.health>0) s+='<div class="sub" style="margin:2px 0">🩹 健康法 所持'+g.health+'（準備画面で使用）／[持]は棚にたまに並ぶ</div>';
-  s+=btn("📜 記録の欠片（耐久+"+shardDur+"）","耐久回復（今"+g.dur+"/"+maxDur()+"）・モチベ消費なし・"+fmtOku(shardOku(g.stage)),"buyShard()", g.dur>=maxDur()?"耐久満タン":(g.silver<shardOku(g.stage)?"シルバー不足":""));
+  if(g.health>0) s+='<div class="sub" style="margin:2px 0">🩹 健康法 所持'+g.health+'（準備画面で使用）</div>';   // v0.54 説明を最小化・消耗品ボタンは上の正方形グリッドへ移設
   s+=btn("店を出る","","showPrep()");
   s+='</div>'+ownedLine();
   scr(s);
@@ -937,11 +946,7 @@ function buyShard(){ if(g.dur>=maxDur())return; const c=shardOku(g.stage); if(g.
 function buyClone(n){ const cc=cloneCost(); if(g.silver<cc*n)return;
   g.silver-=cc*n; g.clone+=n; setMsg("🛡 クロン"+n+"個購入（-"+fmtOku(cc*n)+"）。"); beep(660,.06); goShop();
 }
-// v0.40 棚リロール（1ターン1回・クロン消費）：商品棚を引き直す
-function rerollShelf(){ if(g.rerolledThisTurn)return; const c=rerollClone(g.stage); if(g.clone<c)return;
-  g.clone-=c; g.rerolledThisTurn=true; rollShop();
-  setMsg("🔄 商品棚を引き直した（クロン-"+c+"）。"); beep(520,.07); goShop();
-}
+// v0.54 rerollShelf（棚リロール）は廃止（社長指示）
 function buyHeld(i){ const id=g.shop[i]; const h=HELD[id]; if(!h||!h.avail())return;   // v0.22 [持]所持発動型の購入（エリアンの涙／FEVERマニア）＝装備枠を使わずg.elian/g.feverManiaへ
   const price=h.price(g.stage); if(g.silver<price)return;
   g.silver-=price; h.buy(); g.shop[i]=null;
@@ -1416,7 +1421,6 @@ function buildSnap(){ try{ return {
   wrap('keepCharm', i=>{const id=g.shop[i]; plog({act:'キープ', id:(id&&CHMAP[id]?CHMAP[id][1]:id)});});
   wrap('unkeepCharm', i=>{const id=g.shop[i]; plog({act:'キープ解除', id:(id&&CHMAP[id]?CHMAP[id][1]:id)});});
   wrap('buyClone', n=>plog({act:'クロン購入', n:n, cloneAfter:g.clone}));
-  wrap('rerollShelf', ()=>plog({act:'棚リロール', cloneBefore:g.clone}));
   wrap('buySlot', ()=>plog({act:'コスト上限拡張', to:(g.costCap+COST_CAP_STEP)}));   // v0.51
   wrap('buyShard', ()=>plog({act:'記録の欠片'}));
   wrap('buyDrink', ()=>plog({act:'赤POT購入'}));
@@ -1447,7 +1451,7 @@ function buildSnap(){ try{ return {
 function togglePlog(){ const t=document.getElementById('plogArea'); if(t) t.style.display=(t.style.display==='none'?'block':'none'); }
 function exportPlaylog(){
   const mx=Math.max((g&&g.maxStage)||0, PLAYLOG.reduce((m,e)=>Math.max(m,e.st||0),0));   // v0.24 直前に新しいランを始めていてもログ全体の最高段で書き出す（「1段」ファイル名バグ修正）
-  const data=JSON.stringify({ name:(g&&g.name)||'noname', ver:'v0.53', maxStage:mx, score:(g&&g.score)||0, turns:(g&&g.turn)||0, log:PLAYLOG });
+  const data=JSON.stringify({ name:(g&&g.name)||'noname', ver:'v0.54', maxStage:mx, score:(g&&g.score)||0, turns:(g&&g.turn)||0, log:PLAYLOG });
   try{ const blob=new Blob([data],{type:'application/json'}); const a=document.createElement('a');
     a.href=URL.createObjectURL(blob); a.download='playlog_'+((g&&g.name)||'noname')+'_'+mx+'段.json'; document.body.appendChild(a); a.click(); a.remove();
   }catch(e){}
