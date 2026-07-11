@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>強化脳汁ゲー（仮）— ブラウザ試作 v0.59（詫びクロン自動成長）</title>
+<title>強化脳汁ゲー（仮）— ブラウザ試作 v0.60（ラン途中セーブ＝続きから）</title>
 <style>
   :root{ --navy:#000a5a; --navy2:#001080; --gold:#ffd24a; --edge:#6b7bd6; --panel:#00104a; --track:#00003a; }
   *{ box-sizing:border-box; }
@@ -116,7 +116,7 @@
 </head>
 <body>
 <div id="app">
-  <h1>◆ 強化脳汁ゲー（仮）◆ ブラウザ試作 v0.59 — 詫びクロンは受け取るほど豪華に（Lv上げ廃止）</h1>
+  <h1>◆ 強化脳汁ゲー（仮）◆ ブラウザ試作 v0.60 — ラン途中セーブ（閉じても「続きから」）</h1>
 
   <div class="win">
     <div class="row" style="align-items:center; margin-bottom:8px;">
@@ -150,6 +150,7 @@
   <div class="sub verbose">名称・数値は仮の手触り確認用。設計元：20260702_設計_爆発値システム。</div>
   <details style="margin-top:4px"><summary class="sub" style="cursor:pointer;list-style-position:inside;opacity:.55">開発メモ（版ごとの実装履歴・クリックで開く）</summary>
   <div class="sub" style="text-align:left">
+  ※v0.60【ラン途中セーブ（社長要望「前回状態のまま開かせたい」）】：行動のたびlocalStorageへ自動保存し、タイトルに<b>「💾 続きから（段・ターン・SCORE）」</b>を表示。<b>結果確定後の状態しか保存しない＝失敗→リロードのセーブ悪用は不可</b>。ゲームオーバーで削除。<b>版またぎ対応</b>＝新版初期値へのマージ復元（増えた項目は初期値・ルールは常に新版）＋掃除処理（廃止アイテム除去・コスト上限クランプ・超過装備は自動で外す）＝版が上がってもセーブは引き継がれ、最悪でも「多少消えて続行」。<br>
   ※v0.59【詫びクロン自動成長（社長案「運営からの詫びなんだから、こちらでLv上げしなくてもじわじわ増えるべき」）】：クロン消費のLv上げを<b>廃止</b>し、<b>受け取るたびに次の詫びが豪華になる</b>方式に＝支給=max(最低保証, 倍率×保護必要数)・最低保証8→+6/受取（上限50）・倍率×1→+0.5/受取（上限×5）＝旧Lv1〜5の幅を約8回で踏破【仮】。受取回数（wabiTaken）は周回でもリセットしない（運営の詫びは通算）。<br>
   ※v0.58.2-3【送信まわり調整（社長指示）】：送信完了表示を廃止・📋保存ボタンはゲームオーバー時と同じ送信のみ（ダウンロード/クリップボード廃止・「表示切替」は目視用に残置）。<br>
   ※v0.58【プレイログ自動収集（社長承認・方式B）】：<b>ゲームオーバー時（ラン1回につき1度）と📋保存ボタン押下時に、プレイログをGoogle Apps Script経由でドライブへ自動送信</b>。送信内容＝家名/版/到達段/スコア/ログ本体のみ。URL未設定なら送信せず従来どおり（ダウンロード保存は常に併用可）。送信成功時はゲームオーバー画面に「📤自動送信しました」表示。受け側の設定手順＝Output/手順_プレイログ自動収集_GAS設定.md。<br>
@@ -447,6 +448,34 @@ function fxText(id,L){ const fx=CHMAP[id][5][(L||1)-1]; const pc=v=>Math.round(v
 // ===== セーブ（自己ベスト・家名）※localStorage。sim等で無くても安全 =====
 function lsGet(k){ try{ return (typeof localStorage!=="undefined")?localStorage.getItem(k):null; }catch(e){ return null; } }
 function lsSet(k,v){ try{ if(typeof localStorage!=="undefined") localStorage.setItem(k,v); }catch(e){} }
+function lsDel(k){ try{ if(typeof localStorage!=="undefined") localStorage.removeItem(k); }catch(e){} }
+// ===== v0.60 ラン途中セーブ（社長要望「前回状態のまま開かせたい」＝スマホのタブ破棄・リロード対策）=====
+// 行動のたび自動保存（render経由）。結果確定後の状態しか保存しない＝「失敗→リロードでやり直し」のセーブ悪用は不可。
+// ゲームオーバーで削除。タイトルに「▶続きから」。旧版セーブは新規デフォルトにマージして読む（無い項目は初期値）。
+const SAVE_KEY="kyoka_save";
+const SAVE_VER="v0.60";   // セーブに記録する版（情報用＝復元自体はマージ＋掃除で版またぎ対応）
+function saveGame(){ try{
+  if(typeof localStorage==="undefined") return;   // sim/bot環境ではstringifyごとスキップ（性能）
+  if(!g || g.ended || g._animating || g._deferAdvance || g.phase==="intro") return;
+  lsSet(SAVE_KEY, JSON.stringify({v:SAVE_VER, g:g, log:PLAYLOG}));
+}catch(e){} }
+function loadSaveInfo(){ try{ const s=JSON.parse(lsGet(SAVE_KEY)||"null"); return (s&&s.g&&!s.g.ended)?s:null; }catch(e){ return null; } }
+function resumeGame(){ const s=loadSaveInfo(); if(!s){ newGame(); return; }
+  const oldVer=s.v||"旧版";
+  Object.assign(g, s.g);   // newGame済みのデフォルトに上書きマージ＝版が変わって増えた項目は初期値で補完・ルール（定数/式）は常に新版
+  PLAYLOG=s.log||[];
+  // v0.60 版またぎの掃除：廃止アイテムを除去・上限を現行仕様にクランプ（エラーで詰むより多少消えて続行に倒す）
+  let cleaned=0;
+  g.inv=(g.inv||[]).filter(it=>{ const ok=it&&CHMAP[it.c]; if(!ok)cleaned++; return ok; });
+  g.equipped=(g.equipped||[]).filter(u=>!!invById(u));
+  g.kept=(g.kept||[]).filter(id=>!!CHMAP[id]);
+  g.shop=(g.shop||[]).map(id=>(id&&(CHMAP[id]||HELD[id]))?id:null);
+  g.slots=EQUIP_SLOTS;
+  g.costCap=Math.min(COST_CAP_MAX, Math.max(COST_CAP_BASE, g.costCap||COST_CAP_BASE));
+  while(costUsed()>g.costCap && g.equipped.length){ g.equipped.pop(); cleaned++; }   // コスト表変更で超過→溢れた分は倉庫へ
+  g._animating=false; g._deferAdvance=false; g._animTimers=[]; g.phase="prep";
+  render(); setMsg("💾 前回の続きから再開した。"+(oldVer!==SAVE_VER?"（"+oldVer+"のセーブを引き継ぎ"+(cleaned?"・一部アイテムは仕様変更で整理":"")+"）":"")); showPrep();
+}
 
 // ===== 状態 =====
 let g;
@@ -477,6 +506,8 @@ function showIntro(){ g.phase="intro"; render();
   s+='<div class="center" style="margin-top:10px">家名 <input id="nameInput" maxlength="10" value="'+savedName+'" placeholder="例：脳汁" style="background:var(--panel);color:#fff;border:2px solid #fff;border-radius:4px;padding:4px 8px;font:inherit;width:150px;text-align:center"></div>';
   if(best>0) s+='<div class="sub" style="color:#ffd24a">🏅 自己ベスト SCORE：'+best.toLocaleString()+'</div>';
   s+='<div class="menu" style="margin-top:10px">';
+  { const sv=loadSaveInfo();   // v0.60 途中セーブがあれば「続きから」を先頭に
+    if(sv) s+=btnRaw("💾 続きから（"+stageName(sv.g.stage)+"・"+sv.g.turn+"ターン目・"+(sv.g.cycle>1?sv.g.cycle+"周目・":"")+"SCORE "+(sv.g.score||0).toLocaleString()+"）","resumeGame()"); }
   s+=btnRaw("▶ はじめる","beginRun(false)");
   s+=btnRaw("⏩ 助走をスキップして始める（経験者向け）","beginRun(true)");
   s+='</div><div class="sub">スキップ＝確定成功の助走を飛ばし本番の段から開始。助走ぶんのスコアと資源（シルバー・クロン）は付与。</div>';
@@ -1284,6 +1315,7 @@ function checkDead(){ if(g.motiv>0) return false;
     setMsg("💧 エリアンの涙が砕けた……！ モチベ満タンで復活！（この涙は使い切り・次の周回まで再入手不可）"); render(); return false; }
   gameOver(); return true; }
 function gameOver(){ g.ended=true; render(); beep(220,.5);
+  lsDel(SAVE_KEY);   // v0.60 ランが終わったら途中セーブを削除
   if(!_plogSentThisRun){ uploadPlaylog('gameover'); _plogSentThisRun=true; }   // v0.58 ゲームオーバーで自動送信（ラン1回1度）／v0.58.2 送信表示は出さない（社長指示）
   let rank = g.maxCycle>=2?"👑 周回の覇者":
              g.maxStage>=71?"🏆 神域に挑んだ者":
@@ -1331,7 +1363,8 @@ function render(){ if(!g)return;
   const mb=document.getElementById("mbar"); const pct=Math.max(0,Math.min(100,g.motiv/g.motivMax*100));
   mb.style.width=pct+"%"; mb.className="bar"+(pct<=20?" dang":pct<=45?" warn":"");
   updateBossBg();       // v0.14 Ⅹ接近で背景を深紅（ラスボス色）へ
-  renderEquipPanel();   // 右側の装備枠を常時更新（全フェーズで表示）
+  renderEquipPanel();   // 装備枠を常時更新（全フェーズで表示）
+  saveGame();           // v0.60 行動のたび自動セーブ（演出中・intro・ended時はsaveGame側でスキップ）
 }
 // v0.14 ボス化演出：グレード内位置Ⅹに近づくほど背景を深紅に。グレードが上がるほど濃く。次グレードⅠでさっと通常へ。sim/headlessは無害スキップ。
 function updateBossBg(){
@@ -1459,7 +1492,7 @@ const PLAYLOG_POST_URL="https://script.google.com/macros/s/AKfycbxKl7-VZalPPJyHw
 var _plogSentThisRun=false;
 function buildPlaylogData(reason){
   const mx=Math.max((g&&g.maxStage)||0, PLAYLOG.reduce((m,e)=>Math.max(m,e.st||0),0));
-  return JSON.stringify({ name:(g&&g.name)||'noname', ver:'v0.59', maxStage:mx, score:(g&&g.score)||0, turns:(g&&g.turn)||0, sent:(reason||'manual'), log:PLAYLOG });
+  return JSON.stringify({ name:(g&&g.name)||'noname', ver:'v0.60', maxStage:mx, score:(g&&g.score)||0, turns:(g&&g.turn)||0, sent:(reason||'manual'), log:PLAYLOG });
 }
 function uploadPlaylog(reason){
   try{
