@@ -186,43 +186,43 @@ const TREE=[
    desc:(r,v)=>'火力の基礎倍率 ×'+ROOT_FIRE_BASE+' かつ 成功率+'+Math.round(ROOT_RATE_BONUS*100)+'%。すべての系統の入口を開放する'},
  // 強化系
  {id:'voice', branch:'強化系', name:'ヴォルクスの叫び', maxRank:10, cost:2, reqs:[{id:'root',rank:1}], start:1.2, end:3.0,
-   desc:(r,v)=>'爆発値の火力倍率 ×'+v.toFixed(2)+'（Lv1 ×1.2 → Lv10 ×3.0）'},
+   desc:(r,v)=>'爆発値の火力倍率 ×'+v.toFixed(2)},
  {id:'book', branch:'強化系', name:'ヴォルクスの書', maxRank:5, cost:3, reqs:[{id:'voice',rank:2}], start:1.5, end:4.0,
-   desc:(r,v)=>'ヴォルクスの叫びの火力倍率にさらに ×'+v.toFixed(2)+' を乗算（Lv1 ×1.5 → Lv5 ×4.0）'},
+   desc:(r,v)=>'ヴォルクスの叫びの火力倍率にさらに ×'+v.toFixed(2)+' を乗算'},
  // クロン系
  {id:'wabi', branch:'クロン系', name:'詫びクロン', maxRank:10, cost:2, reqs:[{id:'root',rank:1}], start:100, end:1000,
-   desc:(r,v)=>'毎ターン クロン+'+Math.round(v)+'（Lv1+100 → Lv10+1000）'},
+   desc:(r,v)=>'毎ターン クロン+'+Math.round(v)},
  {id:'kuron_shield', branch:'クロン系', name:'クロンの盾', maxRank:5, cost:3, reqs:[{id:'wabi',rank:3}], start:0.2, end:1.0,
-   desc:(r,v)=>'失敗の段戻りを '+Math.round(v*100)+'% の確率で防ぐ（クロン'+FALLBACK_COST_BASE+'消費・クロン不足時は防げない）（Lv1 20% → Lv5 100%）'},
+   desc:(r,v)=>'失敗の段戻りを '+Math.round(v*100)+'% の確率で防ぐ（クロン'+FALLBACK_COST_BASE+'消費）'},
  {id:'kuron_care', branch:'クロン系', name:'クロン大事に', maxRank:5, cost:3, reqs:[{id:'kuron_shield',rank:3}], start:100, end:500,
-   desc:(r,v)=>'クロンの盾の段戻り防止で使うクロンを -'+Math.round(v)+'（Lv1-100 → Lv5-500）'},
+   desc:(r,v)=>'クロンの盾の段戻り防止で使うクロンを -'+Math.round(v)},
  {id:'kuron_more', branch:'クロン系', name:'クロンはいくらあってもいい', maxRank:5, cost:3, reqs:[{id:'wabi',rank:5}], start:2, end:6,
-   desc:(r,v)=>'詫びクロンの毎ターン供給量 ×'+v.toFixed(1)+'（Lv1 ×2 → Lv5 ×6）'},
+   desc:(r,v)=>'詫びクロンの毎ターン供給量 ×'+v.toFixed(1)},
  // 耐久保護系（記憶の欠片チェーン）※無敵感検証で「周期回復が失敗の耐久減を上回り不死身化」したため
- // 周期の下限を4回に・回復値を抑制（Lv1=10回に1回→Lv5=4回に1回／最大回復+9＝2.25/強化）＝有限化しつつ"守り"の手触りは残す【仮】
+ // 周期の下限を4回に・回復値を抑制（有限化しつつ"守り"の手触りは残す）【仮】
  {id:'kakera', branch:'耐久保護系', name:'記憶の欠片', maxRank:5, cost:2, reqs:[{id:'root',rank:1}], start:10, end:4,
-   desc:(r,v)=>Math.round(v)+'回の強化ごとに耐久+'+kakeraHeal()+'（回復周期 Lv1=10回に1回 → Lv5=4回に1回）'},
+   desc:(r,v)=>Math.round(v)+'回の強化ごとに耐久+'+kakeraHeal()},
  {id:'urooboe', branch:'耐久保護系', name:'うろ覚え', maxRank:5, cost:3, reqs:[{id:'kakera',rank:3}], start:1, end:3,
-   desc:(r,v)=>'記憶の欠片の回復値+'+Math.round(v)+'（Lv1+1 → Lv5+3）'},
+   desc:(r,v)=>'記憶の欠片の回復値+'+Math.round(v)},
  {id:'katachi', branch:'耐久保護系', name:'あるべきカタチ', maxRank:5, cost:5, reqs:[{id:'kakera',rank:5},{id:'urooboe',rank:3}], start:2, end:5,
-   desc:(r,v)=>'記憶の欠片の回復値にさらに+'+Math.round(v)+'（Lv1+2 → Lv5+5・要 記憶の欠片Lv5＋うろ覚えLv3）'},
+   desc:(r,v)=>'記憶の欠片の回復値にさらに+'+Math.round(v)},
  // 失敗系（スタックチェーン）
  {id:'stack', branch:'失敗系', name:'スタック', maxRank:10, cost:1, reqs:[{id:'root',rank:1}], start:1, end:10,
-   desc:(r,v)=>'失敗するたび失敗スタック+'+Math.round(stackGain())+'（Lv1+1 → Lv10+10）。スタックが厚いほど成功率+（最大+'+Math.round(STACK_RATE_CAP*100)+'%）'},
+   desc:(r,v)=>'失敗するたび失敗スタック+'+Math.round(v)+'。スタックが厚いほど成功率+（最大+'+Math.round(STACK_RATE_CAP*100)+'%）'},
  {id:'stack_mult', branch:'失敗系', name:'失敗は成功のもと', maxRank:5, cost:2, reqs:[{id:'stack',rank:5}], start:2, end:10,
-   desc:(r,v)=>'失敗スタックの貯まる値 ×'+v.toFixed(1)+'（Lv1 ×2 → Lv5 ×10）'},
+   desc:(r,v)=>'失敗スタックの貯まる値 ×'+v.toFixed(1)},
  {id:'orenai', branch:'失敗系', name:'折れない心', maxRank:1, cost:10, reqs:[{id:'stack_mult',rank:2}], start:1, end:1,
    desc:(r,v)=>'成功しても失敗スタックをリセットしない（積み上げた失敗が永続の力に）'},
  // 減衰対抗系
  {id:'buki_know', branch:'減衰対抗系', name:'武器知識', maxRank:5, cost:3, reqs:[{id:'root',rank:1}], start:0.05, end:0.25,
-   desc:(r,v)=>'武器の抵抗（減衰）を '+Math.round(v*100)+'% 抑える（Lv1 5% → Lv5 25%）'},
+   desc:(r,v)=>'武器の抵抗（減衰）を '+Math.round(v*100)+'% 抑える'},
  {id:'buki_love', branch:'減衰対抗系', name:'武器への愛着', maxRank:5, cost:3, reqs:[{id:'buki_know',rank:2}], start:0.02, end:0.10,
-   desc:(r,v)=>'成功率の上限（天井）を +'+Math.round(v*100)+'% 押し上げる（Lv1+2% → Lv5+10%）'},
+   desc:(r,v)=>'成功率の上限（天井）を +'+Math.round(v*100)+'% 押し上げる'},
  // 条件系（スノーボール）
  {id:'urami', branch:'条件系', name:'連続成功は恨まれる', maxRank:5, cost:3, reqs:[{id:'root',rank:1}], start:2.0, end:3.0,
-   desc:(r,v)=>'連続成功で爆発値がスノーボール（連続'+uramiCap()+'回でMAX ×'+v.toFixed(2)+'）（Lv1 ×2.0 → Lv5 ×3.0）'},
+   desc:(r,v)=>'連続成功で爆発値がスノーボール（連続'+uramiCap()+'回でMAX ×'+v.toFixed(2)+'）'},
  {id:'nido', branch:'条件系', name:'二度あることは三度ある', maxRank:3, cost:3, reqs:[{id:'urami',rank:2}], start:2, end:4,
-   desc:(r,v)=>'連続成功は恨まれるのMAX到達コンボ数 ×'+v.toFixed(1)+'（Lv1 ×2＝10連 → Lv3 ×4＝20連）'},
+   desc:(r,v)=>'連続成功は恨まれるのMAX到達コンボ数 ×'+v.toFixed(1)},
 ];
 const TREE_MAP={}; TREE.forEach(n=>TREE_MAP[n.id]=n);
 // 表示は根の下にこの順で6系統を並べる（全表示・折りたたみなし）
@@ -410,13 +410,13 @@ function showEnhance(){
   s+='</div>';
   scr(s);
 }
-// v0.72 1ノードのカードHTML（root/枝共通）。desc は現在rank（未取得はLv1相当）の補間値を表示。複数前提を全表示。
+// v0.72.1 1ノードのカードHTML（root/枝共通）。desc は「その時（次のLv）上がる数値」を表示（MAXは現在値）。複数前提を全表示。
 function nodeCard(n, isRoot){
   const r=skR(n.id); const can=canOpen(n.id); const maxed=r>=n.maxRank; const locked=!reqMet(n.id);
-  const shownVal=lerpVal(n, Math.max(1,r));   // 未取得なら「開くとLv1でこうなる」プレビュー
+  const shownR=Math.min(n.maxRank, r+1); const shownVal=lerpVal(n, Math.max(1,shownR));   // 次のLvの値（未取得はLv1・MAXは現在Lv）
   let cls='tnode'+(isRoot?' root':''); if(locked) cls+=' locked'; else if(maxed) cls+=' maxed'; else if(can) cls+=' can';
   let s='<div class="'+cls+'"><span class="nm">'+(isRoot?'【根】':'')+n.name+'</span> <span class="lv">Lv'+r+'/'+n.maxRank+'</span><br>';
-  s+='<span style="color:#cdd">'+n.desc(Math.max(1,r), shownVal)+'</span><br>';
+  s+='<span style="color:#cdd">'+n.desc(shownR, shownVal)+'</span><br>';
   if(locked){ const parts=(n.reqs||[]).map(rq=>(TREE_MAP[rq.id]?TREE_MAP[rq.id].name:rq.id)+' Lv'+rq.rank); s+='<span class="req">🔒 要：'+parts.join(' ＋ ')+'</span>'; }
   else { s+='<button class="obtn" onclick="openNode(\''+n.id+'\')" '+(can?'':'disabled')+'>'+(maxed?'MAX':'開く（'+n.cost+'SP）')+'</button>'; }
   s+='</div>';
