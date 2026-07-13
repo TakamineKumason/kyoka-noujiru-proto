@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>強化脳汁ゲー（仮）— ブラウザ試作 v0.65（Lv上限1-3化・限界突破改名・コスト調整11件）</title>
+<title>強化脳汁ゲー（仮）— ブラウザ試作 v0.71（本格スキルツリー版）</title>
 <style>
   :root{ --navy:#000a5a; --navy2:#001080; --gold:#ffd24a; --edge:#6b7bd6; --panel:#00104a; --track:#00003a; }
   *{ box-sizing:border-box; }
@@ -13,1581 +13,528 @@
   #app{ width:100%; max-width:720px; }
   h1{ font-size:15px; color:var(--gold); text-align:center; letter-spacing:1px; margin:4px 0 10px; }
   .win{ background:var(--navy); border:3px solid #fff; border-radius:8px; padding:10px 12px;
-    box-shadow:0 0 0 3px #000, inset 0 0 0 1px var(--edge); margin-bottom:10px; transition:background .6s ease; }
-  .btn{ transition:background .6s ease, filter .15s ease; }
+    box-shadow:0 0 0 3px #000, inset 0 0 0 1px var(--edge); margin-bottom:10px; }
   .row{ display:flex; flex-wrap:wrap; gap:6px 14px; }
   .stat{ font-size:13px; white-space:nowrap; }
   .stat b{ color:var(--gold); }
-  .barwrap{ background:var(--track); border:2px solid #fff; height:16px; border-radius:3px; overflow:hidden; flex:1; min-width:120px; transition:background .6s ease; }
+  .barwrap{ background:var(--track); border:2px solid #fff; height:16px; border-radius:3px; overflow:hidden; flex:1; min-width:120px; }
   .bar{ height:100%; background:linear-gradient(#7dff8a,#20b53a); transition:width .25s; }
   .bar.warn{ background:linear-gradient(#ffe86b,#e8a020);} .bar.dang{ background:linear-gradient(#ff8a8a,#d02020);}
-  .exbar{ height:100%; background:linear-gradient(#ffd24a,#ff6a00); transition:width .3s; }
-  .exbar.fever{ background:linear-gradient(#ff3b6b,#ff00cc); animation:fev .4s infinite; }
-  @keyframes fev{ 0%{filter:brightness(1)}50%{filter:brightness(1.6)} }
-  #stage{ font-size:24px; color:#fff; text-shadow:0 0 8px var(--gold); }
-  #msg{ min-height:74px; font-size:14px; line-height:1.7; white-space:pre-wrap; }
+  #stage{ font-size:20px; color:#fff; text-shadow:0 0 8px var(--gold); }
+  #msg{ min-height:60px; font-size:14px; line-height:1.7; white-space:pre-wrap; }
   .menu{ display:flex; flex-direction:column; gap:7px; }
   .btn{ background:var(--navy2); color:#fff; border:2px solid #fff; border-radius:6px;
     padding:9px 12px; font:inherit; font-size:14px; text-align:left; cursor:pointer; position:relative; }
-  .btn:hover:not(:disabled){ filter:brightness(1.55); }  /* 固定色をやめ明度アップ＝背景(青/深紅)に自動追従 */
+  .btn:hover:not(:disabled){ filter:brightness(1.55); }
   .btn:hover:not(:disabled)::before{ content:"▶"; color:var(--gold); position:absolute; left:3px; }
   .btn:disabled{ opacity:.4; cursor:not-allowed; }
   .btn small{ color:#b9c4ff; }
-  .grid{ display:grid; grid-template-columns:1fr 1fr; gap:7px; }
-  /* v0.54 正方形コンパクトボタン（商店の消耗品・クロン列用） */
-  .sqgrid{ display:grid; gap:5px; margin-top:4px; }
-  .btn.sq{ text-align:center; padding:8px 3px; font-size:13px; }
-  .btn.sq small{ display:block; color:#b9c4ff; margin-top:1px; font-size:11px; }
-  .btn.sq:hover:not(:disabled)::before{ content:none; }
-  .charm{ background:var(--panel); border:2px solid #fff; border-radius:6px; padding:7px; font-size:12px; }
-  .charm .nm{ color:var(--gold); font-weight:bold; } .charm .pr{ color:#8dff9a; }
+  .btn.center{ text-align:center; }
+  .charm{ background:var(--panel); border:2px solid #fff; border-radius:6px; padding:7px; font-size:12px; margin-bottom:6px; }
+  .charm .nm{ color:var(--gold); font-weight:bold; }
+  /* v0.70.2 スキルツリー：根っこ→5系統チェーンをCSSの縦並び＋矢印で表現 */
+  .treeroot{ display:flex; justify-content:center; margin:2px 0 2px; }
+  .tnode{ background:var(--panel); border:2px solid #fff; border-radius:8px; padding:6px 9px; font-size:12px; position:relative; }
+  .tnode.root{ border-color:var(--gold); box-shadow:0 0 10px rgba(255,210,74,.5); max-width:340px; text-align:center; }
+  .tnode .nm{ color:var(--gold); font-weight:bold; }
+  .tnode .lv{ color:#9fb0ff; font-size:11px; }
+  .tnode.locked{ opacity:.45; border-color:#556; border-style:dashed; }
+  .tnode.locked .nm{ color:#9aa; }
+  .tnode.can{ border-color:#8dff9a; box-shadow:0 0 8px rgba(141,255,138,.35); }
+  .tnode.maxed{ border-color:#ffd24a; }
+  .tnode .req{ color:#ff9c6b; font-size:10.5px; }
+  .tnode .obtn{ background:var(--navy2); color:#fff; border:2px solid #fff; border-radius:5px; padding:2px 9px; font:inherit; font-size:11px; cursor:pointer; margin-top:3px; }
+  .tnode .obtn:disabled{ opacity:.4; cursor:not-allowed; }
+  .tnode .obtn:hover:not(:disabled){ filter:brightness(1.5); }
+  .branches{ display:grid; grid-template-columns:repeat(5,1fr); gap:6px; margin-top:2px; }
+  .branchcol{ display:flex; flex-direction:column; align-items:stretch; gap:0; }
+  .branchcol .btitle{ text-align:center; color:#9ff3e8; font-size:11px; margin-bottom:3px; }
+  .chainarrow{ text-align:center; color:var(--gold); font-size:14px; line-height:1; margin:1px 0; }
+  .rootstem{ text-align:center; color:var(--gold); font-size:16px; line-height:1; }
+  @media(max-width:560px){
+    .branches{ grid-template-columns:1fr; gap:3px; }
+    .branchcol{ margin-bottom:6px; }
+    .tnode{ font-size:10.5px; padding:4px 6px; }
+    .tnode.root{ font-size:11px; }
+  }
   .flash{ animation:fl .5s; } @keyframes fl{ 0%{background:#3a5}50%{background:var(--navy)} }
-  .owned{ font-size:11px; color:#9fb0ff; }
   .center{ text-align:center; }
   .big{ font-size:22px; color:var(--gold); }
   .sub{ font-size:11px; color:#9fb0ff; text-align:center; margin-top:6px; }
-  /* 課題⑤：強化実行後の合体演出 */
   #animstage{ text-align:center; padding:8px 4px; }
-  .animpct{ font-size:44px; font-weight:bold; color:var(--gold); display:inline-block; }
+  .animpct{ font-size:40px; font-weight:bold; color:var(--gold); display:inline-block; }
   .animpct.pop{ animation:pop .28s; }
   @keyframes pop{ 0%{transform:scale(1)}45%{transform:scale(1.45); color:#ff3b6b}100%{transform:scale(1)} }
   .animpct.fever{ color:#ff3b6b; text-shadow:0 0 12px #ff00cc; }
-  /* v0.50 爆発値カウント演出の復活（社長指示）：ゲージ下の爆発値を大きな金色数字にし、札ごとにポップして増える */
   .animex2{ font-size:12px; color:#9fb0ff; margin-top:6px; }
-  .animex2 b{ font-size:26px; color:#ffd24a; display:inline-block; }
-  .animex2 b.expop{ animation:pop .28s; }
-  .animex2 b.exfever{ color:#ff3b6b; text-shadow:0 0 10px #ff00cc; }
+  .animex2 b{ font-size:24px; color:#ffd24a; display:inline-block; }
   .animchips{ display:flex; flex-direction:column; gap:5px; align-items:center; margin-top:12px; min-height:24px; }
   .animchip{ background:var(--panel); border:2px solid var(--gold); border-radius:6px; padding:4px 10px; font-size:12px; animation:drop .34s ease-out; }
-  .animchip .up{ color:#8dff9a; font-weight:bold; }
   @keyframes drop{ 0%{transform:translateY(-38px); opacity:0}70%{transform:translateY(4px)}100%{transform:translateY(0); opacity:1} }
-  /* v0.47 成功率ゲージ（0〜100）：確率の増減を1本のバーで見せる */
   .gaugewrap{ margin:10px auto 2px; max-width:520px; }
   .gaugescale{ display:flex; justify-content:space-between; font-size:10px; color:#9fb0ff; padding:0 2px; }
   .gaugetrack{ height:22px; background:var(--track); border:1px solid var(--edge); border-radius:11px; overflow:hidden; position:relative; }
-  .gaugefill{ height:100%; width:0%; background:#ffd24a; transition:width .45s ease, background .35s; border-radius:11px 0 0 11px; }   /* v0.47.2 スロー化を半分に緩和（0.6→0.45s） */
-  .gaugecap{ position:absolute; top:0; bottom:0; left:99%; width:2px; background:#ff3b6b; opacity:.65; }   /* 99%天井の目印 */
-  .gaugegrid{ position:absolute; top:0; bottom:0; left:50%; width:1px; background:#334; opacity:.6; }
-  /* 課題①：装備枠を田の字型に拡大 */
-  .eqgrid{ display:grid; grid-template-columns:1fr 1fr; gap:9px; margin-bottom:4px; }
-  .eqslot{ background:var(--panel); border:2px solid #fff; border-radius:8px; padding:12px 9px 9px; min-height:82px; position:relative; }
-  .eqslot.empty{ border-style:dashed; opacity:.5; display:flex; align-items:center; justify-content:center; }
-  .eqslot .slotno{ position:absolute; top:4px; left:7px; font-size:10px; color:#7f8ccc; }
-  .eqslot .life{ position:absolute; top:4px; right:8px; font-size:12px; font-weight:bold; }
-  .eqslot .enm{ color:var(--gold); font-weight:bold; font-size:13px; display:block; }
-  /* v0.56 装備欄＝ログの下に横4×縦2（PC/スマホ共通・アイテムクリックで装備変更メニュー） */
-  .eqpanel-title{ font-size:11px; color:#9fb0ff; text-align:center; margin-bottom:4px; }
-  .eqmini{ display:grid; grid-template-columns:repeat(4,1fr); gap:5px; }
-  .eqmslot{ background:var(--panel); border:2px solid #fff; border-radius:6px; padding:6px 4px; min-height:46px; position:relative; font-size:11px; text-align:center; cursor:pointer; }
-  .eqmslot:hover{ filter:brightness(1.4); }
-  .eqmslot.empty{ border-style:dashed; opacity:.45; display:flex; align-items:center; justify-content:center; }
-  .eqmslot .ml{ position:absolute; top:2px; right:4px; font-size:10px; font-weight:bold; }
-  .eqmslot .mn{ color:var(--gold); font-weight:bold; display:block; margin-top:9px; line-height:1.2; word-break:break-all; }
-  /* v0.53 スマホ最適化（社長指示「iPhone基準で1画面に」）：余白/フォント/ボタン圧縮・補足説明(.verbose)非表示・右パネル4列化・演出チップ横並び */
+  .gaugefill{ height:100%; width:0%; background:#ffd24a; transition:width .4s ease, background .3s; border-radius:11px 0 0 11px; }
   @media(max-width:560px){
-    /* v0.56 装備欄はログ下の独立windowに移動（PC/スマホ共通）＝maincols構造は廃止 */
     body{ padding:4px; }
     h1{ font-size:10px; margin:1px 0 4px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
     .win{ padding:5px 7px; margin-bottom:5px; border-width:2px; box-shadow:0 0 0 2px #000, inset 0 0 0 1px var(--edge); }
     .row{ gap:3px 8px; }
-    .stat{ font-size:11px; } #stage{ font-size:17px; }
+    .stat{ font-size:11px; } #stage{ font-size:15px; }
     .barwrap{ height:12px; }
     #msg{ min-height:36px; font-size:11.5px; line-height:1.45; }
-    .menu{ gap:4px; } .grid{ gap:4px; }
+    .menu{ gap:4px; }
     .btn{ padding:6px 8px; font-size:12px; border-width:1px; } .btn small{ font-size:10px; }
     .charm{ font-size:10.5px; padding:4px; border-width:1px; }
     .sub{ font-size:9.5px; margin-top:3px; }
-    .verbose{ display:none; }
     .big{ font-size:18px; }
-    .eqgrid{ gap:5px; } .eqslot{ min-height:60px; padding:8px 6px 5px; border-width:1px; }
-    .eqmini{ grid-template-columns:repeat(4,1fr); gap:3px; }
-    .eqmslot{ min-height:36px; font-size:8.5px; padding:2px; border-width:1px; }
-    .eqmslot .mn{ margin-top:6px; line-height:1.15; } .eqmslot .ml{ font-size:8.5px; }
-    .eqpanel-title{ font-size:10px; margin-bottom:2px; }
-    #animstage{ padding:2px; } .animpct{ font-size:24px; }
-    .animex2{ font-size:10px; margin-top:3px; } .animex2 b{ font-size:18px; }
+    #animstage{ padding:2px; } .animpct{ font-size:26px; }
+    .animex2{ font-size:10px; margin-top:3px; } .animex2 b{ font-size:16px; }
     .gaugewrap{ margin:5px auto 1px; } .gaugetrack{ height:15px; }
     .animchips{ flex-direction:row; flex-wrap:wrap; justify-content:center; gap:3px; margin-top:6px; min-height:18px; }
     .animchip{ font-size:9.5px; padding:2px 5px; border-width:1px; }
-    .btn.sq{ font-size:11px; padding:5px 2px; } .btn.sq small{ font-size:9px; }
-    #plogbtns button{ padding:4px 7px !important; font-size:10px !important; }
   }
 </style>
 </head>
 <body>
 <div id="app">
-  <h1>◆ 強化脳汁ゲー（仮）◆ ブラウザ試作 v0.65 — 社長フィードバック11件（Lv上限1-3化・限界突破改名・コスト調整）</h1>
+  <h1>◆ 強化脳汁ゲー（仮）◆ ブラウザ試作 v0.71 — 本格スキルツリー版</h1>
 
   <div class="win">
-    <div class="row" style="align-items:center; margin-bottom:8px;">
+    <div class="row" style="align-items:center; margin-bottom:6px;">
       <div class="stat">強化 <span id="stage">Ⅰ</span></div>
-      <div class="stat">🔄<b id="cycle">1</b>周目</div>
       <div class="stat" style="margin-left:auto;">SCORE <b id="score">0</b></div>
     </div>
-    <div class="row" style="align-items:center; margin-bottom:6px;">
-      <span class="stat">モチベ</span>
-      <div class="barwrap"><div class="bar" id="mbar" style="width:100%"></div></div>
-      <span class="stat"><b id="motiv">10</b>/<span id="motivmax">10</span></span>
-    </div>
-    <div class="row" style="align-items:center; margin-bottom:6px;">
+    <div class="row" style="align-items:center; margin-bottom:4px;">
       <span class="stat">🔧耐久</span>
       <div class="barwrap"><div class="bar" id="wbar" style="width:100%"></div></div>
       <span class="stat"><b id="wdur">100</b>/<span id="wdurmax">100</span></span>
-    </div><!-- v0.64 武器耐久＝ランの命バー（既存「耐久」を一本化）：強化失敗のたび-10・0でゲームオーバー・成功では減らない・回復はアイテム -->
-    <div class="row">
-      <span class="stat">💰<b id="silver">0.0億</b></span>
-      <span class="stat">🛡クロン<b id="clone">0</b></span>
-      <span class="stat">🔥コンボ<b id="combo">0</b></span>
-      <span class="stat">📅ターン<b id="turn">0</b></span>
     </div>
     <div class="row">
-      <span class="stat">🔥スタック<b id="stack">0</b></span>
-      <span class="stat" style="margin-left:auto;">⚖コスト<b id="cost">0/12</b></span><!-- v0.55 素の成功率→⚖コストに差し替え（社長指示：コストは最上段へ合流・素の率は強化画面で見える） -->
+      <span class="stat">🌳SP残<b id="sp">5</b></span>
     </div>
   </div>
 
   <div class="win"><div id="msg"></div></div>
-  <div class="win" style="padding:7px 10px"><aside id="equippanel"></aside></div><!-- v0.56 装備欄＝ログの下・4×2（クリックで装備変更） -->
   <div class="win"><div id="screen"></div></div>
 
-  <div class="sub verbose">名称・数値は仮の手触り確認用。設計元：20260702_設計_爆発値システム。</div>
+  <div class="sub">名称・数値は仮の手触り確認用（v0.71＝本格スキルツリー版）。</div>
+  <div class="sub" style="opacity:.7;margin-top:2px">本作は『黒い砂漠』(Pearl Abyss)の非公式ファンメイド作品です。権利者とは一切関係ありません。非営利。</div>
   <details style="margin-top:4px"><summary class="sub" style="cursor:pointer;list-style-position:inside;opacity:.55">開発メモ（版ごとの実装履歴・クリックで開く）</summary>
   <div class="sub" style="text-align:left">
-  ※v0.65【社長フィードバック11件（数値は全て仮）】：①<b>Lv上限を1〜3に短縮</b>＝回復系（連撃の回復／FEVERの残響／詫びの追い風／寿命の恵み／長寿／カカシ放置／新設B・C・D）はfx配列を3要素化しmaxLvOf()でLv上限を種ごとに判定（他はLv5据え置き）。<b>七の女神はLv撤廃</b>（配列長1）。②<b>FEVER→「限界突破」に改名</b>＝ユーザー向け表示文字列のみ置換（内部キー/変数名・plogのFEVER壁/FEVER到達キーは互換のため不変）。アイテム名も改名＝「FEVERの残響」→「限界突破の残響」／「FEVERの威光」→「限界突破の威光」／「FEVERマニア」→「限界突破マニア」。<b>到達演出を派手に</b>＝専用kind(feverhit)を新設し発光(boxShadow強め)・大きめポップ・強めbeep2発を追加。③<b>勢い(ikioi)はLvで軽減上限も上昇</b>＝KOU_COMBO_CAP_LV=[0.30,0.40,0.50,0.60,0.70]をLv連動で適用（ikioi自体はLv5据え置き）。④<b>爆発値表示は限界突破の壁を超えても増やし続ける</b>＝setExSubの表示のみ頭打ち解除（判定側のcapは不変）。⑤<b>昂りの還元(kougen)コスト3→2</b>。⑥<b>長寿(choju)は自身の寿命を延ばせなく</b>＝延命/健康法/延命ボタンの対象から自身を除外（買い直しのみ）。⑦<b>オールイン(ain)コスト1→3</b>。⑧<b>コスト最大値を3に</b>＝cos/iji/hai 4→3。⑨<b>プレイログ修正</b>＝ver表記v0.65化・pre スナップショットに武器耐久(dur)を追加記録。⑩<b>新規アイテム「休息の達人」</b>＝狩り勢と同じ倉庫型（コスト外・NOEQUIP）。restBonus[1,2,3]＝休息をとるたびの回復量+X（使うと寿命-1・寿命13）。<br>
-  ※v0.64【武器耐久の一本化＋一服の博打を強化時へ＋FEVERネタバレ撤去（社長指示・数値は全て仮）】：<b>①武器耐久を既存「耐久」に一本化</b>＝v0.63で誤って増設した別バー(weaponDur・⚔武器/開始40/失敗-3)を撤去し、既存の🔧耐久を<b>ランの命バーに格上げ</b>（開始100・強化失敗で-10・成功では減らない・0でゲームオーバー・ゲージ化）。HUDは耐久バー1本に統合（保護耐久スタットは撤去）。<b>回復はアイテム</b>＝記憶の修復（+20）／記録の欠片（+15・安い小回復＝量違いで差別化）。旧「耐久0で保護不可」ゲートは撤去（0＝ゲームオーバーなので不要）。<b>②C 身を削る強化の代償を武器耐久に</b>＝アイテム寿命-1→武器耐久-4（命を賭ける）。<b>③一服の博打(D)を強化フェーズへ移設</b>＝準備画面の即時ボタンを撤去し、磨きの儀トグルと同位置（強化フェーズ）に「クロンを払ってモチベ回復」を表示＝"強化時"の博打に。<b>④FEVER演出のネタバレ撤去</b>＝強化前メニューの「爆発値X / FEVER壁 / ★FEVERライン到達!!」先出しを削除（FEVERするか事前に分かる興ざめを解消）。盛り具合とFEVER到達は強化実行時の段階revealで一枚ずつ見せる（既存機構）。※本格的な演出リメイク（改名・抵抗側の"瞬間"演出）は別タスク。<br>
-  ※v0.63【経済リワーク：赤POT廃止＋新回復＋武器耐久（社長指示・数値は全て仮）】：<b>①赤POT（DRINK_RECOVER/buyDrink/useDrink）を廃止</b>＝モチベ回復は装備の回復系アイテムに一本化。<b>②回復系アイテムを作り替え/新設</b>＝<b>A 連撃の回復</b>（旧・労働力POTを改名＝成功のたびモチベ回復・回復量は連続成功数で増加＝base+floor(コンボ/5)・失敗でコンボ0に戻れば増分もリセット・低コスト化コスト3→1）／<b>B 昂りの還元</b>（新設＝爆発値がFEVER壁を超えた余剰ぶんモチベ回復・トレードオフでオーバーキルの天井/減衰押し返し(okPushPt)を無効化）／<b>C 身を削る強化</b>（新設＝強化するたびモチベ回復するが装備中のどれか1つの寿命を余分に-1・コスト2）／<b>D 一服の博打</b>（新設＝任意ターンにクロンを払ってモチベ回復・回復量は任意選択・クロン単価は高め・コスト2）。<b>節目の休息(fushime)は廃止</b>（FEVERの残響は継続）。<b>③武器耐久を新設</b>＝ランの命バー（開始40・強化失敗のたび-3・0以下でゲームオーバー）。回復は新アイテム<b>記憶の修復（仮）</b>（[持]・有償・耐久+20）。既存の「耐久」（記録の欠片・保護ゲート用）とは別物として併存。HUDに武器耐久バーを新設表示。<b>④ボット最小更新</b>＝mimic/aohataの赤POT呼び出しを撤去し回復系アイテムでモチベ管理、武器耐久が低いとき記憶の修復を購入/使用するロジックを追加。FEVERの仕組み・演出は不変。<br>
-  ※v0.61【長寿の調整（社長指示）】：長寿の回復上限＝<b>そのアイテムの本来の寿命まで</b>を厳密化＝延命で本来の寿命を超えているアイテムを<b>長寿が本来値まで削ってしまうバグを修正</b>（超過中は増減なし・本来未満のときだけ回復）。あわせて<b>コスト2→3</b>（回復系で唯一のB相当＝毎ターン自動延命の強さを反映）【仮】。<br>
-  ※v0.60【ラン途中セーブ（社長要望「前回状態のまま開かせたい」）】：行動のたびlocalStorageへ自動保存し、タイトルに<b>「💾 続きから（段・ターン・SCORE）」</b>を表示。<b>結果確定後の状態しか保存しない＝失敗→リロードのセーブ悪用は不可</b>。ゲームオーバーで削除。<b>版またぎ対応</b>＝新版初期値へのマージ復元（増えた項目は初期値・ルールは常に新版）＋掃除処理（廃止アイテム除去・コスト上限クランプ・超過装備は自動で外す）＝版が上がってもセーブは引き継がれ、最悪でも「多少消えて続行」。<br>
-  ※v0.59【詫びクロン自動成長（社長案「運営からの詫びなんだから、こちらでLv上げしなくてもじわじわ増えるべき」）】：クロン消費のLv上げを<b>廃止</b>し、<b>受け取るたびに次の詫びが豪華になる</b>方式に＝支給=max(最低保証, 倍率×保護必要数)・最低保証8→+6/受取（上限50）・倍率×1→+0.5/受取（上限×5）＝旧Lv1〜5の幅を約8回で踏破【仮】。受取回数（wabiTaken）は周回でもリセットしない（運営の詫びは通算）。<br>
-  ※v0.58.2-3【送信まわり調整（社長指示）】：送信完了表示を廃止・📋保存ボタンはゲームオーバー時と同じ送信のみ（ダウンロード/クリップボード廃止・「表示切替」は目視用に残置）。<br>
-  ※v0.58【プレイログ自動収集（社長承認・方式B）】：<b>ゲームオーバー時（ラン1回につき1度）と📋保存ボタン押下時に、プレイログをGoogle Apps Script経由でドライブへ自動送信</b>。送信内容＝家名/版/到達段/スコア/ログ本体のみ。URL未設定なら送信せず従来どおり（ダウンロード保存は常に併用可）。送信成功時はゲームオーバー画面に「📤自動送信しました」表示。受け側の設定手順＝Output/手順_プレイログ自動収集_GAS設定.md。<br>
-  ※v0.57【計測バグ修正】：プレイログの延命記録＝wrap対象が旧関数名buyExtendのままで<b>延命（reviveItem）が一切記録されていなかった</b>のを修正（アヲハタ氏ログ解析で発見）。ゲーム挙動は不変。※コスト上限拡張の値下げは社長判断で見送り（拡張は無限化を生む懸念＝アイテムの作り替えとセットで今後の論点）。<br>
-  ※v0.56【UI改善3件（社長指示・2026-07-11）】：①装備変更メニューの「枠1,2…」「空き枠」表記を撤去（点線囲みで分かる）。②狩りメニューを狩場名に＝<b>休息をとる／ドケビの森／ガイピンラーシア寺院(地下)／ジェピロス城</b>（奥ほど稼げる・ログの狩り表示も狩場名に）。③<b>装備欄をPC/スマホ共通でログ（メッセージ窓）の下に横4×縦2で配置</b>（旧・PC右サイドパネル構造を廃止）。<b>装備変更ボタンは削除＝装備欄のスロット（空き枠含む）をクリックで装備変更メニューが開く</b>。<br>
-  ※v0.55【表示整理（社長指示5件・PC/スマホ共通）】：①商店ヘッダ「～商店（棚4種＋キープ枠…）～」撤去。②<b>⚖コストを最上段HUDへ合流</b>（商店内のコスト行と「収まれば自動装着」注記を撤去）。③色凡例「色＝系統(🔴爆…)・[持]＝…」を撤去（使ってるうちに分かる）。④<b>装備欄を商品棚の上に配置</b>（スマホ＝装備ミニパネルをorder:-1で画面上部へ。PCは従来どおり右側に常時表示）。⑤HUDの「🎯素の成功率」撤去（強化画面の先見せで足りる）→跡地に⚖コスト。<br>
-  ※v0.54【UI配置の改善（社長指示4件・2026-07-11）】：①<b>スマホで初期表示のメニューが左に寄るバグ修正</b>＝縦積みレイアウト時にalign-items:flex-startで子要素が縮んで左寄りになっていた→stretchに（演出後に直って見えたのはゲージの横幅が画面を押し広げていたため）。②<b>クロン購入を横1列</b>（5/20/100/1000個×価格の正方形4連）。③<b>赤POT・⚖コスト上限・📜記録の欠片を正方形ボタン3連に</b>（名前/効果/価格の3行・説明は必要最低限）。④<b>商品棚リロール廃止</b>（機能ごと撤去。※延命ナーフ論点「案B＝リロールをナシに」が結果的に採用）。<br>
-  ※v0.53【スマホ1画面対応（社長指示「iPhone基準でスクロールなしに」）】：560px以下のモバイルCSSを本格化＝余白/フォント/ボタン/HUDを圧縮・右パネルのミニ装備を2列→<b>4列</b>・演出の札を縦積み→<b>横並び折返し</b>・大数字を縮小。<b>補足説明はスマホでは非表示</b>（.verboseクラス＝商店/装備/強化画面の色凡例・仕組み解説など。PCでは従来どおり表示）。判定・バランスは不変。<br>
-  ※v0.52.1【装備変更画面：装備中カードにLv/寿命/コストを明示（社長指示）】：装備中スロットの表示を「枠番号の隅に小さく」→<b>名前の下に Lv・⏳寿命・⚖コスト の1行</b>に変更（倉庫カードと同じ見やすさに）。右パネルのミニ表示にも⚖コストを追加。<br>
-  ※v0.52【社長指示2件（2026-07-11）】：①<b>失敗時のモチベ減にグレード帯の加算</b>＝無印・真・裏(1〜30段)<b>+1</b>／爆・虚・命(31〜60段)<b>+2</b>／無・界・卍(61〜90段)<b>+3</b>／神(91〜100段)<b>+4</b>（従来の上限4の外側に乗る＝深部の失敗ほど本当に痛い・助走は0・基準は挑んだ段【仮】）。②<b>倉庫ソートに「⚖コスト」キー追加</b>（種別/寿命/Lv/コスト/名前・昇降切替）。<br>
-  ※v0.51.3【ゲージの赤線を非表示（社長指示）】：成功率ゲージの赤線（天井の目印）を撤去。天井の存在は「ゲージが99%まで伸びない」挙動と最終確率の数字で体感させる（天井の計算ロジック自体は不変）。<br>
-  ※v0.51.2【コストを最大4に圧縮（社長指示「S:7では爆を並べられずFEVERが出なくなる」）】：コスト値を S:7/A:5/B:4/C:3/D:2/E・F:1 → <b>S:4／A・B:3／C・D:2／E・F:1</b>に再割り当て（上限12/拡張+2/最大24は据え置き）。初期上限12でも「S級2枚＋中堅1枚」や「爆3枚＋小物」が組める＝FEVERラインに届くビルドを確保しつつ、格差（S=F×4）は維持。数値は【仮】。<br>
-  ※v0.51.1【背水のコスト是正（社長評「割と最強格」）】：背水の覚悟のコスト<b>1→7</b>（Tier F→Sに訂正）。マネージャーの机上評価（モチベコストが重い＝弱い）が実プレイと乖離していたのを社長評で修正。<br>
-  ※v0.51【装備コスト制（社長発案 2026-07-11「コスト上限内でやりくり＝強いアイテムを装備すると他が少ししか装備できない」）】：全装備にコスト（Tier準拠 S:7/A:5/B:4/C:3/D:2/E・F:1【仮】）を設定し、<b>装備中の合計コスト≦上限</b>のみ装備可。上限＝初期<b>12</b>・商店で<b>+2ずつ拡張（最大24・価格は旧枠拡張の段連動式を流用）</b>・周回で12に戻る。<b>物理枠は8固定</b>（旧・枠4〜8の拡張制を廃止＝制限をコスト1本に）。[持]と狩り勢/ヒーロー（倉庫在住）はコスト外。Lvはコスト無関係。狙い＝①最強全部盛りの構造的封じ（上限MAX24でも最強級4枚まで）②安いE/F帯が「隙間の札」として復活 ③一点豪華vs横並べ（コレクター型＝安物敷き詰め）のビルド個性。検算＝ランダム4枚の期待コスト11.4≒初期上限12＝序盤の手触りは現行同等。設計書＝Output/20260711_設計_装備コスト制_v0.51.md。<br>
-  ※v0.50【社長フィードバック4件（2026-07-11・v0.49.1プレイ中）】：①<b>狩り勢トグルはON維持</b>＝一度ONにしたらOFFにするまで毎ターン持続（毎回ONにし直す手間を廃止・寿命は使った狩りごとに-1のまま）。②<b>装備枠の価格を段連動に</b>＝固定60億×1.2^n → <b>狩り収入(その段)×35×1.6^n</b>【仮】＝シルバーが潤沢になる裏後半〜爆でも「2グレードに1枠」ペースを狙う。③<b>長寿の自己回復を廃止</b>＝lifeOnEnhの対象から長寿自身を除外（自身の寿命-1は回復されず実質無限が直る。説明文も「他アイテムの寿命+」に修正）。④<b>爆発値カウント演出を復活</b>＝ゲージ下の爆発値を大きな金色の数字にし、札が積まれるたびポップしながら増えていく（v0.40系の脳汁演出をゲージ演出に併設）。<br>
-  ※v0.49.1【天井のネタバレ防止（社長指摘「結果のネタバレ・演出の上げ下げの意味がなくなる」）】：①強化画面の「⛰成功率天井○○%」の<b>事前表示を削除</b>。②ゲージの赤線は<b>99%からスタート</b>し、演出の中で動かす＝「🗡武器の抵抗！」で赤線がグッと下がる→「🧊抗/😤意地」で押し返して戻る→「⚡オーバーキル」でさらに戻る→最終確率。天井の上下そのものをドラマの一部に（判定ロジック不変・見せ方のみ）。<br>
-  ※v0.49【社長メモ5件（2026-07-11・51段ログ解析で裏取り済み）＋減衰天井式（仮・要社長確認）】：①<b>勢いを弱体化</b>＝連続成功1回ごとの減衰軽減[4,6,8,10,13]%→<b>[2,3,4,5,7]%</b>・上限60%→<b>30%</b>（ログ実測＝装備中ずっと上限60%張り付き）。②<b>抗の合算軽減に総上限85%</b>を新設（勢い＋威光で軽減100%＝減衰完全無効が13段連続していた穴を封じ、完全無効はFEVERマニア専権に）。③<b>純白の砥石を廃止</b>（購入0・使用0＝不要）。④<b>連鎖の跳ねを廃止</b>（購入0・発動0）。⑤<b>スーパーヒーローを倉庫アイテム化</b>＝装備せず、強化フェーズの「🦸使う」トグルで任意の1回に合わせて使用（使うと燃え尽き＝買い直し。ログ実測＝L2投資したのに装備0回：枠が常時系で埋まる構造問題への処方）。⑥<b>減衰もっともっと強く</b>＝DECAY_R 0.050→<b>0.065</b>、さらに<b>減衰が成功率の天井を下げる方式を仮実装</b>（天井=99%−12pt×(1−実効d)＋OK押し返し：深いほど99%の天井が下がり、抗・意地・オーバーキルが天井を押し返す＝<b>Ⅰ〜Ⅶ帯でも減衰が見える</b>）。⚠天井式は未回答案件の仮実装＝NGなら<b>CEIL_ON=false</b>で即オフ。数値は全て【仮】。<br>
-  ※v0.48.2【延命＝加算式に訂正（社長）】：延命1回＝<b>+元の寿命ぶん回復</b>・<b>上限＝元の寿命の3倍</b>（v0.48.1の「1回で3倍まで全快」は誤解釈＝訂正）。超過中（健康法等）は減らない。ボタン表記も「寿命+N（上限3N）」に。<br>
-  ※v0.48.1【延命の上限＝元の寿命の3倍に（社長指示）】：商店の延命(半額)＝「正規寿命まで全快」→「正規寿命の3倍まで全快」（`EXTEND_CAP_MULT=3`【仮】・bigaku/heroの回復不可は不変・健康法/長寿の上限は従来どおり元の寿命のまま）。<br>
-  ※v0.48【狩り勢を倉庫式・都度使用に（社長指示）】：狩り勢は<b>装備せず倉庫に置く</b>（購入時も自動装着しない・装備ボタンなし＝装備枠を食わない）。<b>狩りのたびに「💰狩り勢を使う（収入+X%・寿命-1）」トグルで使用を選ぶ</b>（毎ターン初期OFF＝使うときだけON・収入プレビューも連動）。使った時だけ寿命-1・寿命0で破損（買い直しで復活・Lv保持）。休み（0時間）は消費なし。ボット互換＝doHuntの直呼び（use未指定）は所持していれば自動使用＝旧挙動と同等。<br>
-  ※v0.47.3【オーバーキル表示を減衰の後へ（社長指摘「効果が出る位置に」）】：💥オーバーキル（壁の×N）の表示を積み上げ中→<b>🗡抵抗・🧊抗の後</b>に移動＝「抵抗で下降→抗で上昇→💥オーバーキル×N→⚡押し返しで上昇」の順（効果の実態＝減衰後の押し返し、と表示位置を一致）。🔥FEVER到達は積み上げ中のまま（壁に届いた瞬間の事件なので）。<br>
-  ※v0.47.2【スロー化を半分に（社長FB「+0.5秒は遅すぎ」）】：ANIM_SLOW 500→<b>250</b>ms（爆発値ステップ0.9→0.65秒等）・バーのアニメ0.6→0.45秒。<br>
-  ※v0.47.1【ゲージ演出スロー化（社長指示「演出が早すぎる」）】：1ステップの待ち時間を一律+0.5秒（ANIM_SLOW=500ms・爆発値ステップ0.4→0.9秒等）＋バーのアニメも0.34→0.6秒に。⏩一気に判定は従来どおり。<br>
-  ※v0.47【確率表現をゲージ式に（社長指示「何がどう効いているのか体感できない」）】：強化演出を0〜100の<b>成功率ゲージ</b>に一新＝素の成功率から始まり、各アイテム/条件の爆発値ぶんゲージ上昇（+X.X%表示・99%到達後の札は+0%＝「今は率に効いてない」も見せる）→🔥FEVER到達/💥オーバーキル表示→🗡武器の抵抗で下降→🧊抗・😤意地で上昇→⚡オーバーキルの押し返しで上昇→最終確率→成否（ゲージが成否色に）。赤線＝99%天井・ゲージ下に爆発値/FEVER壁を常時表示。判定ロジックは一切不変（見せ方のみ）。<br>
-  ※v0.46【減衰もう一段強化（社長確定「対抗アイテムもあるし、まだいける」）】：DECAY_R 0.040→<b>0.050</b>（1段目から常在・寿命等は据え置き。目安＝段30 d0.45→0.40・段60 d0.29→0.25・段100 d0.20→0.17）＝抗アイテム/砥石/磨きの儀を「使わされる」圧をさらに強く。数値は【仮】。<br>
-  ※v0.45.2【減衰さらに強化＋寿命1.5倍（社長フィードバック）】：DECAY_R 0.030→<b>0.040</b>（1段目から常在は維持・段60 d0.36→0.29）。寿命＝基準6→<b>9</b>・効果連動値も約1.5倍（cos/slt/col 3→5・条件火力系4→6・狩り/POT/節約9→13・回復系8→12・長寿12→18。<b>hero=1・bigaku=2は一発屋/使い捨てのアイデンティティなので据え置き</b>）＝買い直し頻度を下げ操作の手間を軽減。<br>
-  ※v0.45.1【減衰は1段目から常在（社長指示）】：DECAY_S0 20→<b>0</b>・DECAY_R 0.045→<b>0.030</b>＝武器の抵抗が最初から存在する世界に（通算60段でv0.45と同じ強さ＝終盤の締まりは維持・序盤は爆発値が小さいため実害は僅少で"敵の顔見せ"）。強化画面の説明文も更新。<br>
-  ※v0.45【減衰強敵化＋対減衰アイテム群＋寿命緩和（数値は全て仮）】：①<b>減衰を強敵化</b>＝DECAY_R 0.034→<b>0.045</b>（オーバーキル相殺 OK_BETA/OK_CAP/OK_TH は不変）。②新系統<b>[抗]（対減衰）</b>新設＝各ソースの軽減率を合算しclamp(0〜1)→<b>d'=d+(1-d)*relief</b>で適用（意地は既存どおり別枠で先に適用・重畳しても1.0でclamp）。<b>研磨剤</b>＝常時 減衰軽減[15/25/35/45/60]%（火力は上がらない守りの札）／<b>FEVERの威光</b>＝この強化でFEVER到達時のみ[30/40/50/60/75]%／<b>勢い</b>＝連続成功1ごとに[4/6/8/10/13]%（上限60%・失敗で消える）／<b>磨きの儀</b>＝能動トグル：必要クロンの半分（最低1）を追加消費して今回[35/45/55/65/80]%。③消耗品<b>純白の砥石</b>（赤POT型・価格=赤POTの2倍・所持1・強化フェーズで装填→次の強化1回だけ減衰完全無効・使い切り）。④新アイテム<b>スーパーヒーロー</b>（爆・爆発値×[10/14/20/28/40]・<b>寿命1・回復完全不可</b>＝延命/健康法/長寿の対象外・買い直しのみの一発屋）。⑤寿命緩和＝<b>延命（半額）で寿命全快</b>（従来は正規寿命の半分回復・上限までセット式）。<br>
-  ※v0.44【飛び級ボス制限＋倉庫ソートUI（社長指示・2件）】：①<b>飛び級はⅩボス段（10の倍数段）を飛び越えられない</b>＝段跳ね（🎯段跳ねのお守り/🔗連鎖の跳ね）で段が増えるとき、直前段以降の最初のⅩボス段Bを超えて着地しないようクランプ（<b>g.stage=B</b>でボス手前停止・飛べなかった分は消える＝ボスは必ず自力で1回踏む）。通常の+1昇段はボスに普通に到達（対象外）。神Ⅹ（段100）も保護。②<b>倉庫（未装備）にソートUI</b>＝<b>種別（KEI並び 爆→条→狩→回→保→跳→持）／寿命／Lv／名前</b>の4キーで並べ替え、同じキー再押下で昇順⇄降順（▲/▼表示）。状態は<b>g.invSort</b>に保持（newGameで種別・昇順に初期化）。名前はlocaleCompare（日本語安定）。装備中スロットの並びは不変。<br>
-  ※v0.43【大型改修（社長指示・12項目／数値は全て仮）】：<b>A.アイテム個別</b>＝①<b>使い捨ての美学</b>の倍率[2,3,4,6,9]→<b>[5,9,14,20,30]</b>＆<b>寿命回復を完全不可</b>（延命/健康法/長寿の対象外・商店は延命ボタン非表示で買い直しのみ）。②<b>偶数の福→奇数の福</b>（発動を奇数段に）。③<b>カカシ放置 7連続→6連続</b>。<b>B.寿命経済</b>＝④寿命リワーク<b>「使ったら減る」</b>（ターン開始の一律減衰を廃止→狩り実行で狩系-1・強化実行で非狩系-1／破損チェックも各実行点へ移設・長寿は減算後に加算）。⑤<b>一律6→効果連動の寿命</b>（強火力=短命/地味=長命：使い捨て2・ヴォルクス/スロット/コレクター3・一発/ボス/火事場/魅惑/オールイン/背水4・長寿12・狩り/POT/節約9・残響/節目/詫び/寿命8等・kksは6のまま）。⑥<b>半額延命=正規寿命の半分</b>（LIFE_LV固定→Math.ceil(lifeOf/2)）。⑦<b>Ⅷ〜Ⅹは保護でも失敗で段-1</b>（ボス帯だけ保護失敗降格）。<b>C.難易度</b>＝⑧<b>71段以降Ⅰ〜ⅦをⅧ並み(壁15)</b>に。⑨<b>周回係数1.25→2.0</b>。<b>D.周回</b>＝⑩周回で<b>シルバー0・装備/倉庫リセット・枠4に戻す</b>（Lv/スコア/ターンは持ち越し）。⑪<b>助走(確定成功)は1周目のみ</b>（2周目以降は段1から通常バトル）。<b>E.</b>⑫<b>赤POT基準20→35</b>。<br>
-  ※v0.42【アイテム調整（社長指示・7箇所）】：①<b>魅惑の衣装</b>＝Lv1倍率1.5→1.3に下げ、代わりに装備中は<b>2ターンに1回モチベ+1</b>（startTurnでg.turn%2===0のとき一律+1）。②<b>コレクター</b>のcolMultを[2,3,5,8,15]→<b>[1.5,2.5,4,6,10]</b>に圧縮（初期を弱め上限を抑える）。③<b>筋トレ</b>の倍率上限SNOW_CAPを[3,4,5,6,8]→<b>[4,6,8,11,15]</b>に引き上げ（per-success率は不変）。④<b>連鎖の跳ね</b>の基準価格5→<b>10</b>（2倍・効果は不変）。⑤<b>意地</b>＝「ワザと失敗」を撤去し<b>モチベ-3で発動</b>（強化は通常どおり／モチベ3未満は発動不可）、次の強化で武器の抵抗をLv%無効化するシールドは据え置き。⑥<b>長寿</b>＝労働力POT劣化版のモチベ回復をやめ、<b>強化するたび装備中の全アイテムの寿命+[1,1,2,2,3]</b>（元の寿命を超えない延命用途）に作り替え（新fx key lifeOnEnh／motivRecov経路から除外）。⑦<b>クロン富豪／大金の余裕</b>のfxTextに実閾値を表示（クロン=max(20,保護必要数×5)個以上／シルバー=狩り収入×3以上）。数値は【仮】。<br>
-  ※v0.41【条件発動アイテム20種追加（社長指示・一旦全入れ→改善）】：アイテムプールを18→38種に倍増。狙い＝所持アイテムの棚再登場が薄まり<b>延命が希少なチャンス</b>に戻る＋<b>条件発動を主役に</b>してビルドの幅を出す。追加＝リベンジ/三連の刻/火事場/一発勝負/倍賭け/偶数の福/大金の余裕/クロン富豪/連撃ボーナス/ボスの本気（条件で爆発値×）、七の女神(1/7成功確定)/幸運の積立(失敗で溜めて満タンで成功確定)/執念(スタック厚いと成功率+)、FEVERの残響/節目の休息/詫びの追い風/寿命の恵み/連鎖の跳ね/節約の閃き/積み重ね、長寿(長寿命)/使い捨ての美学(超短命×高倍率)。数値は全て【仮】＝触りながら調整。<br>
-  ※v0.40【寿命リデザイン＋失敗スタック＋演出自動化（社長指示）】：①<b>金による寿命延長を廃止</b>→装備が商店に再登場したとき<b>定価の半額で「延命」（寿命+6）</b>＝アイテムは永続でないので色々なビルドを試す動機に。②<b>アイテム価格を全体的に安価</b>に（買い直し前提）。③<b>強化演出を成否まで自動</b>で流す＝「素の強化値→爆発値演出→オーバーキル→武器の抵抗→FEVERボーナス→最終確率→成否→▶次へ」（⚔判定ボタンは廃止・読む間は"勝負…！"の溜めで担保）。④新アイテム<b>健康法</b>（エリアンと同じ<b>[持]商品棚アイテム</b>：棚にたまに並ぶ・同時1個所持・任意発動で装備中の全アイテム寿命+3）。※サイコパス（失敗でモチベ減0）は無敵化のため廃止。⑥<b>狩り収入を増額</b>（8→14）＝安価化した2個目を寿命切れ前に買えるように。⑦<b>商品棚のリロール</b>＝商店でクロンを払って棚を引き直す（初期10・後半は段階的に増える〔保護コストの約半分〕・1ターン1回・少し苦しい程度）。⑤<b>失敗スタック</b>（黒い砂漠のフェイルスタック）＝失敗で貯まり<b>爆発値に加算</b>、成功で0リセット。ほぼ成功するゲームなので1回の貯まりは高め（その段のFEVERライン×0.5【仮】）。HUDの成長ボーナス（筋トレ）表示はスタックに置換（筋トレ効果は残置・爆発値内訳で表示）。数値は【仮】。<br>
-  ※v0.25.1【判定はボタンで（社長要望）】：演出の最後で自動判定せず、チップの内訳と最終%を<b>読み終えてから「⚔ この確率で判定する！」を押して決着</b>する方式に。急ぐときは従来どおり「⏩一気に判定」。表示間隔は不変。<br>
-  ※v0.25【オーバーキル相殺＋6段演出（社長案）】：①<b>押し返しが本物に</b>＝壁の3倍を超えて盛った分から、桁が1つ上がるごとに成功率+1.5pt（最大+5pt）。浅い減衰帯（〜45段前後）は大盛りで<b>99%が復活</b>／深い帯は壁が勝ち続ける。返した分は基礎減衰を0.030→0.034に深めて回収＝寿命はv2設計のまま（mimic実測：中央81・周回14.7%・99%を拝める率1.1%→14.7%）。②<b>強化演出を6段構成に</b>＝素の確率→チップ積み上げ→<b>💥オーバーキル溜め（壁の×N）</b>→🗡武器の抵抗→<b>💥オーバーキル叩き込み（+ptは実数）</b>→最終確率。数値は【仮】。<br>
-  ※v0.24【難易度是正v2＋競り合い演出＋ログ標準搭載】：①<b>武器の抵抗（段階減衰）</b>＝通算20段を超えると、盛った成功率が武器に抵抗されて最終値が下がる（FEVER判定・スコア・盛れゲージは従来のまま）。②<b>経済v2（膝折れ式）</b>＝収入・物価は段25から線形に、保護クロンは段40から+5個/段、寿命延長Lv倍率を緩和、詫びクロンは「保護N回ぶん」にスケール。③<b>資産倍率の上限</b>（へそくり口数／クロン愛の対象クロン数／筋トレ倍率）。④<b>一撃死の緩和</b>＝失敗のモチベ減は上限4・FEVER中は半減・生賭け倍率1.8→1.5。⑤<b>競り合い演出</b>＝バフのチップで99%へ→「🗡武器の抵抗！」が引き下げ→<b>FEVER中は最後に⚡が押し返して確定</b>。99%頭打ち帯でも倍率×Nを表示（オーバーキル）。⑥<b>意地リワーク</b>＝ワザと失敗→次の強化で武器の抵抗をLv%無効化[40/55/70/85/100]。⑦<b>FEVERマニア</b>＝所持1個まで・発動中は減衰無視の真99%。⑧カカシ放置＝「装備してから連続7回成功」に是正。⑨クロン×100/×1000ボタン・兆京表示・ヴォルクス⇄魅惑の名称入替。⑩📋プレイログ保存を標準搭載（右下・挙動非干渉）。数値は【仮】。<br>
-  ※v0.23【監査対応（挙動不変）】：[持]の防御ガード追加（keep/Lv上げの誤用で例外・ゴースト枠が出ないよう）／画面見出しをv0.23に是正／色凡例に[持]・跳を追記／旧tier定義コメント塊と未使用CSSを掃除／検証ツールを[持]対応に。ゲームの数式・バランス・挙動は不変。<br>
-  ※v0.22【[持]所持発動型カテゴリ＋FEVERマニア】：装備枠を使わず<b>倉庫に持つだけで発動</b>する[持]アイテム種を新設。<b>エリアンの涙</b>を<b>商店4枠</b>に並ぶよう移設（出現率は旧同様<b>1/50固定</b>＝装備の残数に左右されないよう4枠に差し込む方式）。新アイテム<b>FEVERマニア</b>＝強化フェーズで<b>任意発動→この強化＋次の強化を無条件FEVER</b>（Ⅹ突破の切り札・使い切り・所持上限3・出現1/50）。エリアンは不死身ループ防止で<b>1周につき1度だけ</b>（使うと次の周回まで再入手不可）。数値は【仮】。<br>
-  ※v0.21【寿命延長を軽量化】：延長費用を<b>半額</b>（係数1.5→0.75）＋1回の<b>回復値を+2</b>に（+1→+2）＝1ターンあたりの維持コストは実質1/4に軽く。<br>
-  ※v0.20【寿命延長コスト調整＋残り寿命警告】：延長が安すぎたので<b>購入価格連動に</b>＝延長コスト＝<b>そのアイテムの購入価格÷寿命(6)×1.5×Lv倍率[×1/2/3/4/5]で+1ターン</b>（育てた投資ほど維持が重い）。残り寿命が1になったら準備画面に<b>破損予告の警告</b>。数値【仮】。<br>
-  ※v0.19【アイテム追加：カカシ放置】：<b>強化が連続7回成功するごとにモチベ最大値+[1,1,2,2,3]</b>（系統=条・Lvで獲得量増）。単体では7連続が難しく地味だが、爆発値ビルドで連続成功を伸ばすほど寿命が延びる<b>シナジー枠</b>。モチベ最大値を可変化（HUDの分母が増える）。数値【仮】。<br>
-  ※v0.18【アイテム変更】：<b>改名</b>（増幅の護符→ヴォルクスの叫び／称号：努力家→筋トレ／狩人の勘→狩り勢／行動食→労働力POT／ドリンク赤POT）。<b>コレクター</b>＝装備数ぶん爆発値×[2,3,5,8,15]（集めるほど爆発・超強力→要バランス確認）。<b>意地</b>＝能動：ワザと失敗する代わりに次ターン爆発値×[5,7,10,14,20]。<b>オールイン</b>＝能動：全シルバーを使って爆発値×[10,20,30,40,50]。<b>背水</b>＝爆発値×[5,10,15,20,25]。<b>エリアンの涙</b>（新・超希少2%・倉庫アイテム＝装備不可）＝所持していれば倒れても1度だけモチベ満タンで復活。<b>ラッキーセブン削除</b>。数値は【仮】。<br>
-  ※v0.17【ターンスキップ廃止】：「強化せずターンを終える」を撤去＝<b>ターンは強化に挑んだときだけ進む</b>。休憩を繰り返すだけの不死身化・無限farmingを封じた（デバッガーボットで検証）。耐久0でも生賭けは可＝詰み回避。<br>
-  ※v0.14【難易度ボスカーブ】：壁を単調指数から<b>"のこぎり状"</b>に作り替え。<b>どのグレードもⅠ〜Ⅴはそこそこ楽→Ⅷから急坂→Ⅸ・Ⅹはボス級</b>（越えると次グレードⅠで一息）。<b>Ⅹに近づくほど背景＋UI窓・ボタンが深紅（ラスボス色）</b>に。難易度の総量は現行と同等（普通は真Ⅹ前後で満足）／神・周回は達人のみ。設計書＝`Output/20260704_設計_難易度ボスカーブ_強化脳汁ゲー.md`。アイテムLv制・v0.13のアイテム調整（行動食/LvUPコスト/詫びクロン）は継続。数値は【仮】＝再バランス済初期値。旧版はv0.13(`_v0.13.html`)に温存。F5で最新版に更新。</div>
+  ※v0.71【本格スキルツリー化＋プレイログ移植＋権利注記（社長指示・数値は全て仮）】：①ツリーを<b>「細かいランク＋Lv前提＋rank線形補間」の本格版</b>に作り替え。各ノードに req/reqRank（前提のLv条件）と start→end（rankで線形補間する効果値）を持たせ、SPコストもノードごと（root1/入口2/奥3）。root=ブラックストーン（fireMult基礎×1.15＋成功率+2%）→強化系（ヴォルクスの叫び10rank×1.2→×3.0／ヴォルクスの書5rank×1.5→×4.0）・保険系（頑丈な柄5rank+10→+50／クロン石3rank帳消し10→30%）・回復系（メモリ断片5rank+1→+5／生命の秘薬3rank+3→+9）・ラッキー系（女神の加護5rank2→10%／幸運の積立3rank満タン5→3）・条件系（火事場の馬鹿力5rank+2→+10%／背水の一撃3rank×1.5→×2.5）。奥ノードの解放はreqRank2＝前提をLv2以上。②<b>プレイログ保存を移植</b>（v0.65と同じGAS URL・ドライブ「強化脳汁ゲー_プレイログ」へno-cors送信・ゲームオーバーで自動1回＋画面の📋保存ボタン・URL/fetch無しならno-op）。記録＝ver/通算到達段/周回/turn/score/成功・失敗・限界突破回数/最終スキル振り/timestamp。③<b>ファンメイド権利注記</b>をイントロ下部とフッターに常時表示。無敵感対策の数値変更＝下記報告参照。<br>
+  ※v0.70【ラン内スキルツリー版・最小プロト（社長指示・数値は全て仮）】：v0.65（商店/装備/クロン/モチベ/寿命/コスト制/アイテム40種）を全廃し、<b>リソースを武器耐久とSPの2つだけ</b>に絞る大転換。準備フェーズ/商店なし＝毎ターン「強化する」のみ。<b>成功で段+1・SP+1／失敗しても段は落ちず武器耐久のみ減少／耐久0でゲームオーバー</b>。貯めたSPは<b>5系統13ノードのスキルツリー</b>（強化系＝爆発/冷静/抗、保険系＝頑丈/軽減/帳消し、回復系＝修復/大回復、ラッキー系＝女神の気まぐれ/幸運の積立、条件系＝火事場/連撃/一発勝負）に振り分けてビルドを組む（開いたら常時有効・付け替えなし・ランごとにリセット）。段5・SP5で開始（段5〜7は壁ゼロでほぼ確定成功の短い助走）。減衰・限界突破・成功率天井・失敗スタック・強化演出（ゲージ式）は v0.65 のロジックをそのまま移植し、爆発値の出所だけスキルツリー由来に差し替え。開発中に社長指示でスキルツリーを当初の「幹+3枝9ノード」案から<b>「5系統13ノード・幹なしフラット」</b>に全面差し替え（保護＝クロンは廃止確定・保険/回復の2系統で代替）。detail は Output 提出時の報告を参照。<br>
+  </div>
   </details>
 </div>
 
 <script>
 "use strict";
-// ===== v0.24 難易度是正v2（設計書 20260705_設計_難易度バランスv2 に準拠・数値は【仮】）=====
-// ① 段階減衰：通算段(段+100×(周-1))がDECAY_S0を超えると"成功率だけ"減衰（FEVER判定・スコア・盛れゲージは従来のEXのまま）
-const DECAY_S0=0, DECAY_R=0.065;   // v0.49 社長「もっともっと強くていい」＝0.050→0.065（天井式と併用のため解析推奨0.075より控えめ）【仮】／v0.46 0.050／v0.45.2 0.040／v0.45.1 S0=0・R0.030／v0.25 0.034
-// v0.25 オーバーキル相殺（社長案「たまには99%を拝みたい」）：壁のOK_TH倍を超えて盛った分から、桁が1つ上がるごとに+OK_BETApt 成功率を押し返す（最大OK_CAPpt）
-// 実測＝mimic中央81・周回14.7%（v2目標と同一）・減衰帯で99%が見える率1.1%→14.7%。スイープ＝検証ツール/okpush_patch.js
-const OK_BETA=1.5, OK_CAP=5, OK_TH=3;
-const decayD=()=>{ const prog=g.stage+100*((g.cycle||1)-1); return 1/(1+DECAY_R*Math.max(0,prog-DECAY_S0)); };
-// v0.49 減衰天井（仮実装・社長要確認＝提案済みだった「99%の天井を下げる」方式）：深いほど成功率の上限そのものが下がり、
-// 抗・意地・オーバーキルが天井を押し返す＝壁Kが小さい浅い相対段（Ⅰ〜Ⅶ）でも減衰が見える。NGなら CEIL_ON=false で従来の一律99%に戻る
-const CEIL_ON=true, CEIL_SLOPE=0.12, CEIL_MIN=0.50;   // 天井=99% - SLOPE×(1-実効d) + OK押し返し（下限50%）【仮】
-// ② 経済v2＝膝折れ式：KNEEの段までは現行の指数、そこから先は線形（収入lin=0.10・物価lin=0.08＝楽さがゆっくり増える）
-const KNEE=25, INC_LIN=0.10, PRICE_LIN=0.08;
-const kneePow=(r,S,lin)=> Math.pow(r,Math.min(S,KNEE))*(1+lin*Math.max(0,S-KNEE));
-const CLN_KNEE=40, CLN_LIN=5;          // クロン必要数の第2膝：段40超は+5個/段（原作翻案「いくらあっても足りない」）
-// ② 資産比例倍率の上限（二重指数の解体）：Lv1〜5でキャップが伸びる
-const HSO_NCAP=[4,6,8,10,12], CLV_CAP=[40,60,90,130,180], SNOW_CAP=[4,6,8,11,15];   // v0.42 筋トレ倍率上限を引き上げ（[3,4,5,6,8]→[4,6,8,11,15]）
-// B 一撃死の緩和：生賭け倍率1.8→1.5・FEVER中の失敗は半減・単発モチベ減の上限4
-const GAMBLE_MULT=1.5, FEVER_RELIEF=0.5, SINGLE_HIT_CAP=4;
-// v2.1 FEVERマニア：発動中は減衰を無視して真の99%（切り札の保証【仮・要プレイ確認】）
-const FMN_TRUE99=true;
-// 意地リワーク（v0.42）：モチベ-3で発動→次の強化で武器の抵抗（減衰）をLv%無効化
-const IJI_SHIELD=[0.40,0.55,0.70,0.85,1.00];
-// v0.45 抗（対減衰）：各ソースの軽減率を合算し0〜1にclamp→ d'=d+(1-d)*relief で適用（意地と同式・意地は別枠で先に適用）。数値は全て【仮】
-const KOU_COMBO_CAP=0.30;                      // v0.49 勢い弱体化：軽減上限0.6→0.30（51段ログ＝常時60%張り付き）【仮】
-const KOU_COMBO_CAP_LV=[0.30,0.40,0.50,0.60,0.70];   // v0.65 社長指示：勢いはLvで軽減値も上限も上昇（ikioiはLv5据え置き）【仮】
-const KOU_TOTAL_CAP=0.85;                      // v0.49 抗の合算軽減の総上限（勢い＋威光で軽減100%＝完全無効の穴を封じる。完全無効はFEVERマニア専権）【仮】
-// v0.49 純白の砥石は廃止（社長指示「不要」・51段ログでも購入0/使用0）
-const migakiCost=()=> Math.max(1, Math.ceil(needClone(g.stage)/2));   // 磨きの儀：その段の必要クロンの半分を追加消費（最低1）
-// ===== 定数・式（設計書 20260702_爆発値システム に準拠）=====
-const GUAR=7;                         // 無印Ⅰ〜Ⅶ(1-7)は確定成功（助走）
-const MOTIV_MAX=10, MOTIV_START=10, REST_RECOVER=2;  // 休みの回復（v0.8でモチベ整数化：+1.5→+2）
-// v0.10 狩りを3段階に簡素化：1/2/3時間＝モチベ消費1/2/3・収入は現1/3/5時間ぶん（旧1/3/5ティアと同一＝バランス不変）
-const HUNT_INC={1:1,2:3,3:5};                 // 表示時間→収入係数（現1/3/5時間ぶん）
-const HUNT_MOTIV={1:1,2:2,3:3};               // 表示時間→モチベ消費
-const HUNT_NAMES={1:"ドケビの森",2:"ガイピンラーシア寺院(地下)",3:"ジェピロス城"};   // v0.56 狩場名（社長指定・黒い砂漠の狩場・奥ほど稼げる）
-const huntCost=h=> HUNT_MOTIV[h]||h;          // 狩りh(1〜3)の実消費
-const huntInc=h=> HUNT_INC[h]||h;             // 狩りh(1〜3)の収入係数
-// ===== v0.63 経済リワーク（社長指示：赤POT廃止＋新回復＋武器耐久）数値は全て【仮】＝先頭に定数化・後で社長が調整 =====
-// 赤POT（DRINK_RECOVER/buyDrink/useDrink）は廃止。モチベ回復は下記の回復系アイテム（A/B/C/D＋feverecho）に一本化。
-const DUR_START=100, DUR_LOSS=10;             // v0.64 武器耐久（ランの命バー・既存「耐久」を格上げ一本化）：開始100・強化失敗ごとに-10・0でゲームオーバー・成功では減らない
-const MEMREP_ADD=20, MEMREP_MAX_HOLD=1;       // 記憶の修復：1回で回復する武器耐久・同時所持数【仮】
-const SELFHARM_DUR=4;                          // v0.64 C 身を削る強化：モチベ回復の代償に武器耐久を余分に削る量【仮】
-const memrepOku=S=> (50*kneePow(1.06,S,PRICE_LIN))*SCALE;  // 記憶の修復 価格（健康法/エリアン等より高め＝簡単修理にしない）
-const MEMREP_CHANCE=0.12;                     // 商店更新ごとの出現確率
-const RECA_COMBO_DIV=5;                       // A 連撃の回復：回復量+floor(コンボ/この値)
-const KOUGEN_LV=[1,2,3];                      // v0.65 回復系はLv上限3に短縮（社長指示）＝B 昂りの還元：余剰(壁の倍率)の変換強度（Lvで上昇）
-const KEZURU_LV=[1,2,3];                      // v0.65 3段化＝C 身を削る強化：強化するたびモチベ回復（代わりに武器耐久を余分に-SELFHARM_DUR＝命を削る）
-const BAKUCHI_RATE_LV=[6,4,3];                 // v0.65 3段化＝D 一服の博打：モチベ1につき必要クロン（Lvで下がるが高め）【仮】
-// v0.40 健康法（[持]商品棚アイテム・任意消費）：エリアンと同様に商品棚(4枠)へたまに並ぶ。使うと装備中の全アイテムの寿命+3。同時所持1個まで
-const HEALTH_ADD=3, HEALTH_MAX_HOLD=1, HEALTH_CHANCE=0.10;
-const healthOku=S=> (10*kneePow(1.05,S,PRICE_LIN))*SCALE;
-// v0.40 失敗スタック（フェイルスタック）：失敗で貯まり爆発値に加算、成功で0リセット。ほぼ成功するゲームなので1回の貯まりは高め。
-const STACK_FRAC=0.5;                         // 失敗1回で貯まる爆発値＝その段のFEVERライン×この割合【仮・シミュ調整】
-const stackGain=()=> Math.round(FL(g.stage,g.cycle)*STACK_FRAC);
-// v0.16 「強化ブースト」消耗品は撤去→アイテム「段跳ねのお守り」(bst)にLv制で移行（agg().bonusP／onSuccessで判定）
-const SKIP_SILVER=5, SKIP_CLONE=14;          // 助走スキップ時の付与（普通プレイの中央値：総獲得シルバー≒5億・クロン≒14）
-const EQUIP_SLOTS=8;                         // v0.51 物理枠は8固定（制限はコストに一本化・旧＝初期4/拡張で最大8）
-// ===== v0.51 装備コスト制（社長発案「コスト上限内でやりくり」・設計書=Output/20260711_設計_装備コスト制_v0.51.md・数値は全て【仮】）=====
-// Tier表(2026-07-11)準拠：S:7/A:5/B:4/C:3/D:2/E・F:1。[持]/狩り勢/ヒーロー（倉庫在住）はコスト外・Lvはコスト無関係
-const COST={cos:3,iji:3,hai:3, kenma:3,snw:3,bigaku:3,ikou:3,ins:3, col:3,bst:3,migaki:3,rev:3,shunen:3,kaji:3,choju:3,kougen:2,
-  ippatsu:2,bossmk:2,mul:2,cmb:2,amp:2,luck:2,setuyaku:2,clv:2,sanren:2,ikioi:2,kezuru:2,bakuchi:2,
-  renb:2,pay:2,ogane:2,cfugo:2, tsumi:1,wabikaze:1,feverecho:1,jumyo:1,hso:1,rec:1,
-  baigake:1,guuf:1,kks:1,slt:1,megami:1,ain:3};   // v0.51.2 社長指示「最大4に」＝S:4/A・B:3/C・D:2/E・F:1（S:7では爆を並べられずFEVERに届かない）【仮】／v0.51.1 背水はTier F→S／v0.61 長寿2→3（社長指示）／v0.63 rec(A)を低コスト化3→1・fushime廃止で削除・kougen(B)=3/kezuru(C)・bakuchi(D)=2を追加／v0.65 社長指示：cos/iji/hai 4→3（コスト最大値を3に）・kougen 3→2（還元コスト下げ）・ain 1→3（オールインは強力なので3に）【仮】
-const COST_CAP_BASE=12, COST_CAP_MAX=24, COST_CAP_STEP=2;   // 上限：初期12・商店で+2ずつ拡張・最大24（=最強級4枚まで）・周回で12に戻る【仮】
-const costOf=id=> NOEQUIP[id]?0:(COST[id]!=null?COST[id]:3);   // 未登録の新アイテムはC相当=3
-function costUsed(){ return g.equipped.reduce((s,u)=>{ const it=invById(u); return s+(it?costOf(it.c):0); },0); }
-const slotExpandOku=()=> incomeOku(g?g.stage:1)*35*Math.pow(1.6, g?((g.costCap-COST_CAP_BASE)/COST_CAP_STEP):0); // v0.51 コスト上限拡張の価格（v0.50の段連動式を流用＝収入×35・拡張ごと×1.6【仮】）
-// v0.8 装備の寿命：装備中のみ1ターンずつ減り、0で破損。同一装備は別個体として重複所持OK（買うたび新個体）
-// v0.12 Lv制：寿命は一律（tier廃止）。シルバーで延長。Lvはアイテム種ごとに永続保持。
-const LIFE_LV=9;                             // v0.45.2 社長「寿命もうちょい長く（尽きるのが早くて操作がめんどう）」＝基準6→9（約1.5倍）【仮・シミュで調整】
-// v0.43 効果連動の寿命（強い火力=短命／地味・継続=長命）。他はLIFE_LV。v0.45.2で全体約1.5倍（hero=1・bigaku=2は"一発屋/使い捨て"のアイデンティティなので据え置き）【仮】
-const LIFE_OVR={ hero:1, bigaku:2, cos:5, slt:5, col:5, ippatsu:6, bossmk:6, kaji:6, amp:6, ain:6, hai:6, choju:18, hun:13, rec:13, ins:13, feverecho:12, wabikaze:12, jumyo:12, kougen:12, bakuchi:12, kyukei:13 };   // v0.63 fushime廃止で削除／kougen・bakuchi追加／v0.65 kyukei追加（hunと同格）
-function lifeOf(id){ return LIFE_OVR[id]||LIFE_LV; }
-const EXTEND_CAP_MULT=3;   // v0.48.1 社長指示：延命の上限＝元の寿命→元の寿命の3倍（1回で上限まで全快＝寿命の買い直し作業を軽減）【仮】
-function guarStage(){ return g.stage<=GUAR && (g.cycle||1)===1; }   // v0.43 助走(確定成功)は1周目のみ
-const LV_CAP=5;                              // Lv上限（社長決定）
-const maxLvOf=id=>(CHMAP[id]&&CHMAP[id][5]&&CHMAP[id][5].length)||1;   // v0.65 アイテムごとの実際の最大Lv＝fx配列の長さ（回復系はLv1〜3に短縮・他はLv5のまま）
-const LVUP_COST=[10,100,1000,10000];         // Lv1→2,2→3,3→4,4→5 のクロン消費。v0.15で[6,12,20,32]→[10,100,1000,10000]（10倍刻みの指数＝Lv5はクロン沼の到達点）【仮・3ボットで供給とのバランス確認】
-const lvupCost=L=> LVUP_COST[L-1]||999;      // 現Lv Lから次へ上げる費用
-const levelOf=id=> (g.levels&&g.levels[id])||1;
-// v0.20 寿命延長コストを購入価格連動に（従来は安すぎた）。延長コスト＝購入価格÷寿命×1.5×Lv倍率で+1ターン。
-const EXTEND_FACTOR=0.75;              // v0.21 半額に（1.5→0.75）。購入価格÷寿命 に掛ける係数
-const EXTEND_ADD=2;                    // v0.21 1回の延長で戻る寿命（回復値）：+1→+2
-const EXTEND_LVMULT=[1,1.5,2,2.5,3];   // Lvで延長コストが倍化（v0.24で[1,2,3,4,5]から緩和＝収入の線形化で維持費が過重にならないように）【仮】
-const extendCost=id=> priceOf(id,g.stage)/LIFE_LV*EXTEND_FACTOR*(EXTEND_LVMULT[levelOf(id)-1]||1);  // +EXTEND_ADDターン延長の価格（priceOf=億・SCALE不要）
-// v0.13 詫びクロン（"運営の詫び"パロディ）：たまに商店へ無料で出る"ご褒美"。貰えるクロン数はアイテムLv('wabi')で伸び、クロンでLv上げ＝将来の取り分UP。LvはlevelOf/g.levelsで永続管理（他アイテムと同じ）。
-// v0.59 詫びクロンは自動成長式（社長案「運営からの詫びなのだから、こちらでLv上げしなくてもじわじわ増えるべき」＝クロン消費のLv上げを廃止）
-// 支給＝max(最低保証, 倍率×その段の保護必要数)。受け取るたびに最低保証+6・倍率+0.5（旧Lv1〜Lv5の幅を約8回の受け取りで踏破）【仮】
-const WABI_BASE0=8, WABI_BASE_INC=6, WABI_BASE_CAP=50;      // 最低保証：8 → +6/受取（上限50）
-const WABI_MULT0=1, WABI_MULT_INC=0.5, WABI_MULT_CAP=5;     // 倍率：×1 → +0.5/受取（上限×5）
-const wabiAmt=()=>{ const n=(g&&g.wabiTaken)||0;
-  const base=Math.min(WABI_BASE_CAP, WABI_BASE0+WABI_BASE_INC*n);
-  const mult=Math.min(WABI_MULT_CAP, WABI_MULT0+WABI_MULT_INC*n);
-  return Math.max(base, Math.round(mult*cloneNeed(g.stage))); };
-const WABI_CHANCE=0.2;                        // 商店更新ごとの出現確率（≒1/5＝"たまに"）＝クロンの希少性(v0.12の核)を壊さない頻度
-function invById(u){ return g.inv.find(it=>it.u===u); }        // v0.8 個体(uid)→インベントリ実体
-const shardDur=15;                           // v0.64 記録の欠片：耐久（命バー）回復量＝安い小回復（記憶の修復とは量違いで差別化）【仮】
-const shardOku=S=> (12*kneePow(1.05,S,PRICE_LIN))*SCALE;   // 記録の欠片 価格（v0.24膝折れ）
-const elianOku=S=> (40*kneePow(1.06,S,PRICE_LIN))*SCALE;   // エリアンの涙 価格【仮】＝倒れても1度だけモチベ満タン復活の保険（超希少・1個所持）
-const fmnOku=S=> (30*kneePow(1.06,S,PRICE_LIN))*SCALE;      // FEVERマニア 価格【仮】＝任意発動でこの強化＋次の強化を無条件FEVER＝減衰無視の真99%（Ⅹ突破の切り札）
-const FMN_MAX_HOLD=1;                              // FEVERマニア 所持上限＝1個（v0.24 社長決定：ボススキップの溜め込み防止）
-// v0.22 [持]所持発動型アイテム：装備枠を使わず倉庫に持つだけで発動。商店の4枠(rollShop)に低確率で並ぶ（旧・別枠2%抽選は廃止）。効果配列は持たず、g.elian/g.feverManiaで管理（inv/equippedに入らないのでagg()の集計外）。
-const HELD={
-  elian:{ name:"エリアンの涙", kei:"持", price:elianOku,
-    desc:"倒れても1度だけモチベ満タンで復活（装備枠は使わない・1周につき1度＝使うと次の周回まで再入手不可）",
-    avail:()=> !g.elian && !g.elianUsed, buy:()=>{ g.elian=true; } },   // v0.22 elianUsed＝この周ですでに復活を使ったか（死→復活→再購入の不死身ループ防止・周回でリセット）
-  fmn:{ name:"限界突破マニア", kei:"持", price:fmnOku,   // v0.65 表示名をFEVER→限界突破に改名（id/内部キーfmn・g.feverManiaは不変）
-    desc:"任意発動→この強化＋次の強化を無条件限界突破＝減衰無視の真99%（Ⅹ突破の切り札・使い切り・所持1個まで）",
-    avail:()=> g.feverMania<FMN_MAX_HOLD, buy:()=>{ g.feverMania++; } },
-  health:{ name:"健康法", kei:"持", price:healthOku,
-    desc:"任意発動＝装備中の全アイテムの寿命+"+HEALTH_ADD+"（使い切り・同時に1個まで所持・準備画面で使用）",
-    avail:()=> g.health<HEALTH_MAX_HOLD, buy:()=>{ g.health++; } },
-  memrep:{ name:"記憶の修復（仮）", kei:"持", price:memrepOku,
-    desc:"任意発動＝武器耐久+"+MEMREP_ADD+"（使い切り・同時に1個まで所持・準備画面で使用・簡単修理にしない価格）",
-    avail:()=> g.memRepair<MEMREP_MAX_HOLD, buy:()=>{ g.memRepair++; } },   // v0.63 武器耐久の回復手段
-};
-// v0.7.1：装備寿命「一括延長」アイテムは社長指示で撤去（延長手段は同一装備の買い直しに一本化）
-const K0=7, KR=1.11, CYCLE_UP=2.0, WALL_FLAT=32;  // 壁K：K0*KR^min(S-8,WALL_FLAT)。v0.6.1で高段(40段〜)を頭打ち。v0.43 周回係数1.25→2.0【仮】
-const CAP_RATE=0.99;                          // 成功率上限
-// GARM_CD：v0.12でガーモス廃止
-const SCALE=0.05, cloneBase=0.5;
-// 段階の壁K・FEVERライン（=99%到達爆発値）
-// v0.14 難易度"ボスカーブ"：グレード内ランプ(R_RAMP＝Ⅹボス化)×グレードごとベース上昇(GBASE^gi・GRADE_FLATで頭打ち＝神への道を開けたまま)。設計書＝Output/20260704_設計_難易度ボスカーブ_強化脳汁ゲー.md。旧K0/KRは不使用（WALL_FLATはcloneNeed用に残置）
-const R_RAMP=[1,2,3,4,5,7,10,15,20,30];      // グレード内Ⅰ〜Ⅹの相対難易度＝Ⅹがボス【社長承認】
-const KBASE=1.0, GBASE=1.7, GRADE_FLAT=6;    // K=KBASE×GBASE^min(gi,GRADE_FLAT)×R_RAMP[ri]。3ボット実測で現行v0.13と同難易度・普通=真Ⅹ【再バランス済初期値・要最終確認】
-// v0.43 71段以降はランプのⅠ〜ⅦをⅧ並み(=R_RAMP[7]=15)に引き上げ（Sはcycle相対1〜100＝全周回に自動適用）
+// =====================================================================
+// v0.70 ラン内スキルツリー版（新規実装）
+// 減衰/限界突破/天井/演出まわりの式は v0.65（プロト_強化脳汁ゲー_v0.65.html）から
+// そのまま移植（K/FL/decayD/capEff/decayedRateEX/okPushPt/successRateEX 系）。
+// 数値は全て【仮】＝検証ボットで調整。
+// =====================================================================
+
+// ---- 段/グレード（v0.65から流用） ----
+const R_RAMP=[1,2,3,4,5,7,10,15,20,30];
+const KBASE=1.0, GBASE=1.7, GRADE_FLAT=6;
+const CYCLE_UP=2.0;
 const K=(S,cyc)=> S<8?0 : KBASE*Math.pow(GBASE,Math.min(Math.floor((S-1)/10),GRADE_FLAT))*(S>=71 ? Math.max(R_RAMP[(S-1)%10], R_RAMP[7]) : R_RAMP[(S-1)%10])*Math.pow(CYCLE_UP,(cyc||1)-1);
-const FL=(S,cyc)=> Math.round(99*K(S,cyc||1));      // FEVERライン
-// 収入・修理・クロン・失敗減（100段階用。v0.5.2バランス）
-const incomeOku=S=> (14*kneePow(1.10,S,INC_LIN))*SCALE;    // v0.40 狩り収入を増額（8→14）＝安価化した2個目を寿命切れ前に買えるように（社長要望）。膝折れは維持
-const repairOku=S=> (30*kneePow(1.05,S,PRICE_LIN))*SCALE;
-const CLONE_R=1.13, CLONE_FLAT=WALL_FLAT;                  // クロン消費の指数＋高段で頭打ち（壁と同様40段〜プラトー＝神への道を保つ）
-const cloneNeed=S=> S<=GUAR?0 : Math.ceil(Math.pow(CLONE_R,Math.min(S-8,CLONE_FLAT))) + (S>CLN_KNEE? Math.round(CLN_LIN*(S-CLN_KNEE)) : 0);  // 保護1回の必要クロン（指数急増→上限52。v0.24 第2膝＝段40超は+5個/段で線形加算）
-// v0.54 棚リロール（rerollClone/rerollShelf）は廃止（社長指示）。※延命ナーフ論点の「案B＝リロールをナシに」が結果的に採用された形
-const failMotiv=S=> S<=GUAR?0 : Math.min(4, 0.5+0.11*S);   // 失敗のモチベ減（上限4：高段の一撃死を防ぎ神への長い道を可能に。v0.6.1で10→4）
-// v0.52 社長指示「3ステージごとに失敗時のモチベ減を+1ずつ」＝無印・真・裏(1〜30)+1／爆・虚・命(31〜60)+2／無・界・卍(61〜90)+3／神(91〜100)+4。助走は0。上限4とは別枠の加算＝深部の失敗ほど重い【仮】
-const failGradeAdd=S=> S<=GUAR?0 : 1+Math.floor(Math.floor((Math.min(S,100)-1)/10)/3);
-const gainBase=combo=> 0.5+0.2*Math.min(Math.floor(combo/3),3); // 成功でのモチベ回復（0.5〜1.1）
-// 100段階表記：無印→真→裏→爆→虚→命→無→界→卍→神（各Ⅰ〜Ⅹ）
+const FL=(S,cyc)=> Math.round(99*K(S,cyc||1));   // 限界突破の壁
 const grades=["","真","裏","爆","虚","命","無","界","卍","神"];
 const rom=["Ⅰ","Ⅱ","Ⅲ","Ⅳ","Ⅴ","Ⅵ","Ⅶ","Ⅷ","Ⅸ","Ⅹ"];
 function stageName(S){ if(S>100)S=100; if(S<1)S=1; const gi=Math.floor((S-1)/10), ri=(S-1)%10; return grades[gi]+rom[ri]+"（"+S+"）"; }
+function stageLabel(){ return (g.cycle>1?g.cycle+"周 ":"")+stageName(g.stage); }
 
-// ===== アイテム18種（v0.12 Lv制。効果はLvで伸びる・数値は【仮】＝シミュで調整。将来50種まで拡張）=====
-// [id, 名称, 系統, 基準価格億, (未使用), lvfx＝Lv1〜5のfx配列]
-const one=(k,a)=>a.map(v=>({[k]:v}));
-// v0.48 装備しないアイテム（倉庫在住・使う場面で都度選択）。現状は狩り勢のみ＝狩りのたびに「使う（寿命-1）/使わない」を問う
-const NOEQUIP={hun:1, hero:1, kyukei:1};   // v0.49 スーパーヒーローも倉庫在住＝強化のたび使うか選ぶ（社長指示・枠が常時系で埋まり一発屋を装備できない問題への処方）／v0.65 休息の達人（新規）も倉庫在住
-function hunItem(){ return g.inv.find(x=>x.c==='hun' && x.life>0); }
-function hunBoost(){ const it=hunItem(); return it? CHMAP['hun'][5][levelOf('hun')-1].income : 0; }
-function heroItem(){ return g.inv.find(x=>x.c==='hero' && x.life>0); }   // v0.49 スーパーヒーロー（倉庫在住・強化フェーズで任意使用）
-function heroMult(){ return CHMAP['hero'][5][levelOf('hero')-1].mult; }
-function kyukeiItem(){ return g.inv.find(x=>x.c==='kyukei' && x.life>0); }   // v0.65 休息の達人（倉庫在住・休息をとるたび使うか選ぶ）
-function kyukeiBonus(){ const it=kyukeiItem(); return it? CHMAP['kyukei'][5][levelOf('kyukei')-1].restBonus : 0; }
-const CH=[
- ["amp","魅惑の衣装","爆",4,"", one('mult',[1.3,2,2.5,3.2,4])],   // v0.40 価格を安価に（買い直し前提）／v0.42 Lv1倍率1.5→1.3・2ターンに1回モチベ+1（startTurnで付与）
- ["hai","背水の覚悟","条",4,"", [[1,5],[1,10],[2,15],[2,20],[3,25]].map(a=>({haisuiCost:a[0],haisuiMult:a[1]}))],
- ["iji","意地","条",4,"", one('ijiShield',IJI_SHIELD)],   // v0.42 リワーク：モチベ-3で発動→次の強化で武器の抵抗（減衰）をLv%無効化＝Ⅹボス前に仕込む駆け引き
- ["pay","小遣い日","条",4,"", one('condTurn7',[5,12,25,50,90])],
- ["col","コレクター","爆",4,"", one('colMult',[1.5,2.5,4,6,10])],   // v0.42 初期×1.5・上限×10へ圧縮（旧[2,3,5,8,15]）
- ["cmb","連撃の心得","爆",4,"", one('perCombo',[.05,.08,.12,.16,.20])],
- ["clv","クロン愛","爆",4,"", one('perClone',[.04,.06,.09,.12,.16])],
- ["snw","筋トレ","爆",5,"", one('snowball',[.05,.08,.12,.16,.20])],
- ["hso","へそくり","爆",4,"", one('perSilver',[10,8,6,4,3])],
- ["slt","スロット中毒","爆",6,"", one('jackpot',[77,200,500,1500,4000])],
- ["ain","オールイン","爆",4,"", one('allinMult',[10,20,30,40,50])],
- ["cos","ヴォルクスの叫び","爆",6,"", one('mult',[3,5,8,12,20])],   // v0.24 名称入替（旧・魅惑の衣装）
- ["mul","倍数の理","条",4,"", [1.5,2,2.5,3.2,4].map(v=>({stagemod:2,smx:v}))],
- ["hun","狩り勢","狩",4,"", one('income',[.3,.5,.75,1.05,1.4])],   // v0.48 装備不可（NOEQUIP）＝倉庫に置き、狩りのたびに使うか選ぶ（使うと寿命-1・社長指示）
- ["kyukei","休息の達人","狩",4,"", one('restBonus',[1,2,3])],   // v0.65 新規：装備不可（NOEQUIP・狩り勢と同じ倉庫型）＝休息をとるたび回復量+X（使うと寿命-1）。数値は【仮】
- ["rec","連撃の回復","回",4,"", one('comboRecovBase',[1,2,3])],   // v0.63 作り替え（旧・労働力POT）：成功のたびモチベ+base+floor(コンボ/5)・低コスト化／v0.65 Lv上限3に短縮
- ["ins","節約術","保",4,"", one('cloneSaveP',[.15,.25,.35,.45,.55])],
- ["bst","段跳ねのお守り","跳",6,"", one('bonusP',[.12,.18,.25,.33,.45])],  // v0.16 旧・強化ブースト消耗品をアイテム化＝装備中、強化成功のたび確率で段+1（FEVER中+2）。レア度高め（商店に出にくい）・数値【仮】
- ["kks","カカシ放置","条",4,"", one('maxUp',[1,2,3])],  // v0.19 シナジー枠：強化が連続7回成功するごとにモチベ最大値+（Lvで獲得量が増える）。単体だと7連続が難しく地味／爆発値ビルドで連続成功を伸ばすほど化ける。数値【仮】／v0.65 Lv上限3に短縮
- // ===== v0.41 追加（約20種・条件発動を主役に。プール倍増で延命の再登場を希薄化）数値は全て【仮】=====
- ["rev","リベンジ","条",4,"", one('condAfterFail',[3,4,5,7,10])],
- ["sanren","三連の刻","条",4,"", one('condTurn3',[1.6,2,2.6,3.4,4.5])],
- ["kaji","火事場","条",5,"", one('condLowMotiv',[3,4,5,7,10])],
- ["ippatsu","一発勝負","条",5,"", one('condFullMotiv',[4,6,8,11,15])],
- ["baigake","倍賭けの理","条",4,"", one('condEvenMotiv',[1.4,1.7,2.1,2.6,3.2])],
- ["guuf","奇数の福","条",4,"", one('condEvenStage',[1.3,1.5,1.8,2.2,2.8])],   // v0.43 偶数→奇数（発動条件を奇数段に）
- ["ogane","大金の余裕","条",4,"", one('condRichSilver',[1.4,1.7,2.1,2.6,3.2])],
- ["cfugo","クロン富豪","条",4,"", one('condRichClone',[1.4,1.7,2.1,2.6,3.2])],
- ["renb","連撃ボーナス","条",4,"", one('condCombo5',[1.5,1.8,2.2,2.8,3.5])],
- ["bossmk","ボスの本気","条",5,"", one('condGradeX',[4,6,8,11,15])],
- ["megami","七の女神","条",5,"", one('lucky7',[1])],   // v0.65 Lv撤廃（配列長1でLvアップ不可に）
- ["luck","幸運の積立","条",5,"", one('luckFill',[20,26,33,42,55])],
- ["shunen","執念","条",4,"", one('stackRateBonus',[.04,.06,.09,.12,.16])],
- ["feverecho","限界突破の残響","回",4,"", one('feverRecov',[1,2,3])],   // v0.65 表示名をFEVER→限界突破に改名（id/内部キーfeverecho・feverRecovは不変）・Lv上限3に短縮
- // v0.63 fushime（節目の休息）は廃止（社長指示・ニッチ型整理）
- ["wabikaze","詫びの追い風","回",4,"", one('failRelief',[1,2,3])],   // v0.65 Lv上限3に短縮
- ["jumyo","寿命の恵み","回",4,"", one('turn4Life',[1,2,3])],   // v0.65 Lv上限3に短縮
- // ===== v0.63 経済リワーク：回復系B/C/D新設（数値は全て【仮】）=====
- ["kougen","昂りの還元","回",5,"", one('overRecov',KOUGEN_LV)],   // B：爆発値が限界突破の壁を超えた余剰ぶんモチベ回復。トレードオフ＝この強化はオーバーキルの天井/減衰押し返し(okPushPt)を放棄（onSuccess/okPushPtで判定）／v0.65 Lv上限3
- ["kezuru","身を削る強化","回",4,"", one('selfHarmRecov',KEZURU_LV)],   // C：強化するたびモチベ回復。代わりに武器耐久（命バー）を余分に-SELFHARM_DUR（tryEnhで判定）／v0.65 Lv上限3
- ["bakuchi","一服の博打","回",4,"", one('bakuchiRate',BAKUCHI_RATE_LV)],   // D：能動＝強化フェーズでクロンを払ってモチベ回復（回復量は任意選択・単価Lvで下がるが高め）／v0.65 Lv上限3
- // v0.49 連鎖の跳ね(rensa)は廃止（社長指示・51段ログでも購入0/発動0）。跳系は段跳ねのお守り(bst)のみに
- ["setuyaku","節約の閃き","保",4,"", one('cloneRefundP',[.2,.3,.4,.5,.6])],
- ["tsumi","積み重ね","保",4,"", one('stackKeep',[.3,.4,.5,.6,.7])],
- ["choju","長寿","回",4,"", one('lifeOnEnh',[1,2,3])],   // v0.42 延命化：強化するたび装備中の全アイテム寿命+X（元の寿命を超えない）。motivRecov経路から外す【仮】／v0.65 Lv上限3に短縮＋自身の寿命延長を不可に
- ["bigaku","使い捨ての美学","爆",5,"", one('mult',[5,9,14,20,30])],   // v0.43 倍率大幅UP＆寿命回復完全不可（延命/健康法/長寿の対象外）
- // ===== v0.45 追加：抗（対減衰）4種＋スーパーヒーロー（数値は全て【仮】）=====
- ["kenma","研磨剤","抗",5,"", one('decayRelief',[0.15,0.25,0.35,0.45,0.60])],   // 常時：減衰軽減（爆発値は一切上げない守りの札）
- ["ikou","限界突破の威光","抗",5,"", one('feverRelief',[0.30,0.40,0.50,0.60,0.75])],   // v0.65 表示名をFEVER→限界突破に改名（id/内部キーikou・feverReliefは不変）。条件：この強化で限界突破到達（ex>=FL）時のみ減衰軽減
- ["ikioi","勢い","抗",4,"", one('comboRelief',[0.02,0.03,0.04,0.05,0.07])],   // v0.49 弱体化[4,6,8,10,13]%→[2,3,4,5,7]%・上限もKOU_COMBO_CAP=0.30へ（社長「強すぎる」＋ログ実測）【仮】
- ["migaki","磨きの儀","抗",5,"", one('migakiRelief',[0.35,0.45,0.55,0.65,0.80])],   // 能動トグル：必要クロンの半分を追加消費して今回の減衰を軽減
- ["hero","スーパーヒーロー","爆",4,"", one('mult',[10,14,20,28,40])],   // v0.45 社長案：一発屋＝寿命1・回復完全不可（延命/健康法/長寿の対象外・買い直しのみ）
-];   // v0.40 サイコパスは無敵化のため社長判断で廃止／v0.41 条件発動20種追加
-const CHMAP={}; CH.forEach(c=>CHMAP[c[0]]=c);
-// v0.22 [持]アイテムにもCHMAP互換スタブを持たせる（ボット/ヘルパの CHMAP[id][3]・kei(id) が落ちないように）。基準価格はLv1相当の目安・効果配列は空（agg等はinv/equippedのみ走査＝[持]は無視）。
-Object.keys(HELD).forEach(id=>{ const h=HELD[id]; CHMAP[id]=[id,h.name,h.kei, h.price(1), "", []]; });
-const KEI={"爆":{t:"爆",c:"#ff7a7a"},"条":{t:"条",c:"#c9a0ff"},"狩":{t:"狩",c:"#ffd24a"},"回":{t:"回",c:"#7dff8a"},"保":{t:"保",c:"#8ecbff"},"跳":{t:"跳",c:"#ffa64a"},"持":{t:"持",c:"#7fd4ff"},"抗":{t:"抗",c:"#9ff3e8"}};   // v0.45 抗（対減衰）＝視認性の良いティール系【仮】
-function kei(id){ return KEI[CHMAP[id][2]]||KEI["爆"]; }
-const priceOf=(id,S)=> CHMAP[id][3]*kneePow(1.05,S,PRICE_LIN);   // 段で微増（v0.24膝折れ・延長費extendCostもここ経由で自動連動）
-function fxText(id,L){ const fx=CHMAP[id][5][(L||1)-1]; const pc=v=>Math.round(v*100)+'%';
-  if(id==='choju') return '自身の寿命が長い('+lifeOf('choju')+'ターン)＋強化するたび装備中の他アイテムの寿命+'+fx.lifeOnEnh+'（自身は回復しない・元の寿命まで・延命用途）';   // v0.50 自己回復廃止＋寿命表記を実値に
-  if(id==='amp') return '爆発値 ×'+fx.mult+'＋2ターンに1回モチベ+1';
-  if(id==='bigaku') return '爆発値 ×'+fx.mult+'（超短命2ターン＝買い直し前提の逆張り火力）';
-  if(id==='hero') return '倉庫から任意使用：使った強化1回だけ爆発値 ×'+fx.mult+'（装備不要・一度使えば燃え尽きる＝買い直しのみ）';   // v0.49 倉庫アイテム化
-  if(fx.decayRelief!=null) return '減衰（武器の抵抗）を'+pc(fx.decayRelief)+'やわらげる（火力は上がらない守りの札）';
-  if(fx.feverRelief!=null) return '限界突破到達時、減衰を'+pc(fx.feverRelief)+'やわらげる（積み上げは報われる）';
-  if(fx.comboRelief!=null) return '連続成功1回ごとに減衰-'+pc(fx.comboRelief)+'（上限'+Math.round((KOU_COMBO_CAP_LV[(L||1)-1]||KOU_COMBO_CAP)*100)+'%・失敗で消える勢い）';   // v0.65 上限表示をLv連動に
-  if(fx.migakiRelief!=null) return '能動：クロンを燃やして今回の減衰を'+pc(fx.migakiRelief)+'やわらげる（率を買う）';
-  if(fx.condTurn3!=null) return 'ターンが3の倍数で爆発値×'+fx.condTurn3;
-  if(fx.condLowMotiv!=null) return 'モチベ3以下で爆発値×'+fx.condLowMotiv+'（崖っぷちで輝く）';
-  if(fx.condFullMotiv!=null) return 'モチベ満タンで爆発値×'+fx.condFullMotiv+'（一発勝負）';
-  if(fx.condEvenMotiv!=null) return 'モチベが偶数のとき爆発値×'+fx.condEvenMotiv;
-  if(fx.condEvenStage!=null) return '段が奇数のとき爆発値×'+fx.condEvenStage;
-  if(fx.condRichSilver!=null) return 'シルバーが'+((typeof g!=='undefined'&&g)?fmtOku(incomeOku(g.stage)*3)+'以上':'狩り収入の3倍以上')+'で爆発値×'+fx.condRichSilver;
-  if(fx.condRichClone!=null) return 'クロンを'+((typeof g!=='undefined'&&g)?Math.max(20,cloneNeed(g.stage)*5)+'個以上':'保護必要数×5個以上')+'持つと爆発値×'+fx.condRichClone;
-  if(fx.condCombo5!=null) return 'コンボが5の倍数のとき爆発値×'+fx.condCombo5;
-  if(fx.condGradeX!=null) return 'グレードのⅩ段（10の倍数）で爆発値×'+fx.condGradeX+'（ボスの本気）';
-  if(fx.lucky7!=null) return '1/7の確率で今回の強化を成功確定（低確率の救済）';
-  if(fx.luckFill!=null) return '失敗するたびゲージ+'+fx.luckFill+'（100で次の1回を成功確定＝保証弁）';
-  if(fx.stackRateBonus!=null) return '失敗スタックが厚いとき成功率+'+pc(fx.stackRateBonus)+'（執念）';
-  if(fx.feverRecov!=null) return '限界突破成功のたびモチベ+'+fx.feverRecov;
-  if(fx.failRelief!=null) return '失敗時のモチベ減を'+fx.failRelief+'軽減';
-  if(fx.overRecov!=null) return '爆発値が限界突破の壁を超えた余剰ぶんモチベ回復（盛るほど回復大）＝トレードオフでこの強化のオーバーキル押し返し(⚡天井の押し返し)を放棄';
-  if(fx.selfHarmRecov!=null) return '強化するたびモチベ+'+fx.selfHarmRecov+'（代わりに武器耐久を余分に-'+SELFHARM_DUR+'＝命を削る）';
-  if(fx.bakuchiRate!=null) return '能動：強化フェーズでクロンを払ってモチベ回復（モチベ1につきクロン'+fx.bakuchiRate+'・単価は高め・保護を諦めてモチベを買う博打）';
-  if(fx.turn4Life!=null) return '4の倍数ターンで装備中の全アイテム寿命+'+fx.turn4Life;
-  if(fx.cloneRefundP!=null) return '保護して成功すると、使ったクロンの'+pc(fx.cloneRefundP)+'が戻る';
-  if(fx.stackKeep!=null) return '成功しても失敗スタックが'+pc(fx.stackKeep)+'残る（スタック維持）';
-  if(fx.mult!=null) return '爆発値 ×'+fx.mult;
-  if(fx.colMult!=null) return '装備数ぶん 爆発値×'+fx.colMult+'（集めるほど爆発）';
-  if(fx.ijiShield!=null) return '能動：モチベ-3を払い、次の強化で武器の抵抗（減衰）を'+pc(fx.ijiShield)+'無効化';
-  if(fx.allinMult!=null) return '能動：全シルバーを使って爆発値×'+fx.allinMult;
-  if(fx.maxUp!=null) return '装備してから強化が連続6回成功するごとにモチベ最大値+'+fx.maxUp;
-  if(fx.haisuiMult!=null) return '強化時にモチベ-'+fx.haisuiCost+'で爆発値×'+fx.haisuiMult+'（能動）';
-  if(fx.condAfterFail!=null) return '直前が失敗なら次の爆発値×'+fx.condAfterFail;
-  if(fx.condMotiv7!=null) return 'モチベちょうど7で爆発値×'+fx.condMotiv7;
-  if(fx.condTurn7!=null) return 'ターンが7の倍数で爆発値×'+fx.condTurn7;
-  if(fx.perCharm!=null) return '装備1個ごとに爆発値+'+pc(fx.perCharm);
-  if(fx.perCombo!=null) return 'コンボ1ごとに爆発値+'+pc(fx.perCombo);
-  if(fx.perClone!=null) return 'クロン1個ごとに爆発値+'+pc(fx.perClone)+'（対象は最大'+CLV_CAP[(L||1)-1]+'個）';
-  if(fx.snowball!=null) return '成功のたび爆発値+'+pc(fx.snowball)+'（永続・倍率上限×'+SNOW_CAP[(L||1)-1]+'）';
-  if(fx.perSilver!=null) return 'シルバー'+fx.perSilver+'億ごとに爆発値+50%（最大'+HSO_NCAP[(L||1)-1]+'口）';
-  if(fx.jackpot!=null) return '1/7で大当たり＝爆発値×'+fx.jackpot+'（外れ等倍）';
-  if(fx.allin!=null) return '全シルバーを賭け'+fx.allin+'億ごとに爆発値×2';
-  if(fx.stagemod!=null) return '段が'+fx.stagemod+'の倍数で爆発値×'+fx.smx;
-  if(fx.income!=null) return '狩りのシルバー収入+'+pc(fx.income)+'（装備不要・倉庫から狩りのたびに使うか選ぶ／使うと寿命-1）';
-  if(fx.restBonus!=null) return '休息（休む）の回復量+'+fx.restBonus+'（装備不要・休息をとるたびに使うか選ぶ／使うと寿命-1）';   // v0.65 休息の達人
-  if(fx.comboRecovBase!=null) return '強化成功のたびモチベ+'+fx.comboRecovBase+'＋コンボ/'+RECA_COMBO_DIV+'切り捨て（連続成功で回復量UP・失敗でコンボが0に戻ると増分もリセット）';
-  if(fx.bonusP!=null) return '強化成功のたび'+pc(fx.bonusP)+'で段+1（限界突破中は+2）';
-  if(fx.cloneSaveP!=null) return '保護に必要なクロン-'+pc(fx.cloneSaveP);
-  return '';
-}
+// ---- 減衰・天井（v0.65から流用。数値は同一【仮】） ----
+const DECAY_S0=0, DECAY_R=0.065;
+const decayD=()=>{ const prog=g.stage+100*((g.cycle||1)-1); return 1/(1+DECAY_R*Math.max(0,prog-DECAY_S0)); };
+const CEIL_ON=true, CEIL_SLOPE=0.12, CEIL_MIN=0.50;
+const OK_BETA=1.5, OK_CAP=5, OK_TH=3;
+const CAP_RATE=0.99;
+const STACK_FRAC=0.5;                 // 失敗スタック：壁×この割合が貯まる
 
-// ===== セーブ（自己ベスト・家名）※localStorage。sim等で無くても安全 =====
-function lsGet(k){ try{ return (typeof localStorage!=="undefined")?localStorage.getItem(k):null; }catch(e){ return null; } }
-function lsSet(k,v){ try{ if(typeof localStorage!=="undefined") localStorage.setItem(k,v); }catch(e){} }
-function lsDel(k){ try{ if(typeof localStorage!=="undefined") localStorage.removeItem(k); }catch(e){} }
-// ===== v0.60 ラン途中セーブ（社長要望「前回状態のまま開かせたい」＝スマホのタブ破棄・リロード対策）=====
-// 行動のたび自動保存（render経由）。結果確定後の状態しか保存しない＝「失敗→リロードでやり直し」のセーブ悪用は不可。
-// ゲームオーバーで削除。タイトルに「▶続きから」。旧版セーブは新規デフォルトにマージして読む（無い項目は初期値）。
-const SAVE_KEY="kyoka_save";
-const SAVE_VER="v0.65";   // セーブに記録する版（情報用＝復元自体はマージ＋掃除で版またぎ対応）
-function saveGame(){ try{
-  if(typeof localStorage==="undefined") return;   // sim/bot環境ではstringifyごとスキップ（性能）
-  if(!g || g.ended || g._animating || g._deferAdvance || g.phase==="intro") return;
-  lsSet(SAVE_KEY, JSON.stringify({v:SAVE_VER, g:g, log:PLAYLOG}));
-}catch(e){} }
-function loadSaveInfo(){ try{ const s=JSON.parse(lsGet(SAVE_KEY)||"null"); return (s&&s.g&&!s.g.ended)?s:null; }catch(e){ return null; } }
-function resumeGame(){ const s=loadSaveInfo(); if(!s){ newGame(); return; }
-  const oldVer=s.v||"旧版";
-  Object.assign(g, s.g);   // newGame済みのデフォルトに上書きマージ＝版が変わって増えた項目は初期値で補完・ルール（定数/式）は常に新版
-  PLAYLOG=s.log||[];
-  // v0.60 版またぎの掃除：廃止アイテムを除去・上限を現行仕様にクランプ（エラーで詰むより多少消えて続行に倒す）
-  let cleaned=0;
-  g.inv=(g.inv||[]).filter(it=>{ const ok=it&&CHMAP[it.c]; if(!ok)cleaned++; return ok; });
-  g.equipped=(g.equipped||[]).filter(u=>!!invById(u));
-  g.kept=(g.kept||[]).filter(id=>!!CHMAP[id]);
-  g.shop=(g.shop||[]).map(id=>(id&&(CHMAP[id]||HELD[id]))?id:null);
-  g.slots=EQUIP_SLOTS;
-  g.costCap=Math.min(COST_CAP_MAX, Math.max(COST_CAP_BASE, g.costCap||COST_CAP_BASE));
-  while(costUsed()>g.costCap && g.equipped.length){ g.equipped.pop(); cleaned++; }   // コスト表変更で超過→溢れた分は倉庫へ
-  delete g.weaponDur; delete g.maxDur;   // v0.64 別バー武器耐久は廃止（既存durに一本化）。旧セーブに残っていても無害化
-  if(g.dur==null || isNaN(g.dur) || g.dur<=8) g.dur=DUR_START;   // v0.64 旧版セーブ（8スケールの保護耐久）は新命バー(100)へ満タン補完＝near-death誤判定を防ぐ
-  if(g.memRepair==null) g.memRepair=0;
-  delete g.drinks; delete g.drankThisTurn;   // v0.63 赤POTは廃止（旧セーブに残っていても無害化）
-  g._animating=false; g._deferAdvance=false; g._animTimers=[]; g.phase="prep";
-  render(); setMsg("💾 前回の続きから再開した。"+(oldVer!==SAVE_VER?"（"+oldVer+"のセーブを引き継ぎ"+(cleaned?"・一部アイテムは仕様変更で整理":"")+"）":"")); showPrep();
-}
+// ---- コアリソース ----
+const DUR_START=100, DUR_LOSS=10;
+const SP_START=5, STAGE_START=5;
+// v0.71 無敵感対策：granular化で火力(叫び10+書5＝×最大約13.8)が伸びるため、EX_BASE_MULTを4→3に締める（詳細は報告）【仮】
+const EX_BASE_MULT=3;
+const COMBO_FACTOR_PER=0.02, COMBO_FACTOR_CAP_COUNT=15;   // 連続成功のわずかな爆発値ボーナス（任意演出）
+const KOU_TOTAL_CAP=0.40;             // 減衰軽減の総上限（v0.71は軽減系ノードを廃したので実質未使用＝式構造の保持用）【仮】
+const KAJIBA_TH=0.30;                 // 火事場：耐久<=最大の30%で発動
+// v0.71 段階SP獲得（社長指示）：クリアした段のローマ数字位で獲得量が変わる（Ⅹ＝ボスで+3・Ⅸで+2・他+1）
+const SP_GAIN_NORMAL=1, SP_GAIN_IX=2, SP_GAIN_X=3;
+// root（ブラックストーン）の基礎効果
+const ROOT_FIRE_BASE=1.15, ROOT_RATE_BONUS=0.02;
+
+// ---- スキルツリー定義（v0.71 本格版：req/reqRank＋rank線形補間 start→end・ノード別SPコスト） ----
+// 効果値 val(r)=start+(end-start)*(r-1)/(maxRank-1)（maxRank=1なら常にstart・r=0＝未取得は効果なし）。
+// req のノードが rank>=reqRank でなければ開けない（root＝req無し）。名称・数値は全て【仮】＝社長指定どおり。
+const TREE=[
+ {id:'root', branch:'根', name:'ブラックストーン', maxRank:1, cost:1, req:null, reqRank:0, start:0, end:0,
+   desc:(r,v)=>'火力の基礎倍率 ×'+ROOT_FIRE_BASE+' かつ 成功率+'+Math.round(ROOT_RATE_BONUS*100)+'%。すべての系統の入口を開放する'},
+ // 強化系チェーン
+ {id:'voice', branch:'強化系', name:'ヴォルクスの叫び', maxRank:10, cost:2, req:'root', reqRank:1, start:1.2, end:3.0,
+   desc:(r,v)=>'爆発値の火力倍率 ×'+v.toFixed(2)+'（Lv1 ×1.2 → Lv10 ×3.0）'},
+ {id:'book', branch:'強化系', name:'ヴォルクスの書', maxRank:5, cost:3, req:'voice', reqRank:2, start:1.5, end:4.0,
+   desc:(r,v)=>'ヴォルクスの叫びの火力倍率にさらに ×'+v.toFixed(2)+' を乗算（Lv1 ×1.5 → Lv5 ×4.0）'},
+ // 保険系チェーン
+ {id:'ganjou', branch:'保険系', name:'頑丈な柄', maxRank:5, cost:2, req:'root', reqRank:1, start:10, end:50,
+   desc:(r,v)=>'武器耐久の最大値+'+Math.round(v)+'（Lv1+10 → Lv5+50・開いた瞬間 現耐久も同差分+）'},
+ {id:'kuron', branch:'保険系', name:'クロン石', maxRank:3, cost:3, req:'ganjou', reqRank:2, start:0.10, end:0.30,
+   desc:(r,v)=>'失敗時 '+Math.round(v*100)+'% の確率で耐久減少を無効化＝帳消し（Lv1 10% → Lv3 30%）'},
+ // 回復系チェーン
+ {id:'memory', branch:'回復系', name:'メモリ断片', maxRank:5, cost:2, req:'root', reqRank:1, start:1, end:5,
+   desc:(r,v)=>'強化に成功するたび耐久+'+Math.round(v)+'（Lv1+1 → Lv5+5）'},
+ {id:'elixir', branch:'回復系', name:'生命の秘薬', maxRank:3, cost:3, req:'memory', reqRank:2, start:3, end:9,
+   desc:(r,v)=>'限界突破に成功するたび耐久+'+Math.round(v)+'（Lv1+3 → Lv3+9）'},
+ // ラッキー系チェーン
+ {id:'megami', branch:'ラッキー系', name:'女神の加護', maxRank:5, cost:2, req:'root', reqRank:1, start:0.02, end:0.10,
+   desc:(r,v)=>'強化のたび '+Math.round(v*100)+'% の確率で成功確定（Lv1 2% → Lv5 10%）'},
+ {id:'kouun', branch:'ラッキー系', name:'幸運の積立', maxRank:3, cost:3, req:'megami', reqRank:2, start:5, end:3,
+   desc:(r,v)=>'失敗でゲージ+1・満タン（'+Math.round(v)+'）で次の強化は成功確定（Lv1で5 → Lv3で3）'},
+ // 条件系チェーン
+ {id:'kajiba', branch:'条件系', name:'火事場の馬鹿力', maxRank:5, cost:2, req:'root', reqRank:1, start:0.02, end:0.10,
+   desc:(r,v)=>'耐久が最大の'+Math.round(KAJIBA_TH*100)+'%以下のとき成功率+'+Math.round(v*100)+'%（Lv1+2% → Lv5+10%）'},
+ {id:'haisui', branch:'条件系', name:'背水の一撃', maxRank:3, cost:2, req:'kajiba', reqRank:2, start:1.5, end:2.5,
+   desc:(r,v)=>'耐久が満タンのとき その強化の爆発値 ×'+v.toFixed(2)+'（Lv1 ×1.5 → Lv3 ×2.5）'},
+];
+const TREE_MAP={}; TREE.forEach(n=>TREE_MAP[n.id]=n);
+const BRANCHES=['強化系','保険系','回復系','ラッキー系','条件系'];   // 表示は根の下にこの順で枝を並べる
 
 // ===== 状態 =====
 let g;
 function newGame(){
-  g={ stage:1, cycle:1, silver:0, motiv:MOTIV_START, motivMax:MOTIV_MAX, _kks:"", clone:0, dur:DUR_START, memRepair:0, combo:0,
-      turn:0, score:0, maxStage:1, maxCycle:1, inv:[], equipped:[], levels:{}, slots:EQUIP_SLOTS, costCap:COST_CAP_BASE, shop:[], kept:[], _uid:0,
-      snow:1.0, stack:0, health:0, luckGauge:0, _migaki:false, _useHero:false, _useHun:false, lastFailed:false, actedThisTurn:false, _haisui:null, _iji:false, _allin:false, _ijiShield:0, kksCount:0, elian:false, elianUsed:false, feverMania:0, _feverArmed:0, wabiOffer:false, wabiTaken:0, invSort:{key:'kei',dir:1}, _deathReason:null,
-      name:(lsGet("kyoka_name")||"名無し"), phase:"intro", ended:false };   // v0.63 赤POT(drinks/drankThisTurn)は廃止・memRepair/_deathReasonを追加／v0.64 武器耐久は既存durに一本化（別バーweaponDurは廃止）
-  if(typeof _plogSentThisRun!=='undefined') _plogSentThisRun=false;   // v0.58 送信フラグはラン単位でリセット
+  g={ stage:STAGE_START, cycle:1, maxCycle:1, sp:SP_START, dur:DUR_START, combo:0, stack:0, luckGauge:0,
+      turn:0, score:0, maxStage:STAGE_START, lastFailed:false, ended:false, phase:'intro',
+      succCount:0, failCount:0, feverCount:0,   // v0.71 plog用カウンタ
+      skills:{}, _animating:false, _deferAdvance:false, _animTimers:[] };
+  TREE.forEach(n=>g.skills[n.id]=0);
+  if(typeof _plogSentThisRun!=='undefined') _plogSentThisRun=false;   // v0.71 送信フラグはラン単位でリセット
   render(); showIntro();
 }
-// ===== イントロ／チュートリアル =====
-function showIntro(){ g.phase="intro"; render();
-  setMsg("お前は“強化”に取り憑かれた狂人だ。\n研げば研ぐほど脳が痺れる——さあ、始めよう。");
-  let s='<div class="center" style="color:#ffd24a;font-size:15px;margin-bottom:8px">◆ 遊び方 ◆</div>';
-  s+='<div style="font-size:13px;line-height:1.8">'
-    +'・1ターンは【準備】→【強化】の流れ。<br>'
-    +'・<b>準備</b>：<span style="color:#8dff9a">狩り</span>でシルバーを稼ぎ（モチベ-）、<span style="color:#8dff9a">商店</span>で装備の購入/Lv上げ・クロン・記録の欠片（耐久回復）。<br>'
-    +'・<b>装備</b>：買った装備は倉庫に貯まるが、効くのは装備した分だけ。<b>⚖強い装備ほどコストが重く、合計コスト'+COST_CAP_BASE+'以内でやりくり</b>する（上限は商店で拡張可）。何を積むかがビルドの核（🔴爆発/💰狩り/💚回復/🛡保険）。<br>'
-    +'・<b>Lv/寿命</b>：装備は<b>クロンでLv上げ</b>（効果が伸びる・Lvは永続）。装備中は寿命が減り0で破損（Lvは保持・シルバーで延長）。<br>'
-    +'・<span style="color:#8ecbff">🛡クロン</span>は<b>保護とLv上げの両方</b>に要る希少資源。商店でシルバーから購入して確保しろ。<br>'
-    +'・<b>強化</b>：装備の倍率で【<span style="color:#ffd24a">爆発値</span>】を高めるほど、<b>成功率もスコアも上がる</b>。<br>'
-    +'・<span style="color:#8ecbff">🛡保護</span>（クロン消費）＝失敗しても段は落ちない。<span style="color:#ff9">🎲生賭け</span>＝クロン不要だが失敗で1段ダウン＆モチベ大減。<br>'
-    +'・【<span style="color:#7dff8a">モチベ</span>】が0になると<b>“萎え落ち”＝そのランは終了</b>。狩り・失敗で減り、休み・成功や回復系の装備で戻る。<br>'
-    +'・【<span style="color:#ffca7a">⚔武器耐久</span>】は強化に<b>失敗するたび</b>減っていく命バー。0になると武器が砕けてラン終了（記憶の修復で回復）。<br>'
-    +'・最初の数段は<b>確定で成功</b>する。そこから先が本番だ。<b>どこまで生き残れるかはお前次第。</b>'
-    +'</div>';
-  const savedName=(lsGet("kyoka_name")||"").replace(/["<>]/g,""); const best=parseInt(lsGet("kyoka_best")||"0",10);
-  s+='<div class="center" style="margin-top:10px">家名 <input id="nameInput" maxlength="10" value="'+savedName+'" placeholder="例：脳汁" style="background:var(--panel);color:#fff;border:2px solid #fff;border-radius:4px;padding:4px 8px;font:inherit;width:150px;text-align:center"></div>';
-  if(best>0) s+='<div class="sub" style="color:#ffd24a">🏅 自己ベスト SCORE：'+best.toLocaleString()+'</div>';
-  s+='<div class="menu" style="margin-top:10px">';
-  { const sv=loadSaveInfo();   // v0.60 途中セーブがあれば「続きから」を先頭に
-    if(sv) s+=btnRaw("💾 続きから（"+stageName(sv.g.stage)+"・"+sv.g.turn+"ターン目・"+(sv.g.cycle>1?sv.g.cycle+"周目・":"")+"SCORE "+(sv.g.score||0).toLocaleString()+"）","resumeGame()"); }
-  s+=btnRaw("▶ はじめる","beginRun(false)");
-  s+=btnRaw("⏩ 助走をスキップして始める（経験者向け）","beginRun(true)");
-  s+='</div><div class="sub">スキップ＝確定成功の助走を飛ばし本番の段から開始。助走ぶんのスコアと資源（シルバー・クロン）は付与。</div>';
-  scr(s);
+
+// ===== スキルツリー参照・効果集計 =====
+function skR(id){ return (g.skills && g.skills[id]) || 0; }
+// v0.71 rank線形補間：val(r)=start+(end-start)*(r-1)/(maxRank-1)。r<=0＝未取得は0（効果なし）。
+function lerpVal(n, r){ if(r<=0) return 0; if(n.maxRank<=1) return n.start; return n.start + (n.end-n.start)*(r-1)/(n.maxRank-1); }
+function nodeVal(id){ const n=TREE_MAP[id]; if(!n) return 0; return lerpVal(n, skR(id)); }
+function maxDur(){ return DUR_START + Math.round(nodeVal('ganjou')); }
+function durLossEff(){ return DUR_LOSS; }   // v0.71 軽減ノードは廃止＝失敗時の耐久減は固定（帳消しはクロン石が別途無効化）
+function fireMult(){ let m = skR('root')>0 ? ROOT_FIRE_BASE : 1;   // root基礎 × 叫び倍率 × 書倍率（各未取得は×1）
+  if(skR('voice')>0) m *= nodeVal('voice');
+  if(skR('book')>0) m *= nodeVal('book');
+  return m; }
+function comboFactor(){ return 1 + COMBO_FACTOR_PER*Math.min(g.combo, COMBO_FACTOR_CAP_COUNT); }
+function decayReliefTotal(){ return 0; }   // v0.71 減衰軽減系ノード（抗/連撃）は廃止＝減衰は素のまま（式構造は保持）
+function reqMet(id){ const n=TREE_MAP[id]; if(!n) return false; if(!n.req) return true; return skR(n.req) >= (n.reqRank||1); }   // v0.71 前提ゲート：reqノードが rank>=reqRank か
+function canOpen(id){ const n=TREE_MAP[id]; if(!n) return false; return reqMet(id) && skR(id)<n.maxRank && g.sp>=n.cost; }
+function openNode(id){ if(!canOpen(id)) return;
+  const n=TREE_MAP[id];
+  const durBefore = (id==='ganjou') ? Math.round(nodeVal('ganjou')) : 0;   // v0.71 頑丈な柄：開いた瞬間 現耐久も最大値の増分だけ+
+  g.sp-=n.cost; g.skills[id]=(g.skills[id]||0)+1;
+  if(id==='ganjou') g.dur += (Math.round(nodeVal('ganjou')) - durBefore);
+  beep(700,.1); render(); if(g.phase==='tree') showTree();
 }
-function beginRun(skip){
-  const inp=document.getElementById("nameInput");
-  if(inp && typeof inp.value==="string" && inp.value.trim()) g.name=inp.value.trim().slice(0,10);
-  lsSet("kyoka_name", g.name);
-  if(skip){ g.stage=GUAR+1; g.combo=GUAR; g.score+=GUAR*100; g.maxStage=g.stage;
-    g.silver=SKIP_SILVER; g.clone=SKIP_CLONE; }   // 助走ぶんのスコア＋本来得られる中央値の資源を付与
-  rollShop();
-  setMsg("強化を始めろ。倍率を噛み合わせて【爆発値】を育て、行けるところまで駆け上がれ。");
+
+// ===== 爆発値・成功率（v0.65のK/FL/decayD/capEff/decayedRateEX/okPushPt/successRateEXの式を移植） =====
+function decayEffD(){ let d=decayD(); const rel=decayReliefTotal(); if(rel>0) d=Math.min(1, d+(1-d)*rel); return d; }
+function capEff(){ if(!CEIL_ON) return CAP_RATE;
+  const d=decayEffD(); const c=CAP_RATE - CEIL_SLOPE*(1-d) + okPushPt()/100;
+  return Math.max(CEIL_MIN, Math.min(CAP_RATE, c)); }
+function decayedRateEX(ex){ const d=decayEffD(); const Kv=K(g.stage,g.cycle);
+  const exd=100*Math.pow(Math.max(1,ex/100), d);
+  return Math.min(capEff(), exd/(exd+Kv)); }
+function okPushPt(){ const wall=FL(g.stage,g.cycle); if(wall<=0) return 0;
+  const raw=computeExRaw(); const r=raw/wall/OK_TH;
+  return r>1 ? Math.min(OK_CAP, OK_BETA*Math.log10(r)) : 0; }
+function computeExRaw(){
+  const Kv=K(g.stage,g.cycle);
+  let ex = Kv*EX_BASE_MULT*fireMult()*comboFactor() + (g.stack||0);
+  if(skR('haisui')>0 && g.dur>=maxDur()) ex*=nodeVal('haisui');   // v0.71 背水の一撃：耐久満タンでex×
+  return ex;
+}
+function computeEX(){ const raw=computeExRaw(); const wall=FL(g.stage,g.cycle);
+  return wall>0 ? Math.min(raw,wall) : raw; }
+function successRateEX(ex){
+  let rate=decayedRateEX(ex); const cap=capEff();
+  const p=okPushPt(); if(rate<cap && p>0) rate=Math.min(cap, rate+p/100);
+  if(skR('root')>0) rate=Math.min(cap, rate + ROOT_RATE_BONUS);   // v0.71 root（ブラックストーン）の成功率ボーナス
+  if(skR('kajiba')>0 && g.dur<=KAJIBA_TH*maxDur()) rate=Math.min(cap, rate + nodeVal('kajiba'));   // v0.71 火事場の馬鹿力
+  return Math.max(0, rate);
+}
+function stackGain(){ return Math.round(FL(g.stage,g.cycle)*STACK_FRAC); }
+
+// ===== 強化本体（sim/botはtryEnhを直接呼ぶ。UIはplayEnhance経由の演出→doRevealでtryEnh） =====
+function tryEnh(){
+  const ex=computeEX();
+  let rate=successRateEX(ex);
+  let forced=false;
+  if(skR('megami')>0 && Math.random() < nodeVal('megami')) forced=true;   // v0.71 女神の加護：確率で成功確定
+  if(!forced && skR('kouun')>0 && (g.luckGauge||0) >= nodeVal('kouun')) forced=true;   // v0.71 幸運の積立：ゲージ満タンで成功確定
+  const ok = forced || Math.random()<rate;
+  g._lastForced=forced; g._lastRate=rate; g._lastEx=ex;
+  if(ok) onSuccess(ex); else onFail(ex);
+  if(g.ended) return;
+  render();
+  if(checkDead()) return;
+  if(g._deferAdvance) return;
   startTurn();
 }
-
-// ===== 効果集計 =====
-// v0.8 効果スタック：同種は重ねる（加算系＝和／倍率系＝積）。装備は個体(inv内uid)で重複可。
-function agg(){
-  const a={multProd:1, perCharm:0, perCombo:0, perClone:0, snowball:0, perSilverUnits:[],
-    condAfterFail:1, condMotiv7:1, condTurn7:1, haisuiCost:0, haisuiMult:0,
-    jackpot:1, allinUnit:0, colPow:1, ijiShield:0, allinMult:0, maxUp:0, costumeCount:0, smMod:2, smX:1, durBonus:0,
-    income:0, comboRecovBase:0, cloneSaveP:0, bonusP:0, decayRelief:0, feverRelief:0, comboRelief:0, migakiRelief:0,
-    // v0.41 追加：条件×倍率（積・初期1）
-    condTurn3:1, condLowMotiv:1, condFullMotiv:1, condEvenMotiv:1, condEvenStage:1, condRichSilver:1, condRichClone:1, condCombo5:1, condGradeX:1,
-    // v0.41 追加：成功率・ゲージ・回復・跳ね・資源（和/最大・初期0）
-    lucky7:false, luckFill:0, stackRateBonus:0, feverRecov:0, failRelief:0, turn4Life:0, cloneRefundP:0, stackKeep:0, lifeOnEnh:0,
-    selfHarmRecov:0, restBonus:0};   // v0.49 combo3Jump（連鎖の跳ね）撤去／v0.63 motivRecov→comboRecovBase（A作り替え）・stage5Recov撤去（fushime廃止）・selfHarmRecov追加（C）／v0.65 restBonus追加（休息の達人・NOEQUIPのため実際の集約はkyukeiBonus()で直接参照）
-  g.equipped.forEach(u=>{ const it=invById(u); if(!it)return; const fx=CHMAP[it.c][5][levelOf(it.c)-1];  // v0.12 装備中の個体×そのLvの効果
-    if(fx.mult) a.multProd*=fx.mult;                // 常時倍率：積（重ねるほど積算）
-    if(fx.income) a.income+=fx.income;              // 💰狩り：収入UP（和）
-    if(fx.comboRecovBase) a.comboRecovBase+=fx.comboRecovBase;  // 💚回復（A）：成功時モチベ回復の基礎値（和・実際の加算はonSuccessでコンボ分を加算）
-    if(fx.cloneSaveP) a.cloneSaveP+=fx.cloneSaveP;  // 🛡保険：保護クロン%軽減（和）
-    if(fx.bonusP) a.bonusP+=fx.bonusP;              // 🎯段跳ね：成功時に段+1する確率（和・1種のみ）
-    if(fx.perCharm) a.perCharm+=fx.perCharm;        // ★スタック：和
-    if(fx.perCombo) a.perCombo+=fx.perCombo;        // ★スタック：和
-    if(fx.perClone) a.perClone+=fx.perClone;        // ★スタック：和
-    if(fx.snowball) a.snowball+=fx.snowball;        // ★スタック：和
-    if(fx.perSilver) a.perSilverUnits.push(fx.perSilver);  // ★各個体を積で適用（computeEXで）
-    if(fx.haisuiMult && fx.haisuiMult>a.haisuiMult){ a.haisuiMult=fx.haisuiMult; a.haisuiCost=fx.haisuiCost; }  // 背水：能動型・最も強い1枚を採用
-    if(fx.condAfterFail) a.condAfterFail*=fx.condAfterFail;// ★スタック：積
-    if(fx.condMotiv7) a.condMotiv7*=fx.condMotiv7;         // ★スタック：積
-    if(fx.condTurn7) a.condTurn7*=fx.condTurn7;            // ★スタック：積
-    if(fx.jackpot) a.jackpot=Math.max(a.jackpot,fx.jackpot);   // 未確定：重複ルール未定→当面は最大1つ（メモ参照）
-    if(fx.allin) a.allinUnit=a.allinUnit? Math.min(a.allinUnit,fx.allin):fx.allin;  // 簡略：最良1つ（賭けでシルバー0化のため重ねる意味薄）
-    if(fx.stagemod){ a.smMod=fx.stagemod; a.smX=fx.smx; }   // 倍数の理（1種）：段がN倍数で×smx
-    if(fx.colMult) a.colPow*=fx.colMult;                    // コレクター：装備数ぶん累乗（computeEXで colPow^装備数）
-    if(fx.ijiShield) a.ijiShield=Math.max(a.ijiShield,fx.ijiShield);   // 意地（能動・v0.42）：モチベ-3で発動→次の強化で武器の抵抗をLv%無効化
-    if(fx.allinMult) a.allinMult=Math.max(a.allinMult,fx.allinMult); // オールイン（能動）：全シルバーを使って爆発値×
-    if(fx.maxUp) a.maxUp+=fx.maxUp;   // カカシ放置：7連続成功ごとにモチベ最大値+（和・重複は将来のみ）
-    // v0.41 追加フラグ
-    if(fx.condTurn3) a.condTurn3*=fx.condTurn3;
-    if(fx.condLowMotiv) a.condLowMotiv*=fx.condLowMotiv;
-    if(fx.condFullMotiv) a.condFullMotiv*=fx.condFullMotiv;
-    if(fx.condEvenMotiv) a.condEvenMotiv*=fx.condEvenMotiv;
-    if(fx.condEvenStage) a.condEvenStage*=fx.condEvenStage;
-    if(fx.condRichSilver) a.condRichSilver*=fx.condRichSilver;
-    if(fx.condRichClone) a.condRichClone*=fx.condRichClone;
-    if(fx.condCombo5) a.condCombo5*=fx.condCombo5;
-    if(fx.condGradeX) a.condGradeX*=fx.condGradeX;
-    if(fx.lucky7) a.lucky7=true;
-    if(fx.luckFill) a.luckFill=Math.max(a.luckFill,fx.luckFill);
-    if(fx.stackRateBonus) a.stackRateBonus+=fx.stackRateBonus;
-    if(fx.feverRecov) a.feverRecov+=fx.feverRecov;
-    if(fx.failRelief) a.failRelief+=fx.failRelief;
-    if(fx.selfHarmRecov) a.selfHarmRecov+=fx.selfHarmRecov;   // v0.63 C 身を削る強化：強化のたびモチベ回復（和）
-    if(fx.turn4Life) a.turn4Life=Math.max(a.turn4Life,fx.turn4Life);
-    if(fx.cloneRefundP) a.cloneRefundP=Math.max(a.cloneRefundP,fx.cloneRefundP);
-    if(fx.stackKeep) a.stackKeep=Math.max(a.stackKeep,fx.stackKeep);
-    if(fx.lifeOnEnh) a.lifeOnEnh+=fx.lifeOnEnh;   // v0.42 長寿：強化ごとに装備の寿命+（和）
-    // v0.45 抗（対減衰）
-    if(fx.decayRelief) a.decayRelief+=fx.decayRelief;       // 研磨剤：和（agg合算）
-    if(fx.feverRelief) a.feverRelief+=fx.feverRelief;       // FEVERの威光：和
-    if(fx.comboRelief) a.comboRelief+=fx.comboRelief;       // 勢い：和（combo比例の計算はdecayReliefTotalで）
-    if(fx.migakiRelief) a.migakiRelief=Math.max(a.migakiRelief,fx.migakiRelief);   // 磨きの儀：能動＝最強1枚を採用（背水と同様）
-  });
-  return a;
-}
-function maxDur(){ return DUR_START+agg().durBonus; }   // v0.64 命バーの上限＝100（durBonusは将来枠・現状0）
-function cloneCost(){ return cloneBase; }
-function income(S){ return incomeOku(S)*(1+agg().income); }          // 💰狩り装備で収入UP
-function needClone(S){ const b=cloneNeed(S); if(b<=0)return 0; const p=Math.min(0.8,agg().cloneSaveP); return Math.max(1,Math.ceil(b*(1-p))); }  // 🛡保険で%軽減（最低1）
-
-// ===== 爆発値の計算 =====
-// forExec=true なら確率(ジャックポット)・賭け(オールイン)を確定させる（副作用あり）
-function computeEX(forExec){
-  const a=agg(); let ex=100;
-  ex*=a.multProd;
-  if(g._useHero && heroItem()) ex*=heroMult();   // v0.49 スーパーヒーロー：倉庫から任意使用（この強化1回・使うと燃え尽きる）
-  ex*=(1+a.perCharm*g.equipped.length);
-  if(a.colPow>1) ex*=Math.pow(a.colPow, g.equipped.length);   // コレクター：装備数ぶん累乗（集めるほど爆発）
-  ex*=(1+a.perCombo*g.combo);
-  if(a.perClone>0){ const lv=levelOf('clv');                  // v0.24 上限：クロン愛の対象クロン数はLvでキャップ（所持比例の二重指数を解体）
-    ex*=(1+a.perClone*Math.min(g.clone, CLV_CAP[lv-1])); }
-  if(a.perSilverUnits.length){ const lv=levelOf('hso');       // v0.24 上限：へそくりの口数はLvでキャップ
-    a.perSilverUnits.forEach(unit=> ex*=(1+0.5*Math.min(Math.floor(g.silver/unit), HSO_NCAP[lv-1]))); }
-  let snow=g.snow; if(a.snowball>0){ const lv=levelOf('snw'); snow=Math.min(snow, SNOW_CAP[lv-1]); }   // v0.24 上限：筋トレ倍率はLvでキャップ
-  ex*=snow;
-  if(g._haisui) ex*=g._haisui.mult;   // 背水（能動）：焚いている間だけ倍率（モチベ消費はtryEnhで）
-  if(g._allin && a.allinMult>1 && g.silver>0) ex*=a.allinMult;   // オールイン（能動）：全シルバーを使って爆発値×（消費はforExecで）
-  if(g.lastFailed) ex*=a.condAfterFail;
-  if(g.motiv===7) ex*=a.condMotiv7;   // v0.8 モチベ整数化で「ちょうど7」が確実に判定できる
-  if(g.turn%7===0) ex*=a.condTurn7;
-  if(g.stage%a.smMod===0) ex*=a.smX;   // 倍数の理（未装備なら×1）
-  // v0.41 条件発動の×倍率（未装備なら×1）
-  if(g.turn%3===0) ex*=a.condTurn3;
-  if(g.motiv<=3) ex*=a.condLowMotiv;
-  if(g.motiv>=g.motivMax) ex*=a.condFullMotiv;
-  if(g.motiv%2===0) ex*=a.condEvenMotiv;
-  if(g.stage%2===1) ex*=a.condEvenStage;   // v0.43 奇数の福：奇数段で発動
-  if(g.silver>=incomeOku(g.stage)*3) ex*=a.condRichSilver;
-  if(g.clone>=Math.max(20,cloneNeed(g.stage)*5)) ex*=a.condRichClone;
-  if(g.combo>0 && g.combo%5===0) ex*=a.condCombo5;
-  if(g.stage%10===0) ex*=a.condGradeX;
-  if(g.stack>0) ex+=g.stack;   // v0.40 失敗スタック：貯めた爆発値を加算（成功で0リセット）
-  g._jackpotHit=false; g._bet=0;
-  if(forExec){
-    if(a.jackpot>1 && Math.random()<1/7){ ex*=a.jackpot; g._jackpotHit=true; }
-    if(g._allin && a.allinMult>1 && g.silver>0){ g._bet=g.silver; g.silver=0; }   // オールイン：賭けたシルバーは消える（倍率はexで既に反映）
+function onSuccess(ex){
+  const wall=FL(g.stage,g.cycle);
+  const capped = wall>0 && ex>=wall;
+  const ri=(g.stage-1)%10;   // v0.71 クリアした段（増加前）のローマ数字位＝SP獲得量を決める
+  const spGain = ri===9 ? SP_GAIN_X : (ri===8 ? SP_GAIN_IX : SP_GAIN_NORMAL);   // Ⅹ(ri9)+3・Ⅸ(ri8)+2・他+1
+  g.stack=0; g.luckGauge=0; g.lastFailed=false;
+  g.stage++; g.combo++; g.sp+=spGain;
+  g.succCount=(g.succCount||0)+1; if(capped) g.feverCount=(g.feverCount||0)+1;   // v0.71 plog用カウンタ
+  g.score += Math.round(ex);
+  if(skR('memory')>0) g.dur=Math.min(maxDur(), g.dur+Math.round(nodeVal('memory')));   // v0.71 メモリ断片：成功でdur+
+  if(capped && skR('elixir')>0) g.dur=Math.min(maxDur(), g.dur+Math.round(nodeVal('elixir')));   // v0.71 生命の秘薬：限界突破でdur+
+  g.maxStage=Math.max(g.maxStage, g.stage+(g.cycle-1)*100);
+  let extra='';
+  if(g.stage>100){
+    g.cycle++; g.maxCycle=Math.max(g.maxCycle,g.cycle); g.stage=1; g.combo=0; g.stack=0; g.luckGauge=0;
+    extra="\n🎊 "+g.cycle+"周目へ突入！（壁がさらに硬くなる）";
   }
-  return Math.min(ex, FL(g.stage,g.cycle));   // FEVERラインでカンスト
+  setMsg((capped?"⚡💥 限界突破成功ッ!! ":"✨ 成功！ ")+stageName(g.stage)+" 到達！ 爆発値+"+Math.round(ex).toLocaleString()+"　SP+"+spGain+"（残"+g.sp+"）"+extra);
 }
-// 表示用：爆発値の積み上げ内訳
-function exBreakdown(){
-  const a=agg(); const rows=[]; let ex=100; rows.push(["基礎",100]);
-  const step=(label,mult)=>{ if(mult && mult!==1){ ex*=mult; rows.push([label,Math.round(ex)]); } };
-  step("常時倍率 ×"+a.multProd.toFixed(2), a.multProd);
-  if(g._useHero && heroItem()) step("🦸 スーパーヒーロー ×"+heroMult(), heroMult());   // v0.49 任意使用（この強化1回）
-  if(a.perCharm) step("蒐集(装備"+g.equipped.length+") ×"+(1+a.perCharm*g.equipped.length).toFixed(2), 1+a.perCharm*g.equipped.length);
-  if(a.colPow>1){ const m=Math.pow(a.colPow,g.equipped.length); step("蒐集(×"+a.colPow+"×装備"+g.equipped.length+"個) ×"+Math.round(m), m); }
-  if(g._allin && g.silver>0 && a.allinMult>1) step("💰オールイン(全額) ×"+a.allinMult, a.allinMult);
-  if(a.perCombo) step("連撃(コンボ"+g.combo+") ×"+(1+a.perCombo*g.combo).toFixed(2), 1+a.perCombo*g.combo);
-  if(a.perClone>0){ const lv=levelOf('clv'); const n=Math.min(g.clone,CLV_CAP[lv-1]);   // v0.24 上限反映（computeEXと同じ値を見せる）
-    step("備蓄(クロン"+n+(g.clone>n?"/上限":"")+") ×"+(1+a.perClone*n).toFixed(2), 1+a.perClone*n); }
-  if(a.perSilverUnits.length){ const lv=levelOf('hso'); let m=1;
-    a.perSilverUnits.forEach(unit=> m*=(1+0.5*Math.min(Math.floor(g.silver/unit),HSO_NCAP[lv-1])));
-    if(m>1) step("蓄財 ×"+m.toFixed(2), m); }
-  { let snow=g.snow; if(a.snowball>0){ const lv=levelOf('snw'); snow=Math.min(snow,SNOW_CAP[lv-1]); }
-    if(snow!==1) step("成長ボーナス ×"+snow.toFixed(2), snow); }
-  if(g._haisui) step("🔥背水(モチベ-"+g._haisui.cost+") ×"+g._haisui.mult, g._haisui.mult);
-  if(g.lastFailed && a.condAfterFail>1) step("雪辱(直前失敗) ×"+a.condAfterFail, a.condAfterFail);
-  if(g.motiv===7 && a.condMotiv7>1) step("★7ちょうど ×"+a.condMotiv7, a.condMotiv7);
-  if(g.turn%7===0 && a.condTurn7>1) step("給料日 ×"+a.condTurn7, a.condTurn7);
-  if(g.stage%a.smMod===0 && a.smX>1) step(a.smMod+"の倍数 ×"+a.smX, a.smX);
-  // v0.41 条件発動の×倍率（computeEXと同じ条件・演出の整合のため）
-  if(g.turn%3===0 && a.condTurn3>1) step("三連の刻 ×"+a.condTurn3, a.condTurn3);
-  if(g.motiv<=3 && a.condLowMotiv>1) step("火事場 ×"+a.condLowMotiv, a.condLowMotiv);
-  if(g.motiv>=g.motivMax && a.condFullMotiv>1) step("一発勝負 ×"+a.condFullMotiv, a.condFullMotiv);
-  if(g.motiv%2===0 && a.condEvenMotiv>1) step("倍賭け ×"+a.condEvenMotiv, a.condEvenMotiv);
-  if(g.stage%2===1 && a.condEvenStage>1) step("奇数の福 ×"+a.condEvenStage, a.condEvenStage);
-  if(g.silver>=incomeOku(g.stage)*3 && a.condRichSilver>1) step("大金の余裕 ×"+a.condRichSilver, a.condRichSilver);
-  if(g.clone>=Math.max(20,cloneNeed(g.stage)*5) && a.condRichClone>1) step("クロン富豪 ×"+a.condRichClone, a.condRichClone);
-  if(g.combo>0 && g.combo%5===0 && a.condCombo5>1) step("連撃ボーナス ×"+a.condCombo5, a.condCombo5);
-  if(g.stage%10===0 && a.condGradeX>1) step("ボスの本気 ×"+a.condGradeX, a.condGradeX);
-  if(g.stack>0){ ex+=g.stack; rows.push(["🔥 失敗スタック +"+Math.round(g.stack).toLocaleString(), Math.round(ex)]); }   // v0.40 加算（失敗の蓄積を爆発値へ）
-  const cap=FL(g.stage,g.cycle);
-  const capped=ex>=cap;
-  return { rows, ex:Math.min(ex,cap), cap, capped, jackpot:a.jackpot, allin:a.allinMult };
+function onFail(ex){
+  g.stack += stackGain();
+  g.combo=0; g.lastFailed=true;
+  g.failCount=(g.failCount||0)+1;   // v0.71 plog用カウンタ
+  if(skR('kouun')>0) g.luckGauge=(g.luckGauge||0)+1;
+  let loss=durLossEff(); let negated=false;
+  if(skR('kuron')>0 && Math.random() < nodeVal('kuron')){ loss=0; negated=true; }   // v0.71 クロン石：確率で耐久減を帳消し
+  g.dur=Math.max(0, g.dur-loss);
+  setMsg("💥 失敗…… 武器耐久-"+loss+(negated?"（クロン石で帳消し！）":"")+"（"+Math.max(0,g.dur)+"/"+maxDur()+"）。段は維持＝"+stageName(g.stage)+"に再挑戦。");
 }
-// v0.24 ① 段階減衰：成功率だけ減衰後EXで計算（FEVER判定・スコア・盛れゲージは従来のEXのまま）
-// ・FEVERマニア発動中は減衰を無視して真の99%（切り札の保証・社長決定【仮】）
-// ・意地シールド（前の強化でモチベ-3を払って発動）＝武器の抵抗（減衰）をLv%無効化して挑める
-// v0.25 押し返し前の素の減衰値（演出でもこの値まで下げてから叩き込みで押し返す）
-// v0.45 抗（対減衰）：常時系reliefの合算（各ソースの和→0〜1にclamp）。意地(_ijiShield)は別枠＝decayedRateEXで先に適用
-function decayReliefTotal(ex){ const a=agg(); let r=0;
-  if(a.decayRelief>0) r+=a.decayRelief;                                   // 研磨剤（常時）
-  if(a.feverRelief>0 && ex>=FL(g.stage,g.cycle)) r+=a.feverRelief;        // FEVERの威光：この強化でFEVER到達時のみ（FMN強制FEVERはexがFLまで上がるので自動で有効）
-  if(a.comboRelief>0){ const _icap=KOU_COMBO_CAP_LV[levelOf('ikioi')-1]||KOU_COMBO_CAP; r+=Math.min(_icap, a.comboRelief*g.combo); }  // 勢い：連続成功比例（v0.49 上限0.30・失敗でcombo=0＝自然リセット／v0.65 上限をLv連動に）
-  if(g._migaki && a.migakiRelief>0) r+=a.migakiRelief;                    // 磨きの儀（能動・クロン追加消費の検証/徴収はtryEnhで）
-  return Math.min(KOU_TOTAL_CAP, Math.max(0, r)); }   // v0.49 合算に総上限0.85（勢い＋威光で完全無効になる穴を封じる）・純白の砥石は廃止
-// v0.49 実効の減衰指数d（意地＋抗を適用した後）：成功率の計算と天井の計算で共用
-function decayEffD(ex){ let d=decayD();
-  if(g._ijiShield>0) d=d+(1-d)*Math.min(1,g._ijiShield);   // 減衰の無効化＝指数dを1へ近づける（100%で減衰なし）
-  const rel=decayReliefTotal(ex);   // v0.45 抗：意地の後に同式 d'=d+(1-d)*relief で適用（意地と重畳しても1.0でclamp）
-  if(rel>0) d=Math.min(1, d+(1-d)*rel);
-  return d; }
-// v0.49 減衰天井（仮）：成功率の上限＝99% - CEIL_SLOPE×(1-実効d) + オーバーキル押し返し。深いほど天井が下がり、
-// 抗・意地・オーバーキルが天井を押し返す＝壁Kが小さいⅠ〜Ⅶ帯でも減衰が見え、99%は「取り戻すご褒美」になる
-function capEff(ex){ if(!CEIL_ON || guarStage()) return CAP_RATE;
-  const d=decayEffD(ex);
-  const c=CAP_RATE - CEIL_SLOPE*(1-d) + okPushPt()/100;
-  return Math.max(CEIL_MIN, Math.min(CAP_RATE, c)); }
-function decayedRateEX(ex){ if(guarStage()) return 1.0;
-  const d=decayEffD(ex);
-  const exd=100*Math.pow(Math.max(1,ex/100), d);
-  return Math.min(capEff(ex), exd/(exd+K(g.stage,g.cycle))); }
-// v0.25 オーバーキル押し返し量(pt)：ジャックポットの乱数は含めない決定論値（＝演出表示と常に一致）
-function kougenEquipped(){ return g.equipped.some(u=>{ const it=invById(u); return it && it.c==='kougen'; }); }   // v0.63 B 昂りの還元
-function okPushPt(){ const bd=exBreakdown();
-  if(bd.capped && kougenEquipped()) return 0;   // v0.63 B トレードオフ：余剰をモチベ回復に回す代わり、オーバーキルの天井/減衰押し返しは放棄
-  const raw=(bd.rows&&bd.rows.length)?bd.rows[bd.rows.length-1][1]:bd.ex;   // FEVER上限で切る前の素の爆発値
-  const r=raw/bd.cap/OK_TH;
-  return r>1? Math.min(OK_CAP, OK_BETA*Math.log10(r)) : 0; }
-function successRateEX(ex){ if(guarStage()) return 1.0;
-  if(FMN_TRUE99 && g._feverArmed>0) return CAP_RATE;
-  const cap=capEff(ex);   // v0.49 減衰天井：以降の上限は一律99%でなく天井（抗・意地・OKで押し返した後の値）
-  let rate=decayedRateEX(ex);
-  if(rate<cap){ const p=okPushPt(); if(p>0) rate=Math.min(cap, rate+p/100); }   // v0.25 オーバーキルが武器の抵抗を押し返す（本物の+pt）
-  const a=agg();   // v0.41 執念：失敗スタックが厚い（FL×0.3以上）とき成功率+
-  if(a.stackRateBonus>0 && g.stack>=FL(g.stage,g.cycle)*0.3) rate=Math.min(cap, rate+a.stackRateBonus);
-  return rate; }
+function checkDead(){ if(g.dur<=0){ gameOver(); return true; } return false; }
+function gameOver(){
+  g.ended=true; render(); beep(220,.5);
+  if(typeof _plogSentThisRun!=='undefined' && !_plogSentThisRun){ uploadPlaylog('gameover'); _plogSentThisRun=true; }   // v0.71 ゲームオーバーで自動送信（ラン1回1度・URL/fetch無しはno-op）
+  const best=parseInt(lsGet("kyoka70_best")||"0",10);
+  const newBest=g.score>best; if(newBest) lsSet("kyoka70_best", g.score);
+  const reached=stageName(((g.maxStage-1)%100)+1);
+  scr('<div class="center"><div class="big">～ 武器が砕けた ～</div>'
+    +'<div style="margin:8px 0;color:#ffd24a;font-size:16px">'+(g.maxCycle>1?g.maxCycle+"周 ":"")+reached+' 到達！</div>'
+    +'<div>SCORE：<span class="big">'+g.score.toLocaleString()+'</span>'+(newBest?' <b style="color:#ff3b6b">🎉新記録!!</b>':'')+'</div>'
+    +'<div class="sub" style="color:#ffd24a">🏅 自己ベスト：'+(newBest?g.score:best).toLocaleString()+'</div>'
+    +'<div class="menu" style="margin-top:10px">'+btnRaw("📋 プレイログ保存","exportPlaylog()")+btnRaw("また明日（もう一度）","newGame()")+'</div>'
+    +'<div class="sub">スコア＝爆発値の累積。段を落とさず耐久を守り抜き、限界突破を積み重ねろ。</div></div>');
+  setMsg("武器が耐久切れで砕けた。ラン終了。"+(newBest?"自己ベスト更新！ また明日、その上を。":"また明日、自己ベストを超えろ。"));
+}
 
 // ===== 画面遷移 =====
-function startTurn(){ g.turn++; g.actedThisTurn=false; g._haisui=null; g._iji=false; g._allin=false; g._migaki=false; g._useHero=false; /* v0.50 狩り勢トグル(_useHun)はON維持＝OFFにするまで持続（社長指示「毎回ONがめんどい」）。ヒーロー/磨きの儀は使い切り系なので毎ターンリセット */  // v0.43 寿命はターン開始では減らさない（使ったら減る方式）。能動系（背水/意地/オールイン）は毎ターンリセット・意地のシールドは次の強化で使うので残す
-  { const a=agg(); if(a.turn4Life>0 && g.turn%4===0) g.equipped.forEach(u=>{ const it=invById(u); if(it) it.life+=a.turn4Life; }); }   // v0.41 寿命の恵み：4の倍数ターンで装備の寿命+
-  if(g.turn%2===0 && g.equipped.some(u=>{ const it=invById(u); return it && it.c==='amp'; })) g.motiv=Math.min(g.motivMax, g.motiv+1);   // v0.42 魅惑の衣装：2ターンに1回モチベ+1（Lv不問・一律）
-  showPrep(); }
-// v0.43 破損チェック：寿命0以下の装備を破損（装備・倉庫から除去）。狩り/強化で寿命を減らした後に呼ぶ。
-// g._broke は次の準備画面(showPrep)で表示され読み捨てられる（同一ターン内の複数破損は連結）
-function breakCheck(){ const broke=[];
-  g.equipped.slice().forEach(u=>{ const it=invById(u); if(!it)return;
-    if(it.life<=0){ broke.push(CHMAP[it.c][1]); if(it.c==='kks') g.kksCount=0;   // カカシ破損でカウンタもリセット
-      g.equipped=g.equipped.filter(x=>x!==u); g.inv=g.inv.filter(x=>x.u!==u); } });
-  if(broke.length){ beep(200,.15); g._broke=(g._broke||[]).concat(broke); }
-}
-function keepSlots(){ return g.stage<=10?0 : g.stage<=20?1 : 2; }   // キープ枠：無印0/真1/裏以降2
-function showPrep(){ g.phase="prep"; render();
-  let s='<div class="center" style="margin-bottom:8px;color:#8dff9a">― 準備フェーズ（'+g.turn+'ターン目）―</div>';
-  if(g._broke){ s+='<div class="center" style="color:#ff8a8a;margin-bottom:6px">⛓️‍💥 寿命切れで破損：'+g._broke.join("・")+'（買い直しで復活）</div>'; g._broke=null; }
-  const warn1=g.equipped.map(u=>invById(u)).filter(it=>it&&it.life===1).map(it=>CHMAP[it.c][1]);
-  if(warn1.length) s+='<div class="center" style="color:#ffca7a;margin-bottom:4px">⚠ 寿命が残り1：'+warn1.join('・')+'（次のターンで破損。商店に再登場していれば半額延命／健康法で+3）</div>';
-  if(g.elian){ s+='<div class="center" style="color:#7fd4ff;margin-bottom:4px">💧 エリアンの涙 所持中（倒れても1度だけモチベ満タンで復活）</div>'; }
-  if(g.feverMania>0){ s+='<div class="center" style="color:#ff8ad0;margin-bottom:4px">🔥 限界突破マニア 所持'+g.feverMania+'個（強化フェーズで任意発動＝この強化＋次の強化を無条件限界突破）</div>'; }
-  if(g._feverArmed>0){ s+='<div class="center" style="color:#ff8ad0;margin-bottom:4px">🔥 限界突破マニア発動中：次'+g._feverArmed+'回の強化が無条件限界突破！</div>'; }
-  if(heroItem()){ s+='<div class="center" style="color:#ffd24a;margin-bottom:4px">🦸 スーパーヒーロー 待機中（強化フェーズの「使う」トグルで任意の1回に×'+heroMult()+'・使うと燃え尽きる）</div>'; }   // v0.49
-  s+='<div class="sub" style="margin:0 0 6px">狩りは1回。商店は何度でも。</div><div class="menu">';
-  s+=btn(g.actedThisTurn?"狩り：このターンは済":"狩りに行く",
-         g.actedThisTurn?"行動済み":"狩場でシルバー稼ぎ（モチベ消費1〜3）／休息も","goHunt()", g.actedThisTurn?"行動済":"");   // v0.56 狩場名方式に合わせ表記変更
-  s+=btn("商店","装備の購入/Lv上げ・クロン・記録の欠片（何度でも）","goShop()");
-  // v0.15 メインメニューの「装備を替える」は撤去（右パネルの「装備変更」と機能が被るため）／v0.63 赤POT（buyDrink/useDrink）は廃止
-  if(g.health>0) s+=btn("🩹 健康法を使う（"+g.health+"）","装備中の全アイテムの寿命+"+HEALTH_ADD,"useHealth()", g.equipped.length===0?"装備なし":"");
-  if(g.memRepair>0) s+=btn("🔧 記憶の修復を使う（"+g.memRepair+"）","武器耐久+"+MEMREP_ADD,"useMemRepair()", g.dur>=maxDur()?"耐久満タン":"");   // v0.63 武器耐久の回復／v0.64 durに一本化
-  // v0.64 D 一服の博打の即時ボタンは準備画面から撤去→強化フェーズ（磨きの儀トグルと同位置）へ移設（社長修正：効果は"強化時"に発動）
-  s+=btn("▶ 強化フェーズへ進む","このターンの強化に挑戦（毎ターン必ず挑む）","goEnhance()");   // v0.17 耐久0でも入れる（保護不可・生賭け可＝詰み回避）
-  s+='</div>'+ownedLine();
+function startTurn(){ g.turn++; g.phase='enhance'; render(); showEnhance(); }
+function showIntro(){
+  g.phase='intro'; render();
+  let s='<div class="center" style="color:#ffd24a;font-size:15px;margin-bottom:8px">◆ 遊び方（v0.71）◆</div>';
+  s+='<div style="font-size:13px;line-height:1.8">'
+    +'・リソースは<b>武器耐久</b>と<b>SP</b>の2つだけ。準備フェーズや商店はない。<br>'
+    +'・毎ターン<b>「強化する」</b>を選ぶだけ。成功すれば<b>段+1・SP+1</b>。<br>'
+    +'・<b>Ⅸ・Ⅹ（各グレードの山場）を超えるとSPを多くもらえる</b>（Ⅸで+2・Ⅹで+3）。難所ほど見返りが大きい。<br>'
+    +'・失敗しても<b>段は落ちない</b>（同じ段に再挑戦できる）。代わりに<b>武器耐久</b>が減る。<b>耐久が0でゲームオーバー</b>（到達段がそのランの成果）。<br>'
+    +'・貯めたSPは<b>🌳スキルツリー</b>で使う。根「ブラックストーン」を取ると<b>強化系・保険系・回復系・ラッキー系・条件系</b>の5系統が開く。手前ノードをLv2まで育てると奥が解放（付け替えなし・ランごとにリセット）。<br>'
+    +'・最初の数段（Ⅴ〜Ⅶ）は壁が薄く、ほぼ確定で成功する短い助走。<b>そこから先が本番だ。</b>'
+    +'</div>';
+  s+='<div class="sub" style="opacity:.75;margin-top:8px">本作は『黒い砂漠』(Pearl Abyss)の非公式ファンメイド作品です。権利者とは一切関係ありません。非営利。</div>';
+  const best=parseInt(lsGet("kyoka70_best")||"0",10);
+  if(best>0) s+='<div class="sub" style="color:#ffd24a">🏅 自己ベスト SCORE：'+best.toLocaleString()+'</div>';
+  s+='<div class="menu" style="margin-top:10px">'+btnRaw("▶ はじめる","beginRun()")+'</div>';
   scr(s);
 }
-// v0.17 ターンスキップ廃止：passTurn（強化せずターンを終える）を削除。ターンはtryEnh（強化に挑む）でのみ進む＝休むだけの不死身化・無限farmingを封じる。
-
-function goHunt(){ if(g.actedThisTurn){ showPrep(); return; } g.phase="hunt"; render();
-  // v0.48 狩り勢＝装備せず倉庫から都度使用（社長指示）：使うなら収入UP＋寿命-1。毎狩り初期OFF＝「使うか」を問う
-  const hi=hunItem(); const useOn=!!(g._useHun && hi);
-  const inc=income(g.stage)*(1+(useOn?hunBoost():0));
-  let s='<div class="center">狩場を選べ（1回だけ）<br><small>奥の狩場ほど稼げるがモチベを使う</small></div>';   // v0.56 時間表記→狩場名（社長指示）
-  if(hi){ s+='<div class="menu" style="margin-top:8px"><button class="btn center" style="border-color:'+(useOn?'#ffd24a':'#556')+(useOn?';color:#ffd24a':'')+'" onclick="toggleHunUse()">💰 狩り勢を使う（収入+'+Math.round(hunBoost()*100)+'%・⏳'+hi.life+'→'+(hi.life-1)+'）＝'+(useOn?'ON':'OFF')+'</button></div>'; }
-  s+='<div class="grid" style="margin-top:8px">';
-  s+='<button class="btn center" onclick="doHuntUI(0)">休息をとる<br><small>モチベ+'+REST_RECOVER+'</small></button>';
-  for(let h=1;h<=3;h++) s+='<button class="btn center" onclick="doHuntUI('+h+')">'+HUNT_NAMES[h]+'<br><small>+'+fmtOku(inc*huntInc(h))+'／モチベ-'+huntCost(h)+'</small></button>';
-  s+='</div><div class="menu" style="margin-top:8px">'+btnRaw("戻る","showPrep()")+'</div>';
+function beginRun(){
+  setMsg("強化を始めろ。SPをスキルツリーに注ぎ、行けるところまで駆け上がれ。");
+  startTurn();
+}
+function showEnhance(){
+  const ex=computeEX(); const rate=successRateEX(ex); const wall=FL(g.stage,g.cycle);
+  let s='<div class="center">'+stageLabel()+' に挑む</div>';
+  s+='<div class="center sub">今のビルドでの素の成功率：'+pct1(rate)+'</div>';
+  if(wall>0) s+='<div class="center sub">限界突破の壁：'+wall.toLocaleString()+'</div>';
+  else s+='<div class="center sub">（助走中：壁ゼロ）</div>';
+  s+='<div class="menu" style="margin-top:10px">';
+  s+=btnRaw("⚔ 強化する","playEnhance()");
+  s+=btnRaw("🌳 スキルツリー（SP残 "+g.sp+"）","showTree()");
+  s+='</div>';
   scr(s);
 }
-function toggleHunUse(){ g._useHun=!g._useHun; goHunt(); }   // v0.48 収入プレビューも切り替わる
-function doHuntUI(h){ doHunt(h, !!g._useHun); }              // v0.48 UI経由＝トグルの明示指定
-function doHunt(h, use){ g.actedThisTurn=true;
-  if(h===0){ const kb=kyukeiBonus(); const rec=REST_RECOVER+kb; g.motiv=Math.min(g.motivMax,g.motiv+rec);   // v0.65 休息の達人：所持していれば休息の回復量+kb（使うと寿命-1）
-    let kMsg="";
-    if(kb>0){ const ki=kyukeiItem(); if(ki){ ki.life--; if(ki.life<=0){ g.inv=g.inv.filter(x=>x.u!==ki.u); kMsg="\n⛓️‍💥 休息の達人が寿命切れで破損（買い直しで復活）。"; beep(200,.15); } } }
-    setMsg("💤 休んだ。モチベ +"+rec+(kb>0?"（休息の達人 使用・内訳：休息+"+REST_RECOVER+"／達人+"+kb+"）":"")+"。"+kMsg); render(); showPrep(); return; }
-  // v0.48 狩り勢：use未指定（ボット等の直呼び）＝持っていれば自動使用（旧挙動互換）／UIはトグルで明示
-  const hi=hunItem(); const useHun=(use===undefined)? !!hi : (!!use && !!hi);
-  const inc=income(g.stage)*(1+(useHun?hunBoost():0)); const got=inc*huntInc(h); g.silver+=got; const mc=huntCost(h); g.motiv-=mc;
-  let brokeTxt="";
-  if(useHun){ hi.life--; if(hi.life<=0){ g.inv=g.inv.filter(x=>x.u!==hi.u); brokeTxt="\n⛓️‍💥 狩り勢が寿命切れで破損（買い直しで復活）。"; beep(200,.15); } }
-  setMsg("🐗 "+(HUNT_NAMES[h]||h+"時間")+"で狩り"+(useHun?"（💰狩り勢 使用・寿命-1）":"")+"。"+fmtOku(got)+"シルバー獲得！ モチベ -"+mc+"。"+brokeTxt);   // v0.56 狩場名表示
-  g.equipped.slice().forEach(u=>{ const it=invById(u); if(it && CHMAP[it.c][2]==='狩') it.life--; });   // v0.43 使ったら減る（装備型の狩系が将来増えた場合用・hunは装備不可のため対象外）
-  breakCheck();
-  if(checkDead())return; showPrep();
-}
-// goGarmoth：v0.12でガーモス廃止（クロンはシルバー購入に一本化）
-
-function goShop(){ g.phase="shop"; render();
-  const cc=cloneCost(); const ks=keepSlots();
-  let s='<div class="grid">';   // v0.55 商店ヘッダ・コスト行・色凡例を撤去（社長指示：コストは最上段HUDへ合流・凡例は使ってるうちに分かる）
-  g.shop.forEach((id,i)=>{ if(id===null){ s+='<div class="charm" style="opacity:.35">―</div>'; return;}
-    if(HELD[id]){ const h=HELD[id]; const hp=h.price(g.stage);   // v0.22 [持]所持発動型のカード（Lv/寿命/キープなし）
-      s+='<div class="charm" style="border-color:#2f6fa0"><span style="color:#7fd4ff;font-weight:bold">[持]</span><span class="nm">'+h.name+'</span><br>'
-        +'<span style="color:#cdd">'+h.desc+'</span><br><span class="pr">'+fmtOku(hp)+'</span> '
-        +'<button class="btn" style="display:inline-block;padding:2px 8px" onclick="buyCharm('+i+')" '+(g.silver<hp?'disabled':'')+'>'+(g.silver<hp?'ｼﾙﾊﾞｰ不足':'買う')+'</button></div>';
-      return; }
-    const c=CHMAP[id]; const own=g.inv.find(x=>x.c===id); const owned=!!own; const kept=g.kept.includes(id); const k=kei(id); const L=levelOf(id); const price=priceOf(id,g.stage); const rc=price/2;
-    s+='<div class="charm"><span style="color:'+k.c+';font-weight:bold">['+k.t+']</span><span class="nm">'+c[1]+'</span> <span style="color:#9fb0ff;font-size:11px">Lv'+L+'</span>'
-      +' <span style="color:#ffca7a;font-size:11px">⏳'+(owned?own.life:lifeOf(id))+'</span>'+(NOEQUIP[id]?'':' <span style="color:#ffca7a;font-size:11px">⚖'+costOf(id)+'</span>')
-      +(kept?' <span style="color:#ff8">🔖keep</span>':'')+'<br>'
-      +'<span style="color:#cdd">'+fxText(id,L)+'</span><br>'
-      +(owned
-        ? (id==='bigaku'
-            ? '<span class="pr" style="color:#ff8a8a">延命不可（買い直し前提の超短命）</span>'   // v0.43 使い捨ての美学は延命ボタンを出さない
-            : id==='hero'
-            ? '<span class="pr" style="color:#ff8a8a">一発屋（買い直しのみ）</span>'   // v0.45 スーパーヒーローは延命ボタンなし
-            : id==='choju'
-            ? '<span class="pr" style="color:#ff8a8a">延命不可（自身の寿命は延ばせない・買い直し）</span>'   // v0.65 長寿は自身の寿命延長不可（社長指示）
-            : '<span class="pr" style="color:#ffca7a">延命 '+fmtOku(rc)+'</span> <button class="btn" style="display:inline-block;padding:2px 8px" onclick="reviveItem(\''+id+'\')" '+(g.silver<rc?'disabled':'')+'>⏳延命(半額)＝寿命+'+lifeOf(id)+'（上限'+(lifeOf(id)*EXTEND_CAP_MULT)+'）</button>')   // v0.40 半額延命／v0.48.2 加算式＝+元の寿命ぶん・上限3倍
-        : '<span class="pr">'+fmtOku(price)+'</span> <button class="btn" style="display:inline-block;padding:2px 8px" onclick="buyCharm('+i+')" '+(g.silver<price?'disabled':'')+'>買う</button>'
-          +((!kept && ks>0 && g.kept.length<ks)?' <button class="btn" style="display:inline-block;padding:2px 6px" onclick="keepCharm('+i+')" '+(g.clone<1?'disabled':'')+'>🔖ｷｰﾌﾟ(ｸﾛﾝ1)</button>':'')
-          +(kept?' <button class="btn" style="display:inline-block;padding:2px 6px" onclick="unkeepCharm('+i+')" '+(g.clone<1?'disabled':'')+'>🔖解除(ｸﾛﾝ1)</button>':''))
-      +'</div>';
-  });
+// v0.71 1ノードのカードHTML（root/枝共通）。desc は現在rank（未取得はLv1相当）の補間値を表示。
+function nodeCard(n, isRoot){
+  const r=skR(n.id); const can=canOpen(n.id); const maxed=r>=n.maxRank; const locked=!reqMet(n.id);
+  const shownVal=lerpVal(n, Math.max(1,r));   // 未取得なら「開くとLv1でこうなる」プレビュー
+  let cls='tnode'+(isRoot?' root':''); if(locked) cls+=' locked'; else if(maxed) cls+=' maxed'; else if(can) cls+=' can';
+  let s='<div class="'+cls+'"><span class="nm">'+(isRoot?'【根】':'')+n.name+'</span> <span class="lv">Lv'+r+'/'+n.maxRank+'</span><br>';
+  s+='<span style="color:#cdd">'+n.desc(Math.max(1,r), shownVal)+'</span><br>';
+  if(locked){ s+='<span class="req">🔒 要：'+(TREE_MAP[n.req]?TREE_MAP[n.req].name:n.req)+' Lv'+(n.reqRank||1)+'以上</span>'; }
+  else { s+='<button class="obtn" onclick="openNode(\''+n.id+'\')" '+(can?'':'disabled')+'>'+(maxed?'MAX':'開く（'+n.cost+'SP）')+'</button>'; }
   s+='</div>';
-  // v0.54 クロン購入を横1列に・棚リロールは廃止（社長指示）
-  s+='<div class="sub" style="margin:7px 0 2px">🛡クロン購入（保護1回='+needClone(g.stage)+'個・所持'+g.clone+'）'+(ks>0?'／キープ'+g.kept.length+'/'+ks:'')+'</div>';
-  s+='<div class="sqgrid" style="grid-template-columns:repeat(4,1fr)">';
-  [5,20,100,1000].forEach(n=>{ s+='<button class="btn sq" onclick="buyClone('+n+')" '+(g.silver<cc*n?'disabled':'')+'>'+n+'個<small>'+fmtOku(cc*n)+'</small></button>'; });
-  s+='</div>';
-  // v0.54 ⚖コスト上限／📜欠片＝正方形ボタン（説明は必要最低限）／v0.63 赤POTは廃止（欄削除）
-  s+='<div class="sqgrid" style="grid-template-columns:repeat(2,1fr)">';
-  if(g.costCap<COST_CAP_MAX) s+='<button class="btn sq" onclick="buySlot()" '+(g.silver<slotExpandOku()?'disabled':'')+'>⚖上限+'+COST_CAP_STEP+'<small>'+g.costCap+'→'+(g.costCap+COST_CAP_STEP)+'</small><small>'+fmtOku(slotExpandOku())+'</small></button>';
-  else s+='<button class="btn sq" disabled>⚖上限MAX<small>'+g.costCap+'/'+COST_CAP_MAX+'</small><small>—</small></button>';
-  s+='<button class="btn sq" onclick="buyShard()" '+((g.dur>=maxDur()||g.silver<shardOku(g.stage))?'disabled':'')+'>📜欠片<small>耐久+'+shardDur+'（'+g.dur+'/'+maxDur()+'）</small><small>'+fmtOku(shardOku(g.stage))+'</small></button>';
-  s+='</div>';
-  s+='<div class="menu" style="margin-top:6px">';
-  if(g.wabiOffer){ const amt=wabiAmt();   // v0.59 自動成長式（Lv上げ廃止・受け取るほど豪華に）
-    s+='<div style="margin:6px 0;padding:7px;background:#14180a;border:1px solid #7a6410;border-radius:4px">'
-      +'<div class="center" style="color:#ffd24a">🎁 運営からの詫びクロン（無料）</div>'
-      +'<div class="sub" style="margin:2px 0 5px">受け取ると<b>クロン+'+amt+'個</b>。受け取るほど、次の詫びは豪華になる（'+(((g.wabiTaken||0))+1)+'回目）。次の棚更新で消える。</div>'
-      +'<button class="btn" style="display:inline-block;padding:3px 10px" onclick="takeWabi()">🎁 受け取る（クロン+'+amt+'）</button>'
-      +'</div>';
-  }
-  if(g.elian) s+='<div class="sub" style="color:#7fd4ff;margin:4px 0">💧 エリアンの涙 所持中（倒れても1度だけ復活）</div>';
-  if(g.feverMania>0) s+='<div class="sub" style="color:#ff8ad0;margin:4px 0">🔥 限界突破マニア 所持'+g.feverMania+'個（強化フェーズで任意発動＝この強化＋次の強化を無条件限界突破）</div>';
-  // v0.15 商店の「装備を替える」も撤去（右パネルの「装備変更」に一本化）
-  if(g.health>0) s+='<div class="sub" style="margin:2px 0">🩹 健康法 所持'+g.health+'（準備画面で使用）</div>';   // v0.54 説明を最小化・消耗品ボタンは上の正方形グリッドへ移設
-  s+=btn("店を出る","","showPrep()");
-  s+='</div>'+ownedLine();
-  scr(s);
+  return s;
 }
-const DRAFT_W={bst:0.2};   // v0.16 レア度＝装備の出やすさ（重み）。既定1・段跳ねのお守りだけ0.2で出にくい（当たり枠）
-const ELIAN_CHANCE=0.02, FMN_CHANCE=0.02;   // v0.22 [持]は毎回の棚更新ごと固定確率(=1/50)で4枠の1つに差し込む。装備の残数で変動する重み抽選(終盤100%化)ではなくレア率を一定に保つ。数値【仮】
-function rollShop(){   // v0.40：所持済も棚に再登場させる（半額延命のため）。未所持は購入・所持済は延命。
-  const owned=new Set(g.inv.map(x=>x.c));
-  const pool=CH.map(c=>c[0]);   // v0.40 所持済も含める＝再登場で延命できる（買い直し前提でビルドが回る）
-  g.shop=g.kept.filter(id=>!owned.has(id)).slice();   // キープ（未所持）を先頭
-  let guard=0;
-  while(g.shop.length<4 && guard++<200){
-    const cand=pool.filter(id=>!g.shop.includes(id));
-    if(!cand.length) break;
-    // レア度（重み）付き抽選：重みの合計から比例で1つ選ぶ
-    let tot=0; cand.forEach(id=> tot+=(DRAFT_W[id]||1));
-    let r=Math.random()*tot, pick=cand[cand.length-1];
-    for(const id of cand){ r-=(DRAFT_W[id]||1); if(r<=0){ pick=id; break; } }
-    g.shop.push(pick);
-  }
-  while(g.shop.length<4) g.shop.push(null);
-  injectHeld('elian', ELIAN_CHANCE); injectHeld('fmn', FMN_CHANCE); injectHeld('health', HEALTH_CHANCE); injectHeld('memrep', MEMREP_CHANCE);   // v0.22/40/63 [持]（エリアン/FMN/健康法/記憶の修復）を固定確率で4枠の1つに差し込む
-  g.wabiOffer = Math.random()<WABI_CHANCE;   // v0.13 詫びクロンの"ご褒美"を抽選（棚更新のたび／たまに出る）
-}
-// v0.22 [持]アイテムを4枠の1つに差し込む（chance＝1/50固定）。空き枠優先→無ければキープ以外の装備枠を1つ置換（レア率を装備の残数に左右させない）。
-function injectHeld(id, chance){
-  if(!HELD[id] || !HELD[id].avail()) return;
-  if(Math.random()>=chance) return;
-  let idx=g.shop.indexOf(null);
-  if(idx<0){ const cand=[]; for(let i=0;i<g.shop.length;i++){ const s=g.shop[i]; if(s && !g.kept.includes(s) && !HELD[s]) cand.push(i); }
-    if(!cand.length) return; idx=cand[Math.floor(Math.random()*cand.length)]; }   // 全枠埋まり＝キープ以外の装備枠を1つ置き換え
-  g.shop[idx]=id;
-}
-function buyCharm(i){ const id=g.shop[i]; if(!id)return;
-  if(HELD[id]) return buyHeld(i);   // v0.22 [持]所持発動型は装備せず専用処理へ（UI・ボット両方この関数を通る）
-  if(g.inv.some(x=>x.c===id))return; const c=CHMAP[id]; const price=priceOf(id,g.stage); if(g.silver<price)return;
-  g.silver-=price;
-  if(!g.levels[id]) g.levels[id]=1;   // 初取得はLv1（再取得なら既存Lvを保持＝投資は消えない）
-  const u=++g._uid; g.inv.push({u:u,c:id,life:lifeOf(id)});
-  g.shop[i]=null; g.kept=g.kept.filter(k=>k!==id);
-  let eq="";
-  if(NOEQUIP[id]) eq="\n→ 倉庫へ（装備せず、"+(id==='hero'?"強化のときに使うか選ぶ":"狩りのたびに使うか選ぶ")+"）";   // v0.48 狩り勢／v0.49 スーパーヒーローは装備しない
-  else if(g.equipped.length<g.slots && costUsed()+costOf(id)<=g.costCap){ g.equipped.push(u); eq="\n→ 自動装着（⚖コスト "+costUsed()+"/"+g.costCap+"）"; }   // v0.51 コストが収まる時だけ自動装着
-  else eq="\n→ 倉庫へ（"+(g.equipped.length>=g.slots?"枠が満杯":"⚖コスト上限オーバー："+costUsed()+"+"+costOf(id)+">"+g.costCap)+"）";
-  setMsg("✨【"+c[1]+"】購入！（Lv"+g.levels[id]+"・寿命"+lifeOf(id)+"）\n"+fxText(id,g.levels[id])+eq); beep(880,.08); goShop();
-}
-function levelUp(cid){ if(HELD[cid])return; const L=levelOf(cid); if(L>=maxLvOf(cid))return; const cost=lvupCost(L); if(g.clone<cost)return;  // Lv上げ＝クロン消費（v0.23 [持]はLvを持たない＝空fx配列でfxTextが例外を投げるのを防ぐガード／v0.65 上限はアイテムごとのmaxLvOf）
-  g.clone-=cost; g.levels[cid]=L+1;
-  setMsg("⬆【"+CHMAP[cid][1]+"】Lv"+(L+1)+"！（クロン-"+cost+"）\n"+fxText(cid,L+1)); beep(1150,.1); goEquip();
-}
-// v0.40 半額延命：商店に再登場した所持アイテムを定価の半額で買い直す＝寿命+LIFE_LV（金による随時延長は廃止）
-function reviveItem(id){ if(id==='bigaku'||id==='hero'||id==='choju')return;   // v0.43 使い捨ての美学／v0.45 スーパーヒーローは寿命回復不可（買い直しのみ）／v0.65 長寿は自身の寿命を延ばせない（社長指示）
-  const it=g.inv.find(x=>x.c===id); if(!it)return; const cost=priceOf(id,g.stage)/2; if(g.silver<cost)return;
-  const capL=lifeOf(id)*EXTEND_CAP_MULT;   // v0.48.2 社長訂正：延命1回＝+元の寿命ぶん回復（加算式）・上限＝元の寿命の3倍。超過中（健康法等）は減らさない
-  const newL=Math.max(it.life, Math.min(capL, it.life+lifeOf(id)));
-  const add=newL-it.life;
-  g.silver-=cost; it.life=newL;
-  const idx=g.shop.indexOf(id); if(idx>=0) g.shop[idx]=null;   // v0.40 一度延命したら棚から消す（同じ棚での再購入不可・次の棚更新で再登場すればまた延命可）
-  setMsg("⏳【"+CHMAP[id][1]+"】を延命！ 寿命+"+add+"（残り"+it.life+"・半額-"+fmtOku(cost)+"）。"); beep(760,.08); goShop();
-}
-// v0.40 健康法（任意・消費）：買って準備画面で使うと装備中の全アイテムの寿命+HEALTH_ADD
-function useHealth(){ if(g.health<1)return; g.health--; let n=0;
-  g.equipped.forEach(u=>{ const it=invById(u); if(it && it.c!=='bigaku' && it.c!=='hero' && it.c!=='choju'){ it.life+=HEALTH_ADD; n++; } });   // v0.43 使い捨ての美学／v0.45 スーパーヒーローは寿命回復不可／v0.65 長寿も対象外
-  setMsg("🩹 健康法。装備中"+n+"個の寿命+"+HEALTH_ADD+"。"); beep(720,.08);
-  render(); if(g.phase==="shop") goShop(); else showPrep();
-}
-// ===== 装備の着脱（v0.6：効くのは装備中の枠だけ）=====
-// v0.44 倉庫ソート：KEI並び(爆→条→狩→回→保→跳→持)/寿命/Lv/名前の4キー。CHMAP欠落でも落ちないようガード。
-const KEI_ORDER=['爆','条','狩','回','保','跳','抗','持'];   // v0.45 抗を追加
-function sortedBench(bench){
-  const st=(g&&g.invSort)||{key:'kei',dir:1}; const dir=st.dir<0?-1:1;
-  const nm=c=>(CHMAP[c]&&CHMAP[c][1])||''; const ke=c=>{ const k=CHMAP[c]&&CHMAP[c][2]; const i=KEI_ORDER.indexOf(k); return i<0?KEI_ORDER.length:i; };
-  const arr=bench.slice();
-  arr.sort((a,b)=>{ let r=0;
-    if(st.key==='life') r=(a.life||0)-(b.life||0);
-    else if(st.key==='lv') r=levelOf(a.c)-levelOf(b.c);
-    else if(st.key==='cost') r=costOf(a.c)-costOf(b.c);   // v0.52 コストで並べ替え（社長指示）
-    else if(st.key==='name') r=nm(a.c).localeCompare(nm(b.c),'ja');
-    else r=ke(a.c)-ke(b.c);   // kei（種別）
-    if(r===0) r=ke(a.c)-ke(b.c) || nm(a.c).localeCompare(nm(b.c),'ja');   // 安定タイブレーク
-    return r*dir;
-  });
-  return arr;
-}
-function setInvSort(key){ if(!g.invSort) g.invSort={key:'kei',dir:1}; if(g.invSort.key===key) g.invSort.dir=(g.invSort.dir<0?1:-1); else { g.invSort.key=key; g.invSort.dir=1; } goEquip(g.prevPhase); }
-function goEquip(from){ g.prevPhase=(from==="shop"?"shop":"prep"); g.phase="equip"; render();
-  const cu=costUsed();
-  let s='<div class="center" style="margin-bottom:4px;color:#ffd24a">🎒 装備（'+g.equipped.length+'/'+g.slots+' 枠・⚖コスト <b style="color:'+(cu>=g.costCap?'#ff8a8a':'#8dff9a')+'">'+cu+'</b>/'+g.costCap+'）</div>';
-  s+='<div class="barwrap" style="height:10px;max-width:340px;margin:0 auto 6px"><div class="bar'+(cu/g.costCap>0.99?' dang':cu/g.costCap>0.75?' warn':'')+'" style="width:'+Math.min(100,cu/g.costCap*100)+'%"></div></div>';   // v0.51 コストバー
-  s+='<div class="sub" style="margin:0 0 6px"><b style="color:#ffca7a">⚖強い装備ほど重い＝上限内でやりくり</b>（拡張は商店）<span class="verbose">。寿命は使うと-1・0で破損（Lv保持・買い直しで復活）。⬆Lv＝クロン（コスト不変）。延命は商店で半額／健康法で全装備+3</span></div>';   // v0.53 スマホでは補足を隠す
-  // 装備中スロット（田の字：枠番号・Lv・名前・効果・寿命・Lv上げ/延長）
-  s+='<div class="eqgrid">';
-  for(let i=0;i<g.slots;i++){ const u=g.equipped[i]; const it=(u!==undefined)?invById(u):null;
-    if(it){ const c=CHMAP[it.c],k=kei(it.c); const lf=it.life; const lc=lf<=2?'#ff8a8a':lf<=3?'#ffca7a':'#9fb0ff';
-      const L=levelOf(it.c), cost=lvupCost(L);
-      s+='<div class="eqslot" style="border-color:'+k.c+'">'
-        +'<span class="enm"><span style="color:'+k.c+'">['+k.t+']</span>'+c[1]+'</span>'
-        +'<span style="font-size:12px;display:block;margin:3px 0 1px"><span style="color:#9fb0ff">Lv'+L+'</span>　<span style="color:'+lc+'">⏳'+lf+'</span>　<span style="color:#ffca7a">⚖'+costOf(it.c)+'</span></span>'   // v0.52.1 装備中にもLv/寿命/コストを見やすく（社長指示・隅の小表示から名前下の1行へ）
-        +'<span style="color:#cdd;font-size:11px;display:block;margin:3px 0 6px">'+fxText(it.c,L)+'</span>'
-        +'<button class="btn" style="display:inline-block;padding:2px 8px" onclick="unequip('+i+')">外す</button> '
-        +(L<maxLvOf(it.c)?'<button class="btn" style="display:inline-block;padding:2px 8px" onclick="levelUp(\''+it.c+'\')" '+(g.clone<cost?'disabled':'')+'>⬆Lv(ｸﾛﾝ'+cost+')</button>':'<span class="sub" style="margin:0">Lv MAX </span>')
-        +'</div>';   // v0.40 ⏳金延長ボタンは廃止（延命は商店で半額）
-    } else s+='<div class="eqslot empty"></div>';   // v0.56 枠番号・「空き枠」表記は不要（点線囲みで分かる・社長指示）
-  }
-  s+='</div>';
-  // 倉庫（未装備の個体）
-  const bench=g.inv.filter(it=>!g.equipped.includes(it.u));
-  s+='<div class="sub" style="margin:8px 0 4px">倉庫（未装備 '+bench.length+'）</div>';
-  if(bench.length===0) s+='<div class="sub">なし</div>';
-  else { const st=(g.invSort)||{key:'kei',dir:1}; const ar=k=> st.key===k ? (st.dir<0?'▼':'▲') : '';   // v0.44 ソートUI
-    const sb=(k,label)=>'<button class="btn" style="display:inline-block;padding:2px 8px;margin:0 3px 3px 0'+(st.key===k?';border-color:#ffd24a;color:#ffd24a':'')+'" onclick="setInvSort(\''+k+'\')">'+label+ar(k)+'</button>';
-    s+='<div class="sub" style="margin:0 0 4px">並び替え：'+sb('kei','種別')+sb('life','寿命')+sb('lv','Lv')+sb('cost','⚖コスト')+sb('name','名前')+'</div>';   // v0.52 コストキー追加
-    s+='<div class="grid">';
-    sortedBench(bench).forEach(it=>{ const c=CHMAP[it.c],k=kei(it.c); const full=g.equipped.length>=g.slots; const lc=it.life<=3?'#ff8a8a':'#9fb0ff'; const L=levelOf(it.c), cost=lvupCost(L);
-      s+='<div class="charm"><span style="color:'+k.c+';font-weight:bold">['+k.t+']</span><span class="nm">'+c[1]+'</span> <span style="color:#9fb0ff;font-size:11px">Lv'+L+'</span> <span style="color:'+lc+';font-size:11px">⏳'+it.life+'</span>'+(NOEQUIP[it.c]?'':' <span style="color:#ffca7a;font-size:11px">⚖'+costOf(it.c)+'</span>')+'<br>'
-        +'<span style="color:#cdd;font-size:11px">'+fxText(it.c,L)+'</span><br>'
-        +(NOEQUIP[it.c]?'<span style="color:#ffd24a;font-size:11px">'+(it.c==='hero'?'🦸強化で使用（装備不要）':'💰狩りで使用（装備不要）')+'</span>':'<button class="btn" style="display:inline-block;padding:2px 8px" onclick="equip('+it.u+')" '+(full?'disabled':'')+'>'+(full?'枠満杯':'装備')+'</button>')
-        +(L<maxLvOf(it.c)?' <button class="btn" style="display:inline-block;padding:2px 8px" onclick="levelUp(\''+it.c+'\')" '+(g.clone<cost?'disabled':'')+'>⬆Lv(ｸﾛﾝ'+cost+')</button>':'')+'</div>';
+function showTree(){
+  g.phase='tree'; render();
+  const rootNode=TREE_MAP['root'];
+  let s='<div class="center" style="color:#ffd24a;margin-bottom:6px">🌳 スキルツリー（SP残 '+g.sp+'）</div>';
+  // 根っこ
+  s+='<div class="treeroot">'+nodeCard(rootNode, true)+'</div>';
+  s+='<div class="rootstem">↓</div>';
+  // 5系統を横並びの縦チェーンに（rootから伸びる枝）
+  s+='<div class="branches">';
+  BRANCHES.forEach(br=>{
+    const chain=TREE.filter(n=>n.branch===br);   // 定義順＝手前→奥（reqのチェーン順）
+    s+='<div class="branchcol"><div class="btitle">'+br+'</div>';
+    chain.forEach((n,idx)=>{
+      if(idx>0) s+='<div class="chainarrow">↓</div>';
+      s+=nodeCard(n,false);
     });
     s+='</div>';
-  }
-  s+='<div class="menu" style="margin-top:8px">'+btnRaw("戻る",(g.prevPhase==="shop"?"goShop()":"showPrep()"))+'</div>';
+  });
+  s+='</div>';
+  s+='<div class="sub">手前のノードを必要Lv（多くはLv2）まで育てると、その奥（↓）が開く。根「ブラックストーン」を取るまで全系統の入口は閉じたまま。</div>';
+  s+='<div class="menu" style="margin-top:6px">'+btnRaw("戻る","backFromTree()")+'</div>';
   scr(s);
 }
-function equip(u){ const it=invById(u); if(!it||g.equipped.includes(u))return; if(NOEQUIP[it.c])return; if(g.equipped.length>=g.slots)return;   // v0.48 狩り勢は装備不可
-  if(costUsed()+costOf(it.c)>g.costCap){ setMsg("⚖ コスト上限オーバー！【"+CHMAP[it.c][1]+"】(コスト"+costOf(it.c)+")は入らない（今 "+costUsed()+"/"+g.costCap+"）。\n何かを外すか、商店でコスト上限を拡張しろ。"); beep(200,.1); goEquip(); return; }   // v0.51 装備コスト制
-  g.equipped.push(u); setMsg("装着：【"+CHMAP[it.c][1]+"】（⚖コスト "+costUsed()+"/"+g.costCap+"）"); beep(720,.05); goEquip();
-}
-function unequip(i){ const u=g.equipped[i]; if(u===undefined)return; g.equipped.splice(i,1);
-  const it=invById(u); if(it && it.c==='kks') g.kksCount=0;   // v0.24 カカシ放置は外すとカウンタもリセット（直前だけ装備の小技防止）
-  setMsg("外した：【"+(it?CHMAP[it.c][1]:"?")+"】（倉庫へ）"); beep(360,.05); goEquip();
-}
-function buySlot(){ if(g.costCap>=COST_CAP_MAX)return; const c=slotExpandOku(); if(g.silver<c)return;   // v0.51 コスト上限の拡張に置換（関数名はボット互換のため維持）
-  g.silver-=c; g.costCap+=COST_CAP_STEP; setMsg("⚖ コスト上限を拡張した！（"+(g.costCap-COST_CAP_STEP)+"→"+g.costCap+"・最大"+COST_CAP_MAX+"）"); beep(900,.1); goShop();
-}
-function keepCharm(i){ const id=g.shop[i]; if(!id||HELD[id])return; if(g.clone<1||g.kept.includes(id))return;   // v0.23 [持]はキープ対象外（g.keptに混ざるとrollShopのキープ優先でavail無視の再注入＝ゴースト枠を防ぐ）
-  g.clone-=1; g.kept.push(id);
-  setMsg("🔖【"+CHMAP[id][1]+"】をキープ（クロン-1）。次の棚更新でも残る。"); beep(500,.06); goShop();
-}
-function unkeepCharm(i){ const id=g.shop[i]; if(!id||HELD[id])return; if(!g.kept.includes(id))return; if(g.clone<1)return;   // v0.23 [持]ガード
-  g.clone-=1; g.kept=g.kept.filter(k=>k!==id);
-  setMsg("🔖【"+CHMAP[id][1]+"】のキープを解除（クロン-1）。次の棚更新で入れ替わる。"); beep(400,.06); goShop();
-}
-// v0.63 赤POT（buyDrink/useDrink）は廃止（社長指示：モチベ回復は回復系アイテムA/B/C/Dに一本化）
-function useMemRepair(){ if(g.memRepair<1)return; g.memRepair--; const before=g.dur;   // v0.64 既存dur（命バー）を回復
-  g.dur=Math.min(maxDur(), g.dur+MEMREP_ADD);
-  setMsg("🔧 記憶の修復。武器耐久+"+(g.dur-before)+"（"+g.dur+"/"+maxDur()+"）。"); beep(650,.08);
-  render(); if(g.phase==="shop") goShop(); else showPrep();
-}
-function useBakuchi(n){   // v0.63 D 一服の博打：装備中のみ有効。クロンを払ってモチベ回復（回復量nは任意選択）
-  if(!g.equipped.some(u=>{ const it=invById(u); return it && it.c==='bakuchi'; })) return;
-  const gap=g.motivMax-g.motiv; const amt=Math.max(0,Math.min(n,gap)); if(amt<=0) return;
-  const rate=BAKUCHI_RATE_LV[levelOf('bakuchi')-1]; const cost=Math.ceil(amt*rate); if(g.clone<cost) return;
-  g.clone-=cost; g.motiv=Math.min(g.motivMax, g.motiv+amt);
-  setMsg("🎰 一服の博打。クロン-"+cost+"でモチベ+"+amt+"。"); beep(600,.08);
-  render(); if(g.phase==="enhance") goEnhance(); else if(g.phase==="shop") goShop(); else showPrep();   // v0.64 強化フェーズへ移設＝enhance再描画に対応
-}
-// v0.49 純白の砥石（buyWhet/useWhetstone）は廃止（社長指示「不要」＝減衰完全無効の消耗品は緊張を殺す・ログでも購入0）
-function buyShard(){ if(g.dur>=maxDur())return; const c=shardOku(g.stage); if(g.silver<c)return;
-  g.silver-=c; g.dur=Math.min(maxDur(),g.dur+shardDur); setMsg("📜 記録の欠片。耐久+"+shardDur+"（"+g.dur+"/"+maxDur()+"）。"); beep(620,.06); goShop();
-}
-function buyClone(n){ const cc=cloneCost(); if(g.silver<cc*n)return;
-  g.silver-=cc*n; g.clone+=n; setMsg("🛡 クロン"+n+"個購入（-"+fmtOku(cc*n)+"）。"); beep(660,.06); goShop();
-}
-// v0.54 rerollShelf（棚リロール）は廃止（社長指示）
-function buyHeld(i){ const id=g.shop[i]; const h=HELD[id]; if(!h||!h.avail())return;   // v0.22 [持]所持発動型の購入（エリアンの涙／FEVERマニア）＝装備枠を使わずg.elian/g.feverManiaへ
-  const price=h.price(g.stage); if(g.silver<price)return;
-  g.silver-=price; h.buy(); g.shop[i]=null;
-  if(id==='elian') setMsg("💧 エリアンの涙を手に入れた。倒れても1度だけ、モチベ満タンで復活できる。（装備枠は使わない）");
-  else if(id==='health') setMsg("🩹 健康法を手に入れた。準備画面で使うと装備中の全アイテムの寿命+"+HEALTH_ADD+"。（同時に1個まで所持）");
-  else setMsg("🔥 限界突破マニアを手に入れた（所持"+g.feverMania+"）。強化フェーズで任意発動＝この強化＋次の強化を無条件限界突破！ Ⅹ突破の切り札だ。");
-  beep(900,.1); goShop();
-}
-function takeWabi(){ if(!g.wabiOffer)return; const amt=wabiAmt();   // v0.59 受け取るたびに次が豪華になる（wabiTaken加算・周回でもリセットしない＝運営の詫びは通算）
-  g.clone+=amt; g.wabiTaken=(g.wabiTaken||0)+1; g.wabiOffer=false;
-  setMsg("🎁 運営からの詫びクロンを受け取った！ クロン+"+amt+"個。（受け取るほど、次の詫びは豪華になる）"); beep(880,.09); goShop();
-}
-// v0.59 levelUpWabi（クロンでのLv上げ）は廃止（社長案＝運営からの詫びが自動で育つ方式に）
-function doRepair(){ const cost=repairOku(g.stage); if(g.silver<cost)return;
-  g.silver-=cost; g.dur=maxDur(); g.motiv-=1;
-  setMsg("🔧 修理完了。耐久全回復。（モチベ-1）"); if(checkDead())return; goShop();
-}
+function backFromTree(){ g.phase='enhance'; render(); showEnhance(); }
 
-function goEnhance(){   // v0.17 耐久0でも入れる（保護は不可だが生賭けは可＝ターンを必ず進められる＝詰み回避）
-  g.phase="enhance"; render();
-  let s='<div class="center" style="margin-bottom:6px;color:#ffd24a">― 強化フェーズ '+stageName(g.stage)+' → '+stageName(g.stage+1)+' ―</div>';
-  if(guarStage()){
-    s+='<div class="center big">成功率 100%（助走）</div>';
-    s+='<div class="menu" style="margin-top:8px">'+btnRaw("⚔ 強化する！","tryEnh(false)")+btnRaw("戻る","showPrep()")+'</div>';
-    scr(s+'<div class="sub">無印Ⅰ〜Ⅶは確定成功。Ⅷから爆発値の勝負が始まる。</div>'); return;
-  }
-  const bd=exBreakdown(); const need=needClone(g.stage);
-  const canProtect=g.clone>=need;
-  const rawRate=Math.min(CAP_RATE, 100/(100+K(g.stage,g.cycle)));   // 装備・爆発値ゼロ（素EX=100）の成功率
-  // 実行前は「素の成功率＋どれだけ盛れているか（爆発値ゲージ）」まで。最終確率と内訳は実行後の合体演出で開示。
-  s+='<div style="margin:8px 0;padding:8px;background:var(--panel);border:1px solid var(--edge);border-radius:4px">';
-  s+='<div class="center" style="font-size:13px;color:#9fb0ff">この段の<b>素の成功率</b></div>';
-  s+='<div class="center big" style="margin:1px 0 6px">'+(rawRate*100).toFixed(0)+'%</div>';
-  // v0.64 FEVER演出リメイク：事前の「爆発値X / FEVER壁 / ★到達」先出しを撤去（ネタバレ防止・社長指示）。盛り具合とFEVER到達は「強化実行」時に札を一枚ずつ積む段階revealで見せる
-  s+='<div class="sub verbose" style="margin:2px 0 0;color:#ffca7a">◆ 実行すると爆発要素が一枚ずつ降ってくる…限界突破に届くかは<b>その場の演出で</b>！ ◆</div>';
-  if(agg().bonusP>0) s+='<div class="sub" style="margin-top:6px;color:#ffa64a">🎯 段跳ねのお守り装備中：成功したら '+Math.round(agg().bonusP*100)+'%で段+1（限界突破時は+2）</div>';
-  // 能動アイテム（装備していればトグル）：背水／意地／オールイン
-  const ag=agg();
-  if(g._ijiShield>0) s+='<div class="sub" style="margin-top:6px;color:#ff8a8a">😤 前の意地が効いている：今回の強化は<b>武器の抵抗を'+Math.round(g._ijiShield*100)+'%無効化</b>！</div>';
-  if(ag.maxUp>0) s+='<div class="sub" style="margin-top:6px;color:#c9a0ff">🪆 カカシ放置：装備してから連続成功 '+(g.kksCount||0)+'/6（6で モチベ最大値+'+ag.maxUp+'）</div>';
-  if(ag.haisuiMult>0){
-    if(g._haisui) s+='<div class="menu" style="margin-top:6px"><button class="btn center" style="border-color:#ff6a6a" onclick="toggleHaisui()">🔥 背水ON（モチベ-'+g._haisui.cost+'・爆発値×'+g._haisui.mult+'）＝解除する</button></div>';
-    else s+='<div class="menu" style="margin-top:6px"><button class="btn center" onclick="toggleHaisui()" '+(g.motiv<=ag.haisuiCost?'disabled':'')+'>🔥 背水を焚く（モチベ-'+ag.haisuiCost+' → 爆発値×'+ag.haisuiMult+'）'+(g.motiv<=ag.haisuiCost?'［モチベ不足］':'')+'</button></div>';
-  }
-  if(ag.ijiShield>0){
-    if(g._iji) s+='<div class="menu" style="margin-top:6px"><button class="btn center" style="border-color:#ff6a6a" onclick="toggleIji()">😤 意地ON（この強化でモチベ-3 → 次の強化で武器の抵抗を'+Math.round(ag.ijiShield*100)+'%無効化）＝やめる</button></div>';
-    else s+='<div class="menu" style="margin-top:6px"><button class="btn center" onclick="toggleIji()" '+(g.motiv<3?'disabled':'')+'>😤 意地を張る（モチベ-3を払い、次の強化で武器の抵抗を'+Math.round(ag.ijiShield*100)+'%無効化）'+(g.motiv<3?'［モチベ不足］':'')+'</button></div>';
-  }
-  if(ag.allinMult>0){
-    if(g._allin) s+='<div class="menu" style="margin-top:6px"><button class="btn center" style="border-color:#8f8" onclick="toggleAllin()">💰 オールインON（全シルバー'+fmtOku(g.silver)+'を使って爆発値×'+ag.allinMult+'）＝やめる</button></div>';
-    else s+='<div class="menu" style="margin-top:6px"><button class="btn center" onclick="toggleAllin()" '+(g.silver<=0?'disabled':'')+'>💰 オールイン（全シルバー'+fmtOku(g.silver)+'を使って爆発値×'+ag.allinMult+'）'+(g.silver<=0?'［シルバー無し］':'')+'</button></div>';
-  }
-  // v0.45 磨きの儀（抗・能動トグル）：ONで強化すると必要クロンの半分（最低1）を追加消費し、今回の減衰を軽減
-  if(ag.migakiRelief>0){ const mc=migakiCost();
-    if(g._migaki) s+='<div class="menu" style="margin-top:6px"><button class="btn center" style="border-color:#9ff3e8" onclick="toggleMigaki()">🧊 磨きの儀ON（クロン-'+mc+'を追加で燃やし、今回の減衰を'+Math.round(ag.migakiRelief*100)+'%やわらげる）＝やめる</button></div>';
-    else s+='<div class="menu" style="margin-top:6px"><button class="btn center" onclick="toggleMigaki()" '+(g.clone<mc?'disabled':'')+'>🧊 磨きの儀（クロン-'+mc+'を追加で燃やし、今回の減衰を'+Math.round(ag.migakiRelief*100)+'%やわらげる）'+(g.clone<mc?'［クロン不足］':'')+'</button></div>';
-  }
-  // v0.64 D 一服の博打（能動）：強化フェーズでクロンを払ってモチベ回復（磨きの儀と同位置＝"強化時"の博打）。装備中のみ表示
-  if(g.equipped.some(u=>{ const it=invById(u); return it && it.c==='bakuchi'; })){
-    const rate=BAKUCHI_RATE_LV[levelOf('bakuchi')-1]; const gap=g.motivMax-g.motiv;
-    if(gap>0){
-      s+='<div class="menu" style="margin-top:6px"><div class="sub" style="margin:0 0 3px;color:#ffca7a">🎰 一服の博打：クロンを払ってモチベ回復（単価クロン'+rate+'/モチベ1・保護を諦めてモチベを買う博打）</div><div class="grid">';
-      [1,3].filter(n=>n<=gap).forEach(n=> s+=btn("+"+n,"クロン-"+(n*rate),"useBakuchi("+n+")", g.clone<n*rate?"クロン不足":""));
-      if(gap>3) s+=btn("満タンまで(+"+gap+")","クロン-"+(gap*rate),"useBakuchi("+gap+")", g.clone<gap*rate?"クロン不足":"");
-      s+='</div></div>';
-    }
-  }
-  // v0.49 スーパーヒーロー（倉庫在住・任意使用）：ONにして強化すると爆発値×（成否問わず燃え尽きる）
-  { const hi=heroItem(); if(hi){
-    s+='<div class="menu" style="margin-top:6px"><button class="btn center" style="border-color:'+(g._useHero?'#ffd24a':'#556')+(g._useHero?';color:#ffd24a':'')+'" onclick="toggleHero()">🦸 スーパーヒーローを使う（爆発値×'+heroMult()+'・この一撃で燃え尽きる）＝'+(g._useHero?'ON':'OFF')+'</button></div>'; } }
-  { const _rel=decayReliefTotal(bd.ex); if(_rel>0) s+='<div class="sub" style="margin-top:6px;color:#9ff3e8">🧊 減衰軽減 -'+Math.round(_rel*100)+'%（抗アイテム・合算上限'+Math.round(KOU_TOTAL_CAP*100)+'%）＝武器の抵抗をやわらげ中</div>'; }
-  // v0.49.1 天井の事前表示は削除（社長指摘＝最終確率のネタバレ。天井は演出の中で赤線の動きとして見せる）
-  // v0.22 FEVERマニア（[持]・任意発動）：この強化＋次の強化を無条件FEVER。Ⅹ突破の切り札。
-  if(g._feverArmed>0) s+='<div class="sub" style="margin-top:6px;color:#ff8ad0">🔥 限界突破マニア発動中：あと'+g._feverArmed+'回の強化が<b>無条件限界突破＝減衰無視の真99%</b>！</div>';
-  else if(g.feverMania>0) s+='<div class="menu" style="margin-top:6px"><button class="btn center" style="border-color:#ff6ad0" onclick="activateFmn()">🔥 限界突破マニアを発動（所持'+g.feverMania+'）＝この強化と次の強化を無条件限界突破！</button></div>';
-  s+='<div class="sub verbose" style="margin-top:6px;color:#ffca7a">▶ 最終確率は「強化実行」を選ぶと、爆発要素が降ってきて<b>合体演出</b>で確定！</div>';
-  if(bd.jackpot>1) s+='<div class="sub verbose" style="color:#ff8">※運試し：強化するたび1/7で大当たり。当たれば爆発値×'+bd.jackpot+'（外れても等倍・損なし）。当落は実行時に判定</div>';
-  s+='</div>';
-  s+='<div class="menu" style="margin-top:8px">';
-  s+=btn("🛡 保護して強化","失敗しても段維持（クロン-"+need+"・成否問わず消費）","playEnhance(false)", canProtect?"":("クロン不足（"+g.clone+"/"+need+"）"));   // v0.64 旧・耐久0で保護不可のゲートは撤去（耐久0＝ゲームオーバーなのでこの画面には来ない）
-  s+=btn("🎲 保護なしで生賭け","クロン不要／失敗＝1段ダウン＆モチベ大","playEnhance(true)");
-  s+=btn("準備に戻る","狩り・買い物をやり直す（このターンはまだ終わらない）","showPrep()");
-  s+='</div>';
-  scr(s+'<div class="sub verbose">爆発値が限界突破ラインに届くと限界突破（スコア激増）。<b>武器は最初から抵抗</b>し、段が深いほど<b>成功率の天井そのもの</b>を下げる。<b>壁の3倍を超えて盛った分（オーバーキル）</b>と抗アイテム・意地が天井を押し返す＝99%は取り戻すご褒美。爆発値ぶんスコア加算。</div>');
-}
-function toggleHaisui(){ const ag=agg(); if(ag.haisuiMult<=0) return;   // 背水（能動）のON/OFF
-  if(g._haisui) g._haisui=null;
-  else { if(g.motiv<=ag.haisuiCost) return; g._haisui={cost:ag.haisuiCost, mult:ag.haisuiMult}; beep(300,.12); }
-  goEnhance();
-}
-function toggleIji(){ const ag=agg(); if(ag.ijiShield<=0) return;   // 意地（能動・v0.42）のON/OFF：ONで強化するとモチベ-3を払い次の強化に武器の抵抗をLv%無効化するシールドを仕込む
-  if(!g._iji && g.motiv<3) return;   // v0.42 モチベ3未満は発動不可（ガード）
-  g._iji=!g._iji; beep(g._iji?300:200,.1); goEnhance();
-}
-function toggleAllin(){ const ag=agg(); if(ag.allinMult<=0) return;   // オールイン（能動）のON/OFF：ONだと今回、全シルバーを使って×
-  if(!g._allin && g.silver<=0) return; g._allin=!g._allin; beep(g._allin?520:200,.1); goEnhance();
-}
-function toggleMigaki(){ const ag=agg(); if(ag.migakiRelief<=0) return;   // v0.45 磨きの儀（能動）のON/OFF：ONで強化すると必要クロンの半分を追加消費して今回の減衰を軽減
-  if(!g._migaki && g.clone<migakiCost()) return; g._migaki=!g._migaki; beep(g._migaki?560:200,.1); goEnhance();
-}
-function toggleHero(){ if(!heroItem())return;   // v0.49 スーパーヒーロー（能動・倉庫在住）：ONで今回の強化1回に×ヒーロー倍率、実行で燃え尽きる
-  g._useHero=!g._useHero; beep(g._useHero?1100:200,.12); goEnhance();
-}
-function activateFmn(){ if(g.feverMania<=0 || g._feverArmed>0) return;   // v0.22 FEVERマニア発動＝所持を1消費し、この強化＋次の強化＝計2回を無条件FEVERに（"FEVERの次ターンもFEVER"の連鎖を2回で固定＝無限連鎖防止）
-  g.feverMania--; g._feverArmed=2; beep(1400,.18);
-  setMsg("🔥 限界突破マニア発動！ この強化と次の強化が無条件限界突破＝減衰無視の真99%だ！ Ⅹの壁をこじ開けろ。"); goEnhance();
-}
-
-function tryEnh(gamble){
-  const guaranteed=guarStage();   // v0.43 助走(確定成功)は1周目のみ／2周目以降は段1から通常バトル
-  const need=needClone(g.stage);
-  if(!guaranteed && !gamble && g.clone<need){ setMsg("クロン不足（"+g.clone+"/"+need+"）！ 生賭けか補充を。"); return; }
-  const a0=agg();
-  const ijiActive=(g._iji && !guaranteed && a0.ijiShield>0 && g.motiv>=3);   // v0.42 意地（能動）：モチベ-3を払い次の強化に抵抗無効化シールドを仕込む（失敗は強制しない）
-  let ex=guaranteed?100:computeEX(true);          // 確率・賭け・背水の倍率をここで反映
-  const forceFever=(g._feverArmed>0 && !guaranteed);   // v0.22 FEVERマニア：無条件FEVER＝爆発値をFEVERラインまで押し上げ（v0.24 真99%＆FEVER状態＝bonusP+2・スコアもFEVER級）
-  if(forceFever) ex=Math.max(ex, FL(g.stage,g.cycle));
-  if(g._haisui && !guaranteed){ g.motiv=Math.max(0,g.motiv-g._haisui.cost); }   // 背水：モチベ消費（能動）
-  if(g._migaki && !guaranteed && a0.migakiRelief>0){ const mc=migakiCost();   // v0.45 磨きの儀：必要クロンの半分（最低1）を追加消費。保護分と合わせて不足なら不発（OFF＝軽減も乗らない）
-    if(g.clone>=mc+(gamble?0:need)) g.clone-=mc; else g._migaki=false; }
-  const rate=guaranteed?1.0:successRateEX(ex);    // v0.24 減衰・意地シールド・FMN真99%込みの最終率
-  let ok=(Math.random()<rate);
-  if(!guaranteed){
-    if(a0.lucky7 && Math.random()<1/7){ ok=true; g._lucky7Hit=true; }   // v0.41 七の女神：1/7で成功確定
-    else g._lucky7Hit=false;
-    if(a0.luckFill>0 && g.luckGauge>=100){ ok=true; g.luckGauge=0; g._luckHit=true; } else g._luckHit=false;   // v0.41 幸運の積立：満タンで成功確定
-  }
-  if(!guaranteed) g._ijiShield=0;                 // v0.24 意地シールドは今回の強化で消費（成否問わず）
-  if(ok){ onSuccess(gamble,guaranteed,ex); } else { onFail(gamble,guaranteed,ex); }
-  if(g._useHero){ if(!guaranteed){ const hi=heroItem();   // v0.49 スーパーヒーロー：使った強化1回で燃え尽きる（成否問わず・寿命1・買い直しで復活）
-      if(hi){ hi.life--; if(hi.life<=0){ g.inv=g.inv.filter(x=>x.u!==hi.u); g._broke=(g._broke||[]).concat(["スーパーヒーロー（燃え尽き）"]); beep(200,.15); } } }
-    g._useHero=false; }
-  // v0.43 使ったら減る：強化実行で非狩系アイテムの寿命-1（成否問わず1回）→長寿(choju)で延命→破損チェック。カウント(onSuccessのkks等)後に減算＝6回目が消える事故を回避。周回でequippedが空なら自動でno-op
-  g.equipped.slice().forEach(u=>{ const it=invById(u); if(it && CHMAP[it.c][2]!=='狩') it.life--; });
-  if(a0.lifeOnEnh>0) g.equipped.forEach(u=>{ const it=invById(u); if(it && it.c!=='bigaku' && it.c!=='hero' && it.c!=='choju' && it.life<lifeOf(it.c)) it.life=Math.min(lifeOf(it.c), it.life+a0.lifeOnEnh); });   // 長寿：本来の寿命まで回復・bigaku/heroは回復不可／v0.50 長寿自身も対象外／v0.61 超過中（延命3倍等）は減らさない（Math.minが本来値まで削るバグ修正・社長指示）
-  if(a0.selfHarmRecov>0){ g.motiv=Math.min(g.motivMax, g.motiv+a0.selfHarmRecov);   // v0.64 C 身を削る強化：強化のたびモチベ回復・代わりに武器耐久（命バー）を余分に削る＝命を賭ける（後段のcheckDeadで0なら死）
-    g.dur=Math.max(0,g.dur-SELFHARM_DUR); }
-  breakCheck();
-  if(ijiActive){ g.motiv=Math.max(0,g.motiv-3); g._ijiShield=a0.ijiShield; }   // v0.42 意地：モチベ-3を払い、次の強化で武器の抵抗をLv%無効化（onSuccess/Failの後に立てる＝startTurnでは消えない）
-  if(forceFever) g._feverArmed=Math.max(0,g._feverArmed-1);   // v0.22 無条件FEVERを1回ぶん消費（残り1回は次の強化へ＝計2回で自動終了）
-  if(g.ended)return;
-  render(); if(checkDead())return;
-  if(g._deferAdvance) return;   // v0.40 演出：結果適用後ここで停止（成否表示→「次へ」で advanceAfterEnh が rollShop+startTurn）
-  rollShop(); startTurn();
-}
-
-// ===== 強化実行 → 演出（爆発値→成功率→成否→次へ）。UI専用。sim/botは tryEnh を直接呼ぶ =====
-function playEnhance(gamble){
+// ===== 強化実行 → 演出（UI専用。sim/botはtryEnhを直接呼ぶ） =====
+function playEnhance(){
   if(g._animating) return;
-  const guaranteed=guarStage();
-  const need=needClone(g.stage);
-  if(!guaranteed && !gamble && g.clone<need){ setMsg("クロン不足（"+g.clone+"/"+need+"）！ 生賭けか補充を。"); return; }
-  if(guaranteed){ tryEnh(gamble); return; }   // 助走は演出なしで即確定
-  if(g._feverArmed>0){ tryEnh(gamble); return; }   // FEVERマニア発動中＝即確定
-  // v0.42 意地は通常の強化として演出を通す（強制失敗は撤去・モチベ-3で次弾にシールドを仕込むだけ）
-  // v0.47 社長指示＝確率表現をゲージ式に：0〜100のゲージが「素の成功率→各爆発値で上昇→減衰で下降→抗で上昇→オーバーキルで上昇→最終確率」と動く（何がどう効いたかを1本のバーで体感）
-  const bd=exBreakdown(); const K_=K(g.stage,g.cycle);
-  const rateOf=ex=> Math.min(CAP_RATE, ex/(ex+K_));            // 爆発値→%の素の変換（減衰前）
-  const rawTotal=bd.rows.length?bd.rows[bd.rows.length-1][1]:100;   // FEVER上限で切る前の素の爆発値
-  const cap=bd.cap;
+  const ex=computeEX(); const wall=FL(g.stage,g.cycle); const Kv=K(g.stage,g.cycle);
+  const rateOf=v=> Kv<=0 ? capEff() : Math.min(CAP_RATE, v/(v+Kv));
   const steps=[];
-  let prev=rateOf(100);
-  steps.push({kind:'gauge', label:'素の成功率', rate:prev, cls:'ex', exVal:100});
-  // (1) 各爆発値ぶんゲージ上昇（アイテム/条件ごとに+何%効いたかを見せる。99%到達後は+0%＝「今は率に効いてない」も見せる）
-  let feverShown=false;
-  bd.rows.forEach(([lbl,v],idx)=>{ if(idx===0) return;
-    const r=rateOf(Math.min(v,cap));
-    steps.push({kind:'gauge', label:lbl.split(" ×")[0], rate:r, deltaPct:(r-prev)*100, cls:'ex', exVal:v});
-    prev=r;
-    if(!feverShown && v>=cap){ steps.push({kind:'feverhit', label:'⭐ 限界突破 到達！（壁 '+Math.round(cap).toLocaleString()+' 超え）'}); feverShown=true; }   // v0.65 FEVER→限界突破に改名＋到達演出を専用kindで派手に
-  });
-  // (3) 武器の抵抗＝素の減衰で下降（抗・意地を効かせる前の値まで一旦落とす）
+  let prev=rateOf(ex);
+  steps.push({label:"💥 爆発値 "+Math.round(ex).toLocaleString(), rate:prev, exVal:ex, cls:'ex'});
+  if(wall>0 && ex>=wall) steps.push({kind:'feverhit', label:"⭐ 限界突破 到達！（壁 "+wall.toLocaleString()+" 超え）"});
   const dRaw=decayD();
-  const exdRaw=100*Math.pow(Math.max(1,bd.ex/100), dRaw);
-  const capRaw=CEIL_ON? Math.max(CEIL_MIN, CAP_RATE-CEIL_SLOPE*(1-dRaw)) : CAP_RATE;   // v0.49 素の天井（このあと抗・意地・OKが押し返す）
-  const rateDecayRaw=Math.min(capRaw, exdRaw/(exdRaw+K_));
-  // v0.49.1 赤線（天井）も演出内で動かす：抵抗で下がり、抗/意地・OKで押し返して戻る（事前ネタバレ防止・社長指摘）
-  if(rateDecayRaw < prev-0.0005){ steps.push({kind:'gauge', label:'🗡 武器の抵抗！', rate:rateDecayRaw, deltaPct:(rateDecayRaw-prev)*100, cls:'resist', cap:capRaw}); prev=rateDecayRaw; }
-  // (4) 減衰抵抗（意地＋抗アイテム）で上昇（v0.49 砥石廃止）
-  const rateRelief=decayedRateEX(bd.ex);
-  const capNoOK=CEIL_ON? Math.max(CEIL_MIN, CAP_RATE-CEIL_SLOPE*(1-decayEffD(bd.ex))) : CAP_RATE;   // v0.49.1 抗・意地込み（OK押し返し前）の天井
-  if(rateRelief > prev+0.0005){ const _rel=decayReliefTotal(bd.ex); const parts=[]; if(g._ijiShield>0) parts.push('😤意地'); if(_rel>0) parts.push('🧊抗'+Math.round(_rel*100)+'%');
-    steps.push({kind:'gauge', label:(parts.join('＋')||'🧊抗')+'が抵抗を押し返す！', rate:rateRelief, deltaPct:(rateRelief-prev)*100, cls:'relief', cap:capNoOK}); prev=rateRelief; }
-  // (5) オーバーキル：v0.47.3 社長指摘「効果が出るのは減衰の後」＝表示位置を抵抗・抗の後ろへ移動（壁の×N → 押し返し+pt の順で見せる）
-  if(rawTotal>=cap){ const ratio=rawTotal/cap; steps.push({kind:'note', label:'💥 オーバーキル：壁の×'+(ratio>=100?Math.round(ratio).toLocaleString():String(Math.round(ratio*10)/10))}); }
-  if(prev<CAP_RATE){ const p=okPushPt(); if(p>0){ const r2=Math.min(capEff(bd.ex), prev+p/100);   // v0.49 押し返し先も天井まで
-    if(r2>prev+0.0005){ steps.push({kind:'gauge', label:'⚡ オーバーキルが抵抗を押し返す！', rate:r2, deltaPct:(r2-prev)*100, cls:'fpush', cap:capEff(bd.ex)}); prev=r2; } } }
-  // (6) 執念など残り（successRateEXとの差分を吸収＝最終値と必ず一致させる）
-  const finalRate=successRateEX(bd.ex);
-  if(finalRate > prev+0.0005){ steps.push({kind:'gauge', label:'🔥 執念（失敗スタック）', rate:finalRate, deltaPct:(finalRate-prev)*100, cls:'fpush'}); prev=finalRate; }
-  // (7) 最終確率
-  steps.push({kind:'final', rate:finalRate, cap:capEff(bd.ex)});   // v0.49.1 最終時点で赤線＝実効天井に着地
-  g._pendingGamble=gamble; g._animating=true; g._animTimers=[]; g._finalRatePreview=finalRate;
-  renderEquipPanel();
-  renderAnimStage(gamble);
+  const exdRaw=100*Math.pow(Math.max(1,ex/100), dRaw);
+  const capRaw=CEIL_ON? Math.max(CEIL_MIN, CAP_RATE-CEIL_SLOPE*(1-dRaw)) : CAP_RATE;
+  const rateDecayRaw = Kv<=0 ? prev : Math.min(capRaw, exdRaw/(exdRaw+Kv));
+  if(rateDecayRaw < prev-0.0005){ steps.push({label:"🗡 武器の抵抗！", rate:rateDecayRaw, cls:'resist'}); prev=rateDecayRaw; }
+  const rateRelief=decayedRateEX(ex);
+  if(rateRelief > prev+0.0005){ steps.push({label:"🧊 抗／連撃が押し返す！", rate:rateRelief, cls:'relief'}); prev=rateRelief; }
+  const p=okPushPt();
+  if(prev<capEff() && p>0){ const r2=Math.min(capEff(), prev+p/100);
+    if(r2>prev+0.0005){ steps.push({label:"⚡ オーバーキルが押し返す！", rate:r2, cls:'fpush'}); prev=r2; } }
+  const finalRate=successRateEX(ex);
+  if(finalRate > prev+0.0005){ steps.push({label:"🧘 冷静／火事場が支える！", rate:finalRate, cls:'fpush'}); prev=finalRate; }
+  steps.push({kind:'final', rate:finalRate});
+  g._animating=true; g._animTimers=[]; g._finalRatePreview=finalRate;
+  renderAnimStage(ex, wall);
   let i=0;
   function next(){
     if(!g._animating) return;
-    if(i>=steps.length){ setBig('勝負…！','gamble'); beep(900,.12); g._animTimers.push(setTimeout(doReveal, 700+ANIM_SLOW)); return; }
+    if(i>=steps.length){ setBig('勝負…！','gamble'); beep(900,.12); g._animTimers.push(setTimeout(doReveal, 500)); return; }
     const st=steps[i++];
-    if(st.kind==='gauge'){ setGauge(st.rate, st.cls); if(st.cap!=null) setGaugeCap(st.cap); setBig(pct1(st.rate), st.cls==='ex'?'rate':st.cls); if(st.exVal!=null) setExSub(st.exVal, cap); addChip(st.label, st, st.cls);
-      beep(st.cls==='resist'?180:(st.cls==='fpush'?1250:(st.cls==='relief'?880:520+i*30)), st.cls==='resist'?.09:.06);
-      g._animTimers.push(setTimeout(next, (st.cls==='ex'?400:560)+ANIM_SLOW)); }
-    else if(st.kind==='note'){ addChip(st.label, {}, 'over'); beep(1500,.12); g._animTimers.push(setTimeout(next, 520+ANIM_SLOW)); }
-    else if(st.kind==='feverhit'){   // v0.65 到達演出を派手に：発光・大きめポップ・金/ピンクのフラッシュ・強めbeep
-      addChip(st.label, {}, 'feverhit'); setBig('🌟 限界突破!!', 'feverhit'); beep(1800,.22); beep(2200,.16);
-      const stg=document.getElementById('animstage');
-      if(stg){ stg.style.transition='box-shadow .12s ease'; stg.style.boxShadow='0 0 26px 6px #ffd24a, 0 0 46px 14px #ff3b6b'; g._animTimers.push(setTimeout(()=>{ if(stg) stg.style.boxShadow=''; }, 420)); }
-      g._animTimers.push(setTimeout(next, 640+ANIM_SLOW));
-    }
-    else if(st.kind==='final'){ setGauge(st.rate,'final'); if(st.cap!=null) setGaugeCap(st.cap); setBig('最終 '+pct1(st.rate),'final'); addChip('最終確率 '+pct1(st.rate), {}, 'final'); beep(1000,.1); g._animTimers.push(setTimeout(next, 650+ANIM_SLOW)); }
+    if(st.kind==='feverhit'){ addChip(st.label,'feverhit'); setBig('🌟 限界突破!!','feverhit'); beep(1800,.2); beep(2200,.14);
+      g._animTimers.push(setTimeout(next, 550)); }
+    else if(st.kind==='final'){ setGauge(st.rate,'final'); setBig('最終 '+pct1(st.rate),'final'); addChip('最終確率 '+pct1(st.rate),'final'); beep(1000,.1);
+      g._animTimers.push(setTimeout(next, 480)); }
+    else { setGauge(st.rate, st.cls||'ex'); setBig(pct1(st.rate), st.cls==='ex'?'rate':st.cls); addChip(st.label, st.cls||'ex');
+      beep(st.cls==='resist'?180:(st.cls==='fpush'?1250:(st.cls==='relief'?880:520)), st.cls==='resist'?.09:.06);
+      g._animTimers.push(setTimeout(next, 420)); }
   }
-  g._animTimers.push(setTimeout(next, 450));
+  g._animTimers.push(setTimeout(next, 350));
 }
-// v0.47.1 社長指示「演出が早すぎる」＝1ステップあたりの待ち時間に一律加算するウェイト（ms）【仮・体感で調整】
-const ANIM_SLOW=250;   // v0.47.2 社長FB「+0.5秒は遅すぎ・半分に」＝500→250
-// v0.47 ゲージ用ヘルパ：%は小数1桁表示（+0.3%の効きも見える）
-function pct1(r){ return (r*100).toFixed(1)+'%'; }
-function setGauge(rate, cls){ const f=document.getElementById('gaugefill'); if(!f) return;
-  const col={ex:'#ffd24a',resist:'#ff5a5a',relief:'#9ff3e8',fpush:'#ff3b6b',final:'#ffd24a',win:'#8dff9a',lose:'#ff6a6a'};
-  g._lastGaugeRate=rate;
-  f.style.width=Math.max(0,Math.min(100,rate*100))+'%';
-  f.style.background=col[cls]||'#ffd24a';
-}
-// v0.50 爆発値カウント演出：札が積まれるたび金色の大きな数字がポップして増える（FEVER壁到達でピンク発光）
-function setExSub(ex,cap){ const e=document.getElementById('animex'); if(!e) return;
-  const fever=ex>=cap;
-  e.innerHTML='爆発値 <b id="exnum" class="expop'+(fever?' exfever':'')+'">'+Math.round(ex).toLocaleString()+'</b> ／ 限界突破の壁 '+Math.round(cap).toLocaleString()+(fever?' <span style="color:#ff3b6b;font-weight:bold">★到達!!</span>':'');   // v0.65 社長指示：表示は壁を超えても頭打ちにせず増やし続ける（cap表示・★到達は残す）／FEVER→限界突破に改名
-  const b=document.getElementById('exnum'); if(b && b.classList){ b.classList.remove('expop'); void b.offsetWidth; b.classList.add('expop'); } }
-// v0.49.1 赤線（天井）を演出内で動かす：CSSのleftを書き換え（transitionはgaugefillと同じ体感になるようinlineで付与）
-function setGaugeCap(rate){ const c=document.getElementById('gaugecap'); if(!c) return;
-  c.style.transition='left .45s ease'; c.style.left=Math.max(0,Math.min(100,rate*100)).toFixed(1)+'%'; }
-// 判定を開示（deferで tryEnh を呼び結果を適用・rollShop/startTurnは「次へ」まで保留）
-function doReveal(){ if(!g._animating) return;
-  g._deferAdvance=true; tryEnh(g._pendingGamble);
+function doReveal(){
+  if(!g._animating) return;
+  g._deferAdvance=true; tryEnh();
+  if(g.ended){ g._animating=false; return; }
   const success=!g.lastFailed;
-  if(g.ended){ g._animating=false; return; }   // 死亡＝gameOver画面が既に出ている
   setBig(success?'✨ 成功!!':'💥 失敗…', success?'win':'lose');
-  setGauge((g._finalRatePreview!=null?g._finalRatePreview:(g._lastGaugeRate||0)), success?'win':'lose');   // v0.47 ゲージも成否色に
-  addChip(success?('✨ '+stageName(g.stage)+' 到達！'):'💥 強化失敗', {}, success?'win':'lose');
+  setGauge((g._finalRatePreview!=null?g._finalRatePreview:0), success?'win':'lose');
+  addChip(success?('✨ '+stageName(g.stage)+' 到達！'):'💥 強化失敗', success?'win':'lose');
   beep(success?1400:160, success?.3:.2);
   const c=document.getElementById("animctl");
-  if(c) c.innerHTML='<button class="btn center" style="border-color:#ffd24a;font-size:15px" onclick="advanceAfterEnh()">▶ 次へ（'+stageName(g.stage)+'）</button>';
+  if(c) c.innerHTML='<button class="btn center" style="border-color:#ffd24a;font-size:15px" onclick="advanceAfterEnh()">▶ 次へ（'+stageLabel()+'）</button>';
 }
 function advanceAfterEnh(){ g._animating=false; g._deferAdvance=false;
   if(g._animTimers){ g._animTimers.forEach(clearTimeout); g._animTimers=[]; }
-  if(g.ended) return; rollShop(); startTurn();
+  if(g.ended) return; startTurn();
 }
-function renderAnimStage(gamble){ let s='<div id="animstage">';
-  s+='<div class="sub" style="color:#ffd24a">'+stageName(g.stage)+' → '+stageName(g.stage+1)+'　強化中…</div>';
-  s+='<div class="animpct" id="animpct" style="color:#ffd24a;font-size:34px">成功率 …</div>';
-  // v0.51.3 赤線（天井の目印）は非表示（社長指示）。天井はゲージの伸び止まりと最終確率の数字で体感させる（setGaugeCapは要素なし＝no-op）
-  s+='<div class="gaugewrap"><div class="gaugescale"><span>0</span><span>50</span><span>100</span></div><div class="gaugetrack"><div class="gaugefill" id="gaugefill"></div><div class="gaugegrid"></div></div></div>';
-  s+='<div class="animex2 center" id="animex">爆発値 <b>100</b> ／ 限界突破の壁 '+Math.round(FL(g.stage,g.cycle)).toLocaleString()+'</div>';   // v0.50 爆発値を大きな数字で（カウントアップ演出の復活）／v0.65 FEVER→限界突破に改名
+function skipEnhance(){ if(!g._animating) return; if(g._animTimers) g._animTimers.forEach(clearTimeout); g._animTimers=[]; doReveal(); }
+function renderAnimStage(ex, wall){ let s='<div id="animstage">';
+  s+='<div class="sub" style="color:#ffd24a">'+stageLabel()+' → 強化中…</div>';
+  s+='<div class="animpct" id="animpct" style="color:#ffd24a">成功率 …</div>';
+  s+='<div class="gaugewrap"><div class="gaugescale"><span>0</span><span>50</span><span>100</span></div><div class="gaugetrack"><div class="gaugefill" id="gaugefill"></div></div></div>';
+  s+='<div class="animex2 center" id="animex">爆発値 <b>'+Math.round(ex).toLocaleString()+'</b> ／ 限界突破の壁 '+Math.round(wall).toLocaleString()+'</div>';
   s+='<div class="animchips" id="animchips"></div>';
-  s+='<div class="menu" id="animctl" style="margin-top:12px"><button class="btn center" onclick="skipEnhance('+gamble+')">⏩ 一気に判定</button></div>';
+  s+='<div class="menu" id="animctl" style="margin-top:12px"><button class="btn center" onclick="skipEnhance()">⏩ 一気に判定</button></div>';
   scr(s+'</div>');
 }
-function setBig(text, cls){ const p=document.getElementById("animpct"); if(!p)return;
+function pct1(r){ return (r*100).toFixed(1)+'%'; }
+function setGauge(rate, cls){ const f=document.getElementById('gaugefill'); if(!f) return;
+  const col={ex:'#ffd24a',resist:'#ff5a5a',relief:'#9ff3e8',fpush:'#ff3b6b',final:'#ffd24a',win:'#8dff9a',lose:'#ff6a6a'};
+  f.style.width=Math.max(0,Math.min(100,rate*100))+'%'; f.style.background=col[cls]||'#ffd24a'; }
+function setBig(text, cls){ const p=document.getElementById("animpct"); if(!p) return;
   p.textContent=text;
-  const col={ex:'#ffd24a',over:'#ff8ad0',rate:'#ffd24a',resist:'#ff5a5a',relief:'#9ff3e8',fpush:'#ff3b6b',final:'#ffd24a',gamble:'#fff',win:'#8dff9a',lose:'#ff6a6a',feverhit:'#ffd24a'};
+  const col={ex:'#ffd24a',rate:'#ffd24a',resist:'#ff5a5a',relief:'#9ff3e8',fpush:'#ff3b6b',final:'#ffd24a',gamble:'#fff',win:'#8dff9a',lose:'#ff6a6a',feverhit:'#ffd24a'};
   p.style.color=col[cls]||'#ffd24a';
-  p.className='animpct'; void p.offsetWidth; p.className='animpct pop'+((cls==='fpush'||cls==='over'||cls==='win'||cls==='feverhit')?' fever':'');   // v0.65 feverhit（限界突破到達）も強調ポップに
+  p.className='animpct'; void p.offsetWidth; p.className='animpct pop'+((cls==='fpush'||cls==='win'||cls==='feverhit')?' fever':'');
 }
-function addChip(label, st, kind){ const c=document.getElementById("animchips"); if(!c)return; st=st||{};
+function addChip(label, kind){ const c=document.getElementById("animchips"); if(!c) return;
   const d=document.createElement("div"); d.className="animchip";
-  const bd={ex:'#ffd24a',over:'#ff8ad0',conv:'#9fb0ff',resist:'#ff5a5a',relief:'#9ff3e8',fpush:'#ff3b6b',final:'#ffd24a',win:'#8dff9a',lose:'#ff6a6a',feverhit:'#ffd24a'};
+  const bd={ex:'#ffd24a',resist:'#ff5a5a',relief:'#9ff3e8',fpush:'#ff3b6b',final:'#ffd24a',win:'#8dff9a',lose:'#ff6a6a',feverhit:'#ffd24a'};
   if(bd[kind]) d.style.borderColor=bd[kind];
-  if(kind==='fpush'||kind==='over'||kind==='win'||kind==='feverhit') d.style.boxShadow='0 0 10px '+bd[kind]+(kind==='feverhit'?', 0 0 18px #ff3b6b':'');   // v0.65 限界突破到達は発光を強めに
-  let tail='';
-  // v0.47 ゲージの増減%（小数1桁）。効かなかった札は +0%＝「今は率に効いてない」を明示
-  const dp=(st.deltaPct!=null)?st.deltaPct:(st.delta!=null?st.delta:null);
-  if(dp!=null && dp>0.05) tail=' <span class="up" style="color:'+(kind==='fpush'?'#ff8ad0':'#8dff9a')+'">+'+(dp>=10?Math.round(dp):dp.toFixed(1))+'%</span>';
-  else if(dp!=null && dp<-0.05) tail=' <span style="color:#ff5a5a;font-weight:bold">'+(dp<=-10?Math.round(dp):dp.toFixed(1))+'%</span>';
-  else if(dp!=null) tail=' <span style="color:#8892b0">+0%</span>';
-  d.innerHTML='<span'+(kind==='resist'?' style="color:#ff8a8a"':kind==='feverhit'?' style="color:#ffd24a;font-weight:bold"':'')+'>'+label+'</span>'+tail;   // v0.65 限界突破到達チップは金太字で強調
+  d.innerHTML='<span>'+label+'</span>';
   c.appendChild(d);
 }
-function skipEnhance(gamble){ if(!g._animating) return; if(g._animTimers) g._animTimers.forEach(clearTimeout); g._animTimers=[]; doReveal(); }
 
-// v0.44 飛び級ボス制限：段跳ね(bst)の追加分がⅩボス段(10の倍数)を飛び越えないようクランプ。（rensa＝連鎖の跳ねはv0.49で廃止）
-// before=ジャンプ前の段。before以降の最初のボス段 B=ceil(before/10)*10 を着地(g.stage)が超えたら B で停止（ボスは自力で1回踏む・超過分は消える）。
-// beforeがボス段ちょうど(=B)でも、そのボスは未討伐＝着地が B を超えれば停止。通常の+1昇段はここを通らないので対象外。周回相対1〜100なので段100(神Ⅹ)も保護。
-function bossClamp(before){ const B=Math.ceil(before/10)*10; if(g.stage>B){ g.stage=B; return true; } return false; }
-function onSuccess(gamble,guaranteed,ex){
-  const a=agg();
-  const _bdPreKougen = kougenEquipped() ? exBreakdown() : null;   // v0.63 B：g.stack/g.combo/g.stageが変わる前の爆発値内訳を保持（後段の余剰計算がリセット後の値を見てしまうバグ回避）
-  g.stack = a.stackKeep>0 ? Math.round(g.stack*a.stackKeep) : 0;   // v0.40/41 成功でスタック0リセット（積み重ね装備なら一部残す）
-  if(!guaranteed && !gamble){ const nc=needClone(g.stage); g.clone-=nc; if(a.cloneRefundP>0) g.clone+=Math.round(nc*a.cloneRefundP); }   // v0.41 節約の閃き：保護成功でクロン一部返却
-  const fever=ex>=FL(g.stage,g.cycle);               // 昇段前の段でFEVER判定（ラインに届いたか）
-  g.stage++; g.combo++;
-  g.score+=Math.round(ex);                           // スコア＝爆発値の累積
-  if(a.snowball>0) g.snow+=a.snowball;               // スノーボール永続成長
-  if(a.maxUp>0){ g.kksCount=(g.kksCount||0)+1;   // v0.24 🪆カカシ放置＝装備起点カウンタ：装備中の成功のみ加算（失敗・取り外し・破損で0リセット）＝装備タイミングのズレ／直前だけ装備の小技を封じる
-    if(g.kksCount>=6){ g.kksCount=0; g.motivMax+=a.maxUp; g._kks="\n🪆 カカシ放置：装備してから連続6回成功！ モチベ最大値+"+a.maxUp+"（今"+g.motivMax+"）"; beep(1300,.14); } else g._kks="";
-  } else { g.kksCount=0; g._kks=""; }
-  g.motiv=Math.min(g.motivMax,g.motiv+Math.max(1,Math.round(gainBase(g.combo))));  // v0.8 整数化：成功回復は最低+1
-  if(a.comboRecovBase>0) g.motiv=Math.min(g.motivMax, g.motiv+a.comboRecovBase+Math.floor(g.combo/RECA_COMBO_DIV));   // v0.63 A 連撃の回復：コンボが伸びるほど回復量UP（失敗でコンボ0に戻れば増分もリセット）
-  if(a.feverRecov>0 && fever) g.motiv=Math.min(g.motivMax, g.motiv+a.feverRecov);   // v0.41 FEVERの残響：FEVER成功でモチベ+
-  g.lastFailed=false;
-  let extra=g._kks||"";
-  // v0.63 B 昂りの還元：FEVER到達時、壁を超えた余剰ぶんをモチベ回復に変換（トレードオフ＝okPushPtで押し返し無効化済み）
-  if(fever && _bdPreKougen){
-    const Lv=levelOf('kougen'); const bd=_bdPreKougen;
-    const rawTotal=(bd.rows&&bd.rows.length)?bd.rows[bd.rows.length-1][1]:bd.ex;
-    if(rawTotal>bd.cap){ const amt=Math.max(0,Math.round(KOUGEN_LV[Lv-1]*Math.log2(rawTotal/bd.cap)));
-      if(amt>0){ g.motiv=Math.min(g.motivMax, g.motiv+amt); extra+="\n😵‍💫 昂りの還元：余剰ぶんモチベ+"+amt+"（オーバーキルの押し返しは放棄）"; } }
-  }
-  // 確率で強化値+1（即使い切り・FEVER中は+2）：本番段でのみ発動
-  if(a.bonusP>0 && !guaranteed && Math.random()<a.bonusP){ const b=fever?2:1; const _b=g.stage; g.stage+=b; const cl=bossClamp(_b); const gd=g.stage-_b; if(gd>0) extra+="\n🎯 段跳ね発動！ +"+gd+"段"+(fever?"（FEVER倍増）":""); if(cl) extra+="\n🚧 ボスは飛び越えられない！（ボス手前で停止）"; beep(1200,.12); }  // 🎯段跳ねのお守り（装備）／v0.44 Ⅹボスでクランプ
-  // v0.49 連鎖の跳ね(combo3Jump)は廃止（社長指示）
-  g.maxStage=Math.max(g.maxStage,g.stage + (g.cycle-1)*100);
-  if(g._jackpotHit){ extra+="\n🎰 ジャックポット大当たり！"; }
-  if(g._bet>0){ extra+="\n💰 "+fmtOku(g._bet)+"を賭けた！"; }
-  beep(700+Math.min(g.combo,20)*30,.09);
-  // 周回チェック
-  if(g.stage>100){
-    g.cycle++; g.maxCycle=Math.max(g.maxCycle,g.cycle); g.stage=1; g.motiv=g.motivMax;
-    g.clone=0; g.dur=maxDur(); g.combo=0; g.lastFailed=false; g.kept=[]; g._feverArmed=0; g.elianUsed=false;   // Lvは持ち越し（永続投資）／発動中の無条件FEVER・エリアン使用済は周回でリセット（周回ごとに保険を1回復活）／v0.64 武器耐久（dur）も強くてニューゲームで全快
-    g.silver=0; g.inv=[]; g.equipped=[]; g.slots=EQUIP_SLOTS; g.costCap=COST_CAP_BASE; g.kksCount=0;   // v0.43 周回リセット：シルバー0・装備/倉庫リセット／v0.51 コスト上限も12に戻す（Lv/score/turnは持ち越し）
-    beep(1500,.5);
-    setMsg("🎊🎊🎊 神Ⅹ到達！！ "+g.cycle+"周目へ突入！\n強くてニューゲーム（Lv・スコアは引き継ぎ／シルバー・装備はリセット・壁は2.0倍に）。"+extra);
-    return;
-  }
-  setMsg((fever?"⚡💥 限界突破成功ッ!! ":"✨ 成功！ ")+stageName(g.stage)+" 到達！ 爆発値+"+Math.round(ex).toLocaleString()+(g.combo>1?"（"+g.combo+"コンボ）":"")+extra);
+// ===== 描画・共通ヘルパ（v0.65から流用） =====
+function render(){ if(!g) return;
+  const el=id=>document.getElementById(id);
+  if(el('stage')) el('stage').textContent=stageLabel();
+  if(el('score')) el('score').textContent=g.score.toLocaleString();
+  if(el('sp')) el('sp').textContent=g.sp;
+  if(el('wdur')) el('wdur').textContent=Math.max(0,Math.round(g.dur));
+  if(el('wdurmax')) el('wdurmax').textContent=maxDur();
+  const wb=el('wbar'); if(wb){ const pct=Math.max(0,Math.min(100,g.dur/maxDur()*100));
+    wb.style.width=pct+'%'; wb.className='bar'+(pct<=20?' dang':pct<=45?' warn':''); }
 }
-function onFail(gamble,guaranteed,ex){
-  const a=agg();
-  const S0=g.stage;   // v0.52 挑んだ段（生賭け降格前）＝グレード加算の基準
-  if(g.stage>GUAR) g.stack+=stackGain();   // v0.40 失敗でスタックを貯める（挑んだ段のFEVERライン基準・次の強化の爆発値に乗る）
-  if(a.luckFill>0) g.luckGauge=Math.min(120, g.luckGauge+a.luckFill);   // v0.41 幸運の積立：失敗でゲージを溜める（満タンで次回成功確定）
-  g.dur=Math.max(0,g.dur-DUR_LOSS); g.combo=0; g.lastFailed=true; g.kksCount=0;   // v0.64 武器耐久（命バー）＝強化失敗で-10・0でゲームオーバー（次のcheckDead）／カカシのカウンタもリセット
-  const fever=ex>=FL(g.stage,g.cycle);
-  let mloss=Math.round(failMotiv(g.stage)*(gamble?GAMBLE_MULT:1)*(fever?FEVER_RELIEF:1));   // v0.24 B：生賭け1.8→1.5・FEVER中の失敗は半減（理不尽感の緩和）
-  mloss=Math.min(SINGLE_HIT_CAP, mloss);   // v0.24 B：単発のモチベ減は上限4（高段の一撃死を封じる）
-  mloss+=failGradeAdd(S0);   // v0.52 グレード帯の加算（無印〜裏+1/爆〜命+2/無〜卍+3/神+4）＝上限4の外側に乗る＝深部の失敗は本当に痛い【仮】
-  if(gamble) g.stage=Math.max(GUAR+1,g.stage-1);
-  if(g.stage>GUAR) mloss=Math.max(1,mloss);   // 本番段では最低-1（助走中は0のまま）
-  if(a.failRelief>0) mloss=Math.max(0,mloss-a.failRelief);   // v0.41 詫びの追い風：失敗のモチベ減を軽減
-  g.motiv-=mloss;
-  if(!gamble) g.clone-=needClone(g.stage);   // 保護クロンは挑んだ段基準で消費（降格の前）
-  let bossDemote=false;   // v0.43 グレード内Ⅷ〜Ⅹ（(S-1)%10>=7）は保護して失敗しても段-1（ボス帯だけ保護失敗でも降格）
-  if(!gamble && g.stage>GUAR && (g.stage-1)%10>=7){ g.stage=Math.max(GUAR+1,g.stage-1); bossDemote=true; }
-  beep(160,.14);
-  let m="💥 失敗…… モチベ-"+mloss+"。⚔武器耐久-"+DUR_LOSS+"（"+g.dur+"/"+maxDur()+"）。";
-  if(gamble) m+="\n🎲 生賭け失敗：1段ダウン → "+stageName(g.stage);
-  if(bossDemote) m+="\n🛡💥 ボス帯（Ⅷ〜Ⅹ）：保護しても失敗で降格！ → "+stageName(g.stage);
-  if(g.dur<=20 && g.dur>0) m+="\n⚠ 武器耐久が残りわずか！ 記憶の修復／記録の欠片で回復を。";
-  if(g.dur<=0) m+="\n💔 武器が砕け散った……！";
-  setMsg(m);
-}
-
-function checkDead(){
-  if(g.dur<=0){ gameOver('weaponDur'); return true; }   // v0.64 武器耐久（命バー）0＝即ゲームオーバー（エリアンの涙でも救済不可）。死因キーは'weaponDur'を踏襲
-  if(g.motiv>0) return false;
-  if(g.elian){ g.elian=false; g.elianUsed=true; g.motiv=g.motivMax; beep(1500,.4);   // エリアンの涙：倒れても1度だけモチベ満タンで復活（使い切り）。elianUsedで今周の再入手を封じる（不死身ループ防止）
-    setMsg("💧 エリアンの涙が砕けた……！ モチベ満タンで復活！（この涙は使い切り・次の周回まで再入手不可）"); render(); return false; }
-  gameOver('motiv'); return true; }
-function gameOver(reason){ g.ended=true; g._deathReason=reason||'motiv'; render(); beep(220,.5);
-  lsDel(SAVE_KEY);   // v0.60 ランが終わったら途中セーブを削除
-  if(!_plogSentThisRun){ uploadPlaylog('gameover'); _plogSentThisRun=true; }   // v0.58 ゲームオーバーで自動送信（ラン1回1度）／v0.58.2 送信表示は出さない（社長指示）
-  let rank = g.maxCycle>=2?"👑 周回の覇者":
-             g.maxStage>=71?"🏆 神域に挑んだ者":
-             g.maxStage>=41?"🔥 かなりの強化狂い":
-             g.maxStage>=21?"💪 一人前":"🌱 まだ助走";
-  const best=parseInt(lsGet("kyoka_best")||"0",10);
-  const newBest=g.score>best;
-  if(newBest) lsSet("kyoka_best", g.score);
-  const reached=stageName(((g.maxStage-1)%100)+1);
-  const deathLine = reason==='weaponDur' ? '⚔武器が耐久切れで砕け散った……もう戦えない。' : '今日はもう無理だ。ログアウト……。';   // v0.63 死因で終了メッセージを分岐
-  scr('<div class="center"><div class="big">～ 萎え落ち ～</div>'
-    +'<div style="margin:8px 0;color:#ffd24a;font-size:16px">'+g.name+'家、'+(g.maxCycle>1?g.maxCycle+'周 ':'')+reached+' 到達！</div>'
-    +'<div style="margin:6px 0">'+deathLine+'</div>'
-    +'<div>SCORE：<span class="big">'+g.score.toLocaleString()+'</span>'+(newBest?' <b style="color:#ff3b6b">🎉新記録!!</b>':'')+'</div>'
-    +'<div class="sub" style="color:#ffd24a">🏅 自己ベスト：'+(newBest?g.score:best).toLocaleString()+'</div>'
-    +'<div style="margin:8px 0">'+rank+'</div>'
-    +'<div class="menu" style="margin-top:10px">'+btnRaw("また明日（もう一度）","newGame()")+'</div>'
-    +'<div class="sub">スコア＝爆発値の累積。倍率を掛け合わせ限界突破を狙え。</div></div>');
-  if(newBest) beep(1400,.4);
-  setMsg((reason==='weaponDur'?"武器が耐久切れで砕けた。ラン終了。\n":"モチベが尽きた。ラン終了。\n")+(newBest?"自己ベスト更新！ また明日、その上を。":"また明日、自己ベストを超えろ。"));
-}
-
-// ===== 描画 =====
-function fmt(n){ return n>=10000? Math.round(n).toLocaleString() : n.toFixed(1); }
-// v0.24 和風大数フォーマッタ：内部は億単位のまま（桁あふれ対策と整合）、表示だけ 億→兆→京 に分解（例「10,920億」→「1兆920億」）
-function fmtOku(n){ if(n<0) return "-"+fmtOku(-n);
-  if(n<10000) return fmt(n)+"億";
-  const r=Math.round(n); const kei=Math.floor(r/1e8), cho=Math.floor(r%1e8/1e4), oku=r%1e4;
-  if(kei>0) return kei.toLocaleString()+"京"+(cho?cho+"兆":"")+(oku?oku+"億":"");
-  return cho.toLocaleString()+"兆"+(oku?oku+"億":"");
-}
-function render(){ if(!g)return;
-  document.getElementById("stage").textContent=stageName(g.stage);
-  document.getElementById("cycle").textContent=g.cycle;
-  document.getElementById("score").textContent=g.score.toLocaleString();
-  document.getElementById("motiv").textContent=Math.max(0,Math.round(g.motiv));
-  document.getElementById("motivmax").textContent=g.motivMax;
-  document.getElementById("silver").textContent=fmtOku(g.silver);   // v0.24 兆京表示（suffix固定の「億」は撤去済み）
-  document.getElementById("clone").textContent=g.clone;
-  document.getElementById("combo").textContent=g.combo;
-  document.getElementById("turn").textContent=g.turn;
-  document.getElementById("stack").textContent=Math.round(g.stack);   // v0.40 HUDは成長ボーナス→失敗スタックに変更（成長ボーナスは爆発値の内訳でのみ表示）
-  document.getElementById("wdur").textContent=Math.max(0,g.dur); document.getElementById("wdurmax").textContent=maxDur();   // v0.64 武器耐久（命バー＝dur）
-  { const ce=document.getElementById("cost"); if(ce) ce.textContent=costUsed()+"/"+g.costCap; }   // v0.55 HUDに⚖コスト（素の成功率は撤去＝強化画面で見える）
-  const mb=document.getElementById("mbar"); const pct=Math.max(0,Math.min(100,g.motiv/g.motivMax*100));
-  mb.style.width=pct+"%"; mb.className="bar"+(pct<=20?" dang":pct<=45?" warn":"");
-  const wb=document.getElementById("wbar"); const wpct=Math.max(0,Math.min(100,g.dur/maxDur()*100));   // v0.64 武器耐久バー（命バー＝dur）
-  wb.style.width=wpct+"%"; wb.className="bar"+(wpct<=20?" dang":wpct<=45?" warn":"");
-  updateBossBg();       // v0.14 Ⅹ接近で背景を深紅（ラスボス色）へ
-  renderEquipPanel();   // 装備枠を常時更新（全フェーズで表示）
-  saveGame();           // v0.60 行動のたび自動セーブ（演出中・intro・ended時はsaveGame側でスキップ）
-}
-// v0.14 ボス化演出：グレード内位置Ⅹに近づくほど背景を深紅に。グレードが上がるほど濃く。次グレードⅠでさっと通常へ。sim/headlessは無害スキップ。
-function updateBossBg(){
-  if(typeof document==="undefined" || !document.body) return;   // ← sim(DOMスタブ)ではbody無し＝スキップ
-  const S=g.stage, gi=Math.floor((S-1)/10), ri=(S-1)%10;
-  let t = Math.pow(ri/9, 1.5);          // ボス接近度：Ⅰ=0→Ⅹ=1（Ⅷ以降で急に上がる曲線）
-  if(S<=GUAR){ t=0; }                   // 助走中は通常色
-  const gk = Math.min(gi,6)/6;          // グレードの禍々しさ 0〜1
-  const r = Math.round(6  + t*(70 + gk*90));   // 赤：Ⅹ・高グレードほど濃い深紅（最大~160）
-  const gr= Math.round(3  + t*3);              // 緑は低く抑える
-  const b = Math.round(30 - t*22);             // 青は通常時は残し、深紅化で引く
-  const base='rgb('+r+','+gr+','+b+')';
-  const edge='rgb('+Math.round(Math.min(210,r*1.5))+','+gr+','+Math.round(b*0.5)+')';
-  const bd=document.body;
-  bd.style.transition='background .6s ease';
-  bd.style.background='radial-gradient(ellipse at 50% 28%, '+edge+' 0%, '+base+' 62%, #000 100%)';
-  // UI窓(.win)/ボタン(.btn)/内側の縁取りもボス接近で深紅へ寄せる（CSS変数を差し替え＝青いまま問題の解消）
-  const doc=document.documentElement;
-  if(doc && doc.style){
-    // --navy(窓 基準#000a5a)：赤を足し青を引く（Ⅹ・高グレードほど濃い深紅）
-    doc.style.setProperty('--navy',  'rgb('+Math.round(t*(70+gk*45))+','+Math.round(10-t*6)+','+Math.round(90-t*76)+')');
-    // --navy2(ボタン 基準#001080)：窓よりやや明るい深紅で押せる感を残す
-    doc.style.setProperty('--navy2', 'rgb('+Math.round(t*(105+gk*55))+','+Math.round(16-t*9)+','+Math.round(128-t*104)+')');
-    // --edge(内側の縁取り 基準#6b7bd6)：青い線を赤い線へ
-    doc.style.setProperty('--edge',  'rgb('+Math.round(107+t*(120-107))+','+Math.round(123-t*90)+','+Math.round(214-t*160)+')');
-    // --panel(カード/枠 基準#00104a)：商店カード・装備枠・強化画面の枠も深紅へ
-    doc.style.setProperty('--panel', 'rgb('+Math.round(t*(55+gk*35))+','+Math.round(16-t*11)+','+Math.round(74-t*60)+')');
-    // --track(バー土台 基準#00003a)：モチベ/爆発値バーの地色も深紅へ
-    doc.style.setProperty('--track', 'rgb('+Math.round(t*(45+gk*25))+','+Math.round(t*2)+','+Math.round(58-t*48)+')');
-  }
-  // Ⅸ・Ⅹ（ボス）は段名を赤く光らせる（局所的な"ボス"合図・全画面フリッカーは避ける）
-  const st=document.getElementById("stage");
-  if(st){ if(ri>=8 && S>GUAR){ st.style.color='#ff5b6b'; st.style.textShadow='0 0 12px #ff2040,0 0 4px #ff8080'; }
-          else { st.style.color=''; st.style.textShadow=''; } }
-}
-// 右パネル：装備枠を常時表示（田の字ミニ）。全画面共通・強化フェーズ/演出中も見える
-function renderEquipPanel(){ const el=document.getElementById("equippanel"); if(!el)return;
-  // v0.56 装備変更ボタンは廃止＝スロットのどれかをクリックで装備変更メニュー（空き枠クリックでも開く）
-  let s='<div class="eqpanel-title">🎒 装備 '+g.equipped.length+'/'+g.slots+'　⚖'+costUsed()+'/'+g.costCap+'　<span style="opacity:.6">クリックで変更</span></div><div class="eqmini">';
-  for(let i=0;i<g.slots;i++){ const u=g.equipped[i]; const it=(u!==undefined)?invById(u):null;
-    if(it){ const c=CHMAP[it.c],k=kei(it.c); const lf=it.life; const lc=lf<=2?'#ff8a8a':lf<=3?'#ffca7a':'#9fb0ff';
-      s+='<div class="eqmslot" style="border-color:'+k.c+'" onclick="openEquip()"><span class="ml" style="color:'+lc+'">⏳'+lf+'</span><span class="mn"><span style="color:'+k.c+'">['+k.t+']</span>'+c[1]+'<br><span style="color:#9fb0ff;font-size:10px">Lv'+levelOf(it.c)+'・<span style="color:#ffca7a">⚖'+costOf(it.c)+'</span></span></span></div>';
-    } else s+='<div class="eqmslot empty" onclick="openEquip()">空</div>';
-  }
-  s+='</div>';
-  el.innerHTML=s;
-}
-function openEquip(){ if(g._animating) return; goEquip(g.phase==="shop"?"shop":"prep"); }  // 演出中は不可
 function scr(html){ document.getElementById("screen").innerHTML=html; }
-function setMsg(t){ const m=document.getElementById("msg"); m.textContent=t; m.parentElement.classList.remove("flash"); void m.offsetWidth; m.parentElement.classList.add("flash"); }
-function btn(label,sub,onclick,disabledReason){ return '<button class="btn" onclick="'+onclick+'" '+(disabledReason?'disabled':'')
-  +'>'+label+(sub?' <small>— '+sub+'</small>':'')+(disabledReason?' <small style="color:#f99">['+disabledReason+']</small>':'')+'</button>'; }
+function setMsg(t){ const m=document.getElementById("msg"); if(!m) return; m.textContent=t;
+  if(m.parentElement){ m.parentElement.classList.remove("flash"); void m.offsetWidth; m.parentElement.classList.add("flash"); } }
 function btnRaw(label,onclick){ return '<button class="btn center" onclick="'+onclick+'">'+label+'</button>'; }
-function ownedLine(){
-  const eq = g.equipped.length===0 ? '装備中：なし'
-    : '装備中('+g.equipped.length+'/'+g.slots+')：'+g.equipped.map(u=>{const it=invById(u); if(!it)return''; const k=kei(it.c);return '<span style="color:'+k.c+'">['+k.t+']</span>'+CHMAP[it.c][1];}).join("・");
-  const benchN = g.inv.length - g.equipped.length;
-  const held=[]; if(g.elian) held.push('💧涙'); if(g.feverMania>0) held.push('🔥ﾏﾆｱ'+g.feverMania);   // v0.22 [持]所持発動型
-  return '<div class="owned" style="margin-top:8px">'+eq+(benchN>0?'　｜倉庫'+benchN:'')+(held.length?'　｜[持] '+held.join(' '):'')+'</div>'; }
-
-// ===== SE =====
 let actx=null;
 function beep(freq,dur){ try{ actx=actx||new (window.AudioContext||window.webkitAudioContext)();
   const o=actx.createOscillator(),gg=actx.createGain(); o.type="square"; o.frequency.value=freq;
   o.connect(gg); gg.connect(actx.destination); gg.gain.setValueAtTime(.06,actx.currentTime);
   gg.gain.exponentialRampToValueAtTime(.0001,actx.currentTime+dur); o.start(); o.stop(actx.currentTime+dur);
  }catch(e){} }
+function lsGet(k){ try{ return (typeof localStorage!=="undefined")?localStorage.getItem(k):null; }catch(e){ return null; } }
+function lsSet(k,v){ try{ if(typeof localStorage!=="undefined") localStorage.setItem(k,v); }catch(e){} }
 
 // =====================================================================
-// プレイログ記録（v0.24で正典に統合・ゲーム挙動には非干渉＝元関数をラップして記録するだけ。node/botでは非適用）
-// v0.24修正：★強化は「挑んだ段(pre)」で記録（旧ログ版は昇段後の段が記録されて1つズレていた）。成功率は減衰込みの最終値を記録。
+// v0.71 プレイログ保存（v0.65から移植・同じGAS URL＝ドライブ「強化脳汁ゲー_プレイログ」へ no-cors 送りっぱなし）
+// sim/bot環境（fetch/localStorage無し）でも例外を出さないよう全てtry/catchで囲う。
 // =====================================================================
-var PLAYLOG=[];
-function plog(ev){ try{ PLAYLOG.push(Object.assign({t:g.turn, st:g.stage, seg:(typeof stageName==='function'?stageName(g.stage):g.stage)}, ev)); }catch(e){} }
-function buildSnap(){ try{ return {
-  dur:g.dur, motiv:g.motiv, motivMax:g.motivMax, clone:g.clone, silver:Math.round(g.silver), combo:g.combo, snow:+(g.snow||1).toFixed(2), slots:g.slots, cost:costUsed()+'/'+g.costCap,   // v0.65 dur（武器耐久＝命バー）を追加記録
-  equip:g.equipped.map(u=>{const it=invById(u);return it?(CHMAP[it.c][1]+':L'+levelOf(it.c)):'';}).filter(Boolean),
-  bench:g.inv.filter(x=>g.equipped.indexOf(x.u)<0).map(x=>CHMAP[x.c][1]+':L'+levelOf(x.c)),
-  elian:!!g.elian, elianUsed:!!g.elianUsed, fmn:(g.feverMania|0)
-}; }catch(e){ return {}; } }
-(function(){
-  if(typeof window==='undefined') return;   // ブラウザ実行のみ（node/botでは非適用＝検証ツールの挙動を変えない）
-  const g_=window;
-  const wrap=(name,before)=>{ if(typeof g_[name]!=='function')return; const o=g_[name];
-    g_[name]=function(){ try{ before&&before.apply(null,arguments);}catch(e){} return o.apply(this,arguments); }; };
-  wrap('doHunt', h=>plog({act:'狩り', hours:h}));
-  wrap('buyCharm', i=>{ const id=g.shop[i]; if(id) plog({act:(typeof HELD!=='undefined'&&HELD[id])?'[持]購入':'装備購入', id:(CHMAP[id]?CHMAP[id][1]:id)}); });
-  wrap('levelUp', cid=>plog({act:'Lv上げ', id:(CHMAP[cid]?CHMAP[cid][1]:cid), toLv:(levelOf(cid)+1)}));
-  wrap('keepCharm', i=>{const id=g.shop[i]; plog({act:'キープ', id:(id&&CHMAP[id]?CHMAP[id][1]:id)});});
-  wrap('unkeepCharm', i=>{const id=g.shop[i]; plog({act:'キープ解除', id:(id&&CHMAP[id]?CHMAP[id][1]:id)});});
-  wrap('buyClone', n=>plog({act:'クロン購入', n:n, cloneAfter:g.clone}));
-  wrap('buySlot', ()=>plog({act:'コスト上限拡張', to:(g.costCap+COST_CAP_STEP)}));   // v0.51
-  wrap('buyShard', ()=>plog({act:'記録の欠片'}));
-  wrap('useMemRepair', ()=>plog({act:'記憶の修復使用'}));   // v0.63 赤POTのwrapは廃止（buyDrink/useDrink撤去）
-  wrap('useBakuchi', n=>plog({act:'一服の博打', n:n}));
-  wrap('toggleHero', ()=>plog({act:'スーパーヒーロートグル'}));   // v0.49（砥石のwrapは廃止に伴い撤去）
-  wrap('toggleMigaki', ()=>plog({act:'磨きの儀トグル'}));
-  wrap('reviveItem', id=>plog({act:'延命', id:(CHMAP[id]?CHMAP[id][1]:id)}));   // v0.57 計測バグ修正：旧関数名buyExtendのままで延命が未記録だった（アヲハタログ解析で発見）
-  wrap('takeWabi', ()=>plog({act:'詫びクロン受取'}));
-  wrap('activateFmn', ()=>plog({act:'FEVERマニア発動'}));
-  wrap('toggleIji', ()=>plog({act:'意地トグル'}));
-  wrap('newGame', ()=>{ try{ if(PLAYLOG.length) PLAYLOG.push({act:'NEWGAME（新しいラン開始・以前の記録は上に残る）'}); }catch(e){} });   // v0.24 ラン境界を記録（ログは全ラン通しで残る）
-  // 強化＝ターンの山場。前状態＋ビルド＋（生の爆発値/壁/減衰込み成功率）＋結果を1本にまとめる
-  const oTry=g_['tryEnh']; if(typeof oTry==='function') g_['tryEnh']=function(gamble){
-    const pre=buildSnap(); let rawEx=null, ex=null, cap=null, capped=null, rate=null, dcy=null, ceil=null, useHero=null;
-    try{ if(g.stage>GUAR){ const bd=exBreakdown(); ex=Math.round(bd.ex); cap=bd.cap; capped=bd.capped;
-      rawEx=(bd.rows&&bd.rows.length)?bd.rows[bd.rows.length-1][1]:ex;   // rowsの最後＝FEVER上限で切る前の"素の爆発値"
-      rate=+(successRateEX(bd.ex)*100).toFixed(1); dcy=+decayD().toFixed(3);
-      ceil=+(capEff(bd.ex)*100).toFixed(1); useHero=!!g._useHero; } }catch(e){}   // v0.49 天井とヒーロー使用も記録（解析用）
-    const tBefore=g.turn, sBefore=g.stage, segBefore=stageName(g.stage), scoreBefore=g.score, comboBefore=g.combo;
-    const r=oTry.apply(this,arguments);
-    const success=(g.stage>sBefore)||(g.combo>comboBefore);
-    plog({t:tBefore, st:sBefore, seg:segBefore,   // 挑んだ段・ターンで記録（v0.24ズレ修正）
-      act:'★強化', mode:(gamble?'生賭け':'保護'), pre:pre, rawEx:rawEx, ex:ex, FEVER壁:cap, FEVER到達:!!capped, 成功率:rate, 減衰d:dcy, 天井:(ceil==null?undefined:ceil), ヒーロー:(useHero?1:undefined),
-      結果:(success?'成功':'失敗'), fever:(!!capped&&success), newStage:g.stage, scoreGain:(g.score-scoreBefore) });
-    return r;
-  };
-})();
-function togglePlog(){ const t=document.getElementById('plogArea'); if(!t) return;   // v0.58.3 表示切替＝開くときに最新ログを流し込む（保存ボタンがダウンロードしなくなったため目視/手動コピーの経路として維持）
-  if(t.style.display==='none'){ t.value=buildPlaylogData('view'); t.style.display='block'; } else t.style.display='none'; }
-// ===== v0.58 プレイログ自動収集（社長承認・方式B＝Google Apps Script→ドライブ） =====
-// ゲームオーバー時（ラン1回につき1度）と保存ボタン押下時に自動送信。URL未設定なら無効（従来のダウンロード保存のみ）。
-// no-cors＝送りっぱなし（応答は読めない）。送信内容＝家名・版・到達段・スコア・ログ本体のみ。失敗してもゲームに影響しない。
-const PLAYLOG_POST_URL="https://script.google.com/macros/s/AKfycbxKl7-VZalPPJyHw_uddHQeH3ClGK15pQTAulENG0pElxobkGvG9DyOOj9Be5-fezMK/exec";   // v0.58.1 収集先GAS（2026-07-11疎通確認済み・ドライブ「強化脳汁ゲー_プレイログ」へ保存）
+const PLAYLOG_POST_URL="https://script.google.com/macros/s/AKfycbxKl7-VZalPPJyHw_uddHQeH3ClGK15pQTAulENG0pElxobkGvG9DyOOj9Be5-fezMK/exec";   // v0.58.1 疎通確認済みGAS（v0.65と同一）
 var _plogSentThisRun=false;
 function buildPlaylogData(reason){
-  const mx=Math.max((g&&g.maxStage)||0, PLAYLOG.reduce((m,e)=>Math.max(m,e.st||0),0));
-  return JSON.stringify({ name:(g&&g.name)||'noname', ver:'v0.65', maxStage:mx, score:(g&&g.score)||0, turns:(g&&g.turn)||0, sent:(reason||'manual'), log:PLAYLOG });
+  try{
+    const totalStage = ((g.maxCycle||1)-1)*100 + (((g.maxStage-1)%100)+1);   // 通算到達段（周回込み）
+    const skills={}; TREE.forEach(n=>{ if(skR(n.id)>0) skills[n.id]=skR(n.id); });   // 最終スキル振り（id→rank・取得ぶんのみ）
+    return JSON.stringify({
+      ver:'v0.71', reason:(reason||'manual'), ts:new Date().toISOString(),
+      maxStage: totalStage, cycle:(g.maxCycle||1), turn:(g.turn||0), score:(g.score||0),
+      success:(g.succCount||0), fail:(g.failCount||0), fever:(g.feverCount||0),
+      skills: skills
+    });
+  }catch(e){ return JSON.stringify({ver:'v0.71', reason:(reason||'manual'), err:String(e)}); }
 }
 function uploadPlaylog(reason){
   try{
-    if(!PLAYLOG_POST_URL || typeof fetch==='undefined' || !PLAYLOG.length) return false;
+    if(!PLAYLOG_POST_URL || typeof fetch==='undefined') return false;   // URL未設定/fetch無し（sim/bot）＝送らない・例外にしない
     fetch(PLAYLOG_POST_URL, {method:'POST', mode:'no-cors', headers:{'Content-Type':'text/plain'}, body:buildPlaylogData(reason)});
     return true;
   }catch(e){ return false; }
 }
-function exportPlaylog(){ uploadPlaylog('manual'); }   // v0.58.3 保存ボタン＝ゲームオーバー時と同じ挙動（送信のみ・無表示・社長指示）。ダウンロード/クリップボードは廃止・目視は「表示切替」で
-(function(){ try{
-  if(typeof window==='undefined' || typeof document==='undefined' || !document.body) return;   // ブラウザ実行のみ
-  const wrapd=document.createElement('div'); wrapd.id='plogbtns'; wrapd.style.cssText='position:fixed;right:8px;bottom:8px;z-index:9999;text-align:right';   // v0.53 スマホでは縮小（#plogbtns）
-  wrapd.innerHTML='<button onclick="exportPlaylog()" style="background:#204020;color:#8dff9a;border:1px solid #8dff9a;border-radius:6px;padding:7px 12px;font:inherit;cursor:pointer">📋 プレイログ保存</button>'
-    +'<button onclick="togglePlog()" style="margin-left:6px;background:#202840;color:#9fb0ff;border:1px solid #9fb0ff;border-radius:6px;padding:7px 10px;font:inherit;cursor:pointer">表示切替</button>';
-  document.body.appendChild(wrapd);
-  const ta=document.createElement('textarea'); ta.id='plogArea'; ta.readOnly=true;
-  ta.style.cssText='display:none;position:fixed;left:4%;top:4%;width:92%;height:72%;z-index:9998;font-size:11px;background:#0b0f1e;color:#cde;border:2px solid #8dff9a;border-radius:6px;padding:8px';
-  document.body.appendChild(ta);
-}catch(e){} })();
+function exportPlaylog(){ uploadPlaylog('manual'); }   // 📋保存ボタン＝送信のみ（無表示・v0.65踏襲）
 
+// ===== 起動 =====
 newGame();
 </script>
 </body>
