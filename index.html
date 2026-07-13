@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>強化脳汁ゲー（仮）— ブラウザ試作 v0.76（回復確率down/ゲージ演出/DUR_LOSS緩和）</title>
+<title>強化脳汁ゲー（仮）— ブラウザ試作 v0.77（強化画面に素の成功率ゲージ・演出整理）</title>
 <style>
   :root{ --navy:#000a5a; --navy2:#001080; --gold:#ffd24a; --edge:#6b7bd6; --panel:#00104a; --track:#00003a; }
   *{ box-sizing:border-box; }
@@ -105,7 +105,7 @@
 </head>
 <body>
 <div id="app">
-  <h1>◆ 強化脳汁ゲー（仮）◆ ブラウザ試作 v0.76 — 回復確率down/ゲージ演出/DUR_LOSS緩和</h1>
+  <h1>◆ 強化脳汁ゲー（仮）◆ ブラウザ試作 v0.77 — 素の成功率ゲージ・演出整理・表記修正</h1>
 
   <div class="win">
     <div class="row" style="align-items:center; margin-bottom:6px;">
@@ -216,7 +216,7 @@ const TREE=[
  // 耐久保護系（記憶の欠片チェーン）※v0.73「確率式」＝毎強化ごとにP%で耐久回復。v0.75 社長指定の新数値。
  // 記憶の欠片の確率は非線形(30/40/50/60/75%)なので vals 明示配列で持たせる（nodeVal/lerpValが優先参照）。
  {id:'kakera', branch:'耐久保護系', name:'記憶の欠片', maxRank:5, cost:2, reqs:[{id:'root',rank:1}], vals:[0.10,0.20,0.30,0.40,0.50],
-   desc:(r,v)=>'強化のたび '+Math.round(v*100)+'% の確率で耐久+'+kakeraHeal()},
+   desc:(r,v)=>'強化のたび '+Math.round(v*100)+'% の確率で耐久+'+(1+Math.round(nodeVal('urooboe'))+Math.round(nodeVal('katachi')))},
  {id:'urooboe', branch:'耐久保護系', name:'うろ覚え', maxRank:5, cost:3, reqs:[{id:'kakera',rank:3}], start:1, end:5,
    desc:(r,v)=>'記憶の欠片の回復値+'+Math.round(v)},
  {id:'katachi', branch:'耐久保護系', name:'あるべきカタチ', maxRank:5, cost:5, reqs:[{id:'kakera',rank:5},{id:'urooboe',rank:3}], start:2, end:6,
@@ -417,9 +417,11 @@ function beginRun(){
   startTurn();
 }
 function showEnhance(){
-  const ex=computeEX(); const rate=successRateEX(ex); const wall=FL(g.stage,g.cycle);
+  const ex=computeEX(); const wall=FL(g.stage,g.cycle); const Kv=K(g.stage,g.cycle);
+  const rawRate = Kv<=0 ? capEff() : Math.min(CAP_RATE, ex/(ex+Kv));   // v0.77 素の成功率（減衰前）＝開いた時点でゲージに表示
   let s='<div class="center">'+stageLabel()+' に挑む</div>';
-  s+='<div class="center sub">今のビルドでの素の成功率：'+pct1(rate)+'</div>';
+  s+='<div class="center sub">素の成功率 '+pct1(rawRate)+'</div>';
+  s+='<div class="gaugewrap"><div class="gaugescale"><span>0</span><span>50</span><span>100</span></div><div class="gaugetrack"><div class="gaugefill" style="width:'+(rawRate*100).toFixed(1)+'%;background:#ffd24a"></div></div></div>';
   if(wall>0) s+='<div class="center sub">限界突破の壁：'+wall.toLocaleString()+'</div>';
   else s+='<div class="center sub">（助走中：壁ゼロ）</div>';
   s+='<div class="menu" style="margin-top:10px">';
@@ -432,7 +434,7 @@ function showEnhance(){
 // v0.72.1 1ノードのカードHTML（root/枝共通）。desc は「その時（次のLv）上がる数値」を表示（MAXは現在値）。複数前提を全表示。
 function nodeCard(n, isRoot){
   const r=skR(n.id); const can=canOpen(n.id); const maxed=r>=n.maxRank; const locked=!reqMet(n.id);
-  const shownR=Math.min(n.maxRank, r+1); const shownVal=lerpVal(n, Math.max(1,shownR));   // 次のLvの値（未取得はLv1・MAXは現在Lv）
+  const shownR=(r>0?r:1); const shownVal=lerpVal(n, shownR);   // v0.77 現在Lvの実値を表示（未取得はLv1プレビュー）＝off-by-one解消
   let cls='tnode'+(isRoot?' root':''); if(locked) cls+=' locked'; else if(maxed) cls+=' maxed'; else if(can) cls+=' can';
   let s='<div class="'+cls+'"><span class="nm">'+(isRoot?'【根】':'')+n.name+'</span> <span class="lv">Lv'+r+'/'+n.maxRank+'</span><br>';
   s+='<span style="color:#cdd">'+n.desc(shownR, shownVal)+'</span><br>';
@@ -490,8 +492,7 @@ function buildRevealSteps(){
   const exForRate = wall>0 ? Math.min(running, wall) : running;   // = computeEX()
   const rawRate=rateOf(exForRate);                                // 素（減衰前）＝最初にゲージに出す
 
-  // ---- ① まず素の成功率をゲージに出す（v0.76 社長指示：一番最初に素の確率が見える）----
-  steps.push({kind:'gauge', label:'素の成功率', rate:rawRate, cls:'ex'});
+  // ---- ① 素の成功率は「強化画面を開いた時点」でゲージ表示済み（v0.77 社長指示：演出内の素ステップは撤去・演出はその素から開始）----
   // ---- ② 爆発値の内訳チップ（ゲージは素に据え置き・大きい数字だけ育つ）----
   exChips.forEach(c=>steps.push(c));
   if(feverHit) steps.push({kind:'feverhit', label:'⭐ 限界突破 到達！（壁 '+Math.round(wall).toLocaleString()+' 超え）'});
@@ -516,13 +517,13 @@ function buildRevealSteps(){
   if(sb>0){ const r=Math.min(cap, prev+sb); if(r>prev+0.0005) steps.push({kind:'gauge', label:'📚 失敗スタックの後押し +'+Math.round(sb*100)+'%', rate:r, cls:'fpush'}); prev=r; }
   const rateFinal=Math.max(0,prev);
   steps.push({kind:'final', rate:rateFinal});
-  return {steps, exBuilt, exForRate, wall, feverHit, rateFinal};
+  return {steps, exBuilt, exForRate, wall, feverHit, rateFinal, rawRate};
 }
 function playEnhance(){
   if(g._animating) return;
   const rv=buildRevealSteps(); const steps=rv.steps;
   g._animating=true; g._animTimers=[]; g._finalRatePreview=rv.rateFinal;
-  renderAnimStage(rv.wall);
+  renderAnimStage(rv.wall, rv.rawRate);
   let i=0;
   function next(){
     if(!g._animating) return;
@@ -557,10 +558,10 @@ function advanceAfterEnh(){ g._animating=false; g._deferAdvance=false;
   if(g.ended) return; startTurn();
 }
 function skipEnhance(){ if(!g._animating) return; if(g._animTimers) g._animTimers.forEach(clearTimeout); g._animTimers=[]; doReveal(); }
-function renderAnimStage(wall){ let s='<div id="animstage">';
-  s+='<div class="sub" style="color:#ffd24a">'+stageLabel()+' → 強化中…</div>';
-  s+='<div class="animpct" id="animpct" style="color:#ffd24a">爆発値を積み上げ中…</div>';
-  s+='<div class="gaugewrap"><div class="gaugescale"><span>0</span><span>50</span><span>100</span></div><div class="gaugetrack"><div class="gaugefill" id="gaugefill"></div></div></div>';
+function renderAnimStage(wall, rawRate){ let s='<div id="animstage">';
+  s+='<div class="sub" style="color:#ffd24a">'+stageLabel()+'</div>';
+  s+='<div class="animpct" id="animpct" style="color:#ffd24a">素の成功率 '+pct1(rawRate)+'</div>';
+  s+='<div class="gaugewrap"><div class="gaugescale"><span>0</span><span>50</span><span>100</span></div><div class="gaugetrack"><div class="gaugefill" id="gaugefill" style="width:'+(rawRate*100).toFixed(1)+'%"></div></div></div>';
   s+='<div class="animex2 center" id="animex">爆発値 <b id="exnum">0</b>'+(wall>0?' ／ 限界突破の壁 '+Math.round(wall).toLocaleString():'（助走・壁なし）')+'</div>';
   s+='<div class="animchips" id="animchips"></div>';
   s+='<div class="menu" id="animctl" style="margin-top:12px"><button class="btn center" onclick="skipEnhance()">⏩ 一気に判定</button></div>';
