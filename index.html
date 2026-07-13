@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>強化脳汁ゲー（仮）— ブラウザ試作 v0.77（強化画面に素の成功率ゲージ・演出整理）</title>
+<title>強化脳汁ゲー（仮）— ブラウザ試作 v0.78（強化パネル統合・ログ合流）</title>
 <style>
   :root{ --navy:#000a5a; --navy2:#001080; --gold:#ffd24a; --edge:#6b7bd6; --panel:#00104a; --track:#00003a; }
   *{ box-sizing:border-box; }
@@ -21,7 +21,11 @@
   .bar{ height:100%; background:linear-gradient(#7dff8a,#20b53a); transition:width .25s; }
   .bar.warn{ background:linear-gradient(#ffe86b,#e8a020);} .bar.dang{ background:linear-gradient(#ff8a8a,#d02020);}
   #stage{ font-size:20px; color:#fff; text-shadow:0 0 8px var(--gold); }
-  #msg{ min-height:60px; font-size:14px; line-height:1.7; white-space:pre-wrap; }
+  /* v0.78 メッセージ行＝強化パネル内に合流（旧・独立ログ窓の代わり）。ゲージとボタンの間に置く */
+  #msg{ min-height:44px; font-size:13.5px; line-height:1.6; white-space:pre-wrap; color:#dfe6ff;
+    margin:8px 0 4px; padding:6px 8px; border-top:1px solid var(--edge); border-bottom:1px solid var(--edge); border-radius:4px; }
+  #msg:empty{ display:none; }
+  #msg.flash{ border-radius:4px; }
   .menu{ display:flex; flex-direction:column; gap:7px; }
   .btn{ background:var(--navy2); color:#fff; border:2px solid #fff; border-radius:6px;
     padding:9px 12px; font:inherit; font-size:14px; text-align:left; cursor:pointer; position:relative; }
@@ -89,7 +93,7 @@
     .row{ gap:3px 8px; }
     .stat{ font-size:11px; } #stage{ font-size:15px; }
     .barwrap{ height:12px; }
-    #msg{ min-height:36px; font-size:11.5px; line-height:1.45; }
+    #msg{ min-height:30px; font-size:11px; line-height:1.4; margin:5px 0 3px; padding:4px 6px; }
     .menu{ gap:4px; }
     .btn{ padding:6px 8px; font-size:12px; border-width:1px; } .btn small{ font-size:10px; }
     .charm{ font-size:10.5px; padding:4px; border-width:1px; }
@@ -105,7 +109,7 @@
 </head>
 <body>
 <div id="app">
-  <h1>◆ 強化脳汁ゲー（仮）◆ ブラウザ試作 v0.77 — 素の成功率ゲージ・演出整理・表記修正</h1>
+  <h1>◆ 強化脳汁ゲー（仮）◆ ブラウザ試作 v0.78 — 強化パネル統合・ログ合流</h1>
 
   <div class="win">
     <div class="row" style="align-items:center; margin-bottom:6px;">
@@ -123,13 +127,14 @@
     </div>
   </div>
 
-  <div class="win"><div id="msg"></div></div>
+  <!-- v0.78 msgログ窓を廃止＝強化パネル(#screen)内のメッセージ行に合流。強化フェーズはこの1箱が常設パネル。 -->
   <div class="win"><div id="screen"></div></div>
 
-  <div class="sub">名称・数値は仮の手触り確認用（v0.76＝回復確率down/ゲージ演出/DUR_LOSS緩和）。</div>
+  <div class="sub">名称・数値は仮の手触り確認用（v0.78＝強化パネル統合・ログ合流）。</div>
   <div class="sub" style="opacity:.7;margin-top:2px">本作は『黒い砂漠』(Pearl Abyss)の非公式ファンメイド作品です。権利者とは一切関係ありません。非営利。</div>
   <details style="margin-top:4px"><summary class="sub" style="cursor:pointer;list-style-position:inside;opacity:.55">開発メモ（版ごとの実装履歴・クリックで開く）</summary>
   <div class="sub" style="text-align:left">
+  ※v0.78【強化パネル統合・ログ合流（社長指示・レイアウトのみ／バランス・判定・演出シーケンスは不変）】：独立していた<b>ログ窓(#msg)を廃止</b>し、強化フェーズを<b>1つの常設パネル</b>に統合。上から①<b>素の成功率ゲージ</b>（旧ログ窓があった目立つ位置）＋爆発値/限界突破の壁 ②<b>メッセージ行</b>（合流したログ＝setMsgの出力先をパネル内#msgに変更・最新文言をlastMsgに保持し再描画時に復元・#msgが無い画面ではno-op） ③行動ボタン（⚔強化する/🌳スキルツリー/📋プレイログ保存）。<b>強化演出はこの常設パネル内でその場再生</b>（prepAnimStageで既存要素gauge/exnum/chips/animctl/msgを使い回し初期化＝ページ切替なし・演出中もHUD/ゲージが同じ場所に居続ける）。ボタン行だけ⏩一気に判定／▶次へに切替。ツリー/GO/イントロは従来どおり同パネルに描画。buildRevealSteps/tryEnh/computeEX/successRateEXのロジック・数値・演出の中身は不変（ex/最終率一致・回帰分布同一）。<br>
   ※v0.76【社長FB3点（回復確率down・ゲージ演出・DUR_LOSS緩和）・数値は仮】：①<b>記憶の欠片の回復確率down</b>＝vals[30/40/50/60/75]%→<b>[10/20/30/40/50]%</b>（最大75→50%）。うろ覚え(+1〜5)・あるべきカタチ(+2〜6)は据え置き。②<b>ゲージ演出を「最初に素の確率→そこから上下」に</b>＝リビール開始でまずゲージを『素の成功率』に表示→爆発値の内訳チップは大きい数字だけ育て<b>ゲージは素に据え置き</b>→続いて🗡武器の抵抗で↓→🧊武器知識/⚡オーバーキル/🖤/📚で↑→最終。上下のドラマが明確に（判定・最終率=successRateEXは不変・ex/率一致アサート維持）。③<b>DUR_LOSS段連動を最軽量化</b>＝回復弱化でflatでも大半有限だが火力+耐久保護の一部が不死身化→ボット掃引で無敵化しない最軽量点を採用＝<b>KNEE=50/GROWTH=1.06（v0.75）→KNEE=60/GROWTH=1.03</b>（段80=約18・段100=約33・段120=約59＝v0.75の段80=57/段90=103より大幅に緩く深部の理不尽さを軽減）。全670ラン例外0・無限0。<br>
   ※v0.75【耐久回復系の新数値＋演出のゲージ同期＋📋フィードバック（社長指示・数値は仮）】：①<b>記憶の欠片チェーンを社長指定値に</b>＝記憶の欠片の回復確率を非線形<b>[30/40/50/60/75]%</b>（ノードに vals 明示配列を持たせlerpVal/nodeValが優先参照）、うろ覚え<b>+1/2/3/4/5</b>（start1/end5）、あるべきカタチ<b>+2/3/4/5/6</b>（start2/end6）＝毎Lv+1ずつ動く（旧「2Lvごとにしか上がらない」丸め問題を解消）。回復量kakeraHeal＝1(基礎)+うろ覚え+カタチ＝最大<b>+12</b>。②<b>★無敵感対策＝社長指定の回復値は不変のまま別レバーで有限化</b>：検証で火力+耐久保護の複合が2000ターン張り付き（不死身）を確認→<b>失敗時の耐久減を通算段連動に</b>（KNEE=50までDUR_LOSS=10据え置き＝浅中盤は従来どおり／KNEE超で×1.06^超過段＝段60約18・段80約57・段90約103）＝深部ほど失敗が重く回復(+9/強化期待)が追いつかず有限化。③<b>演出のゲージも爆発値ステップで動かす</b>（社長「演出ごとにゲージも上下してほしい」）＝各爆発値積み上げステップにその時点の素の成功率を持たせsetGauge＝溜め(ゲージ↑)→武器の抵抗(↓)→押し返し(↑)が視覚化。④<b>📋プレイログ保存に手応え</b>＝押すと「📋 プレイログを保存しました」をmsg窓に表示（flash演出付き）。判定ロジック不変・ex/最終率一致は維持。<br>
   ※v0.74【強化演出を要素分解に作り直し（社長FB「1回統合で何が効いてるか分からない・v0.65みたいに要素で分けて」）＝演出のみ・バランス数値/ロジックは一切不変】：playEnhanceのreveal構築を <b>buildRevealSteps()</b>（純粋関数・DOM非依存）に再構成し「実際に効いている要素ごと」に分解。<b>A. 爆発値の積み上げ</b>＝基礎(K×EX_BASE_MULT)→🖤ブラックストーン×1.15→📣ヴォルクスの叫び×N→📖ヴォルクスの書×N→🔥連続成功スノーボール×N（urami取得&連撃時）→📚失敗スタック+N を、大きい金色の数字(animex)を1要素ずつ育てながらチップ表示。壁超えで⭐限界突破。<b>B. 成功率の押し引き</b>＝素の成功率→🗡武器の抵抗（減衰）↓→🧊武器知識が押し返す↑（武器知識取得時のみ）→⚡オーバーキルが押し返す↑→🖤ブラックストーン+2%↑→📚失敗スタックの後押し+N%↑→最終%。<b>廃止スキル名参照（冷静/火事場/連撃）を実スキル名に修正</b>。各要素は「実際に効いている時だけ」表示（未取得/中立は非表示）。積み上げ後の爆発値はcomputeExRaw()と、最終率はsuccessRateEX()と一致（検証でアサート）。tryEnh/computeEX/successRateEX等の判定ロジック・数値は不変＝sim/botの分布は同一。<br>
@@ -396,7 +401,7 @@ function startTurn(){ g.turn++;
   g.phase='enhance'; render(); showEnhance(); }
 function showIntro(){
   g.phase='intro'; render();
-  let s='<div class="center" style="color:#ffd24a;font-size:15px;margin-bottom:8px">◆ 遊び方（v0.76）◆</div>';
+  let s='<div class="center" style="color:#ffd24a;font-size:15px;margin-bottom:8px">◆ 遊び方（v0.78）◆</div>';
   s+='<div style="font-size:13px;line-height:1.8">'
     +'・リソースは<b>武器耐久・SP・クロン</b>の3つ。準備フェーズや商店はない。<br>'
     +'・毎ターン<b>「強化する」</b>を選ぶだけ。成功すれば<b>段+1・SP+1</b>（Ⅸで+2・Ⅹで+3）。<br>'
@@ -416,20 +421,24 @@ function beginRun(){
   setMsg("強化を始めろ。SPをスキルツリーに注ぎ、行けるところまで駆け上がれ。");
   startTurn();
 }
+// v0.78 強化フェーズの常設パネル：①素の成功率ゲージ（目立つ上部）＋爆発値/壁 ②メッセージ行(合流したログ) ③行動ボタン
 function showEnhance(){
   const ex=computeEX(); const wall=FL(g.stage,g.cycle); const Kv=K(g.stage,g.cycle);
-  const rawRate = Kv<=0 ? capEff() : Math.min(CAP_RATE, ex/(ex+Kv));   // v0.77 素の成功率（減衰前）＝開いた時点でゲージに表示
-  let s='<div class="center">'+stageLabel()+' に挑む</div>';
-  s+='<div class="center sub">素の成功率 '+pct1(rawRate)+'</div>';
-  s+='<div class="gaugewrap"><div class="gaugescale"><span>0</span><span>50</span><span>100</span></div><div class="gaugetrack"><div class="gaugefill" style="width:'+(rawRate*100).toFixed(1)+'%;background:#ffd24a"></div></div></div>';
-  if(wall>0) s+='<div class="center sub">限界突破の壁：'+wall.toLocaleString()+'</div>';
-  else s+='<div class="center sub">（助走中：壁ゼロ）</div>';
-  s+='<div class="menu" style="margin-top:10px">';
+  const rawRate = Kv<=0 ? capEff() : Math.min(CAP_RATE, ex/(ex+Kv));   // 素の成功率（減衰前）＝開いた時点でゲージに表示
+  let s='<div id="animstage">';   // 演出と同じ器＝押した瞬間その場でアニメに切り替わる（ページ切替なし）
+  s+='<div class="sub" style="color:#ffd24a">'+stageLabel()+' に挑む</div>';
+  s+='<div class="animpct" id="animpct" style="color:#ffd24a;font-size:22px">素の成功率 '+pct1(rawRate)+'</div>';
+  s+='<div class="gaugewrap"><div class="gaugescale"><span>0</span><span>50</span><span>100</span></div><div class="gaugetrack"><div class="gaugefill" id="gaugefill" style="width:'+(rawRate*100).toFixed(1)+'%;background:#ffd24a"></div></div></div>';
+  s+='<div class="animex2 center" id="animex">爆発値 <b id="exnum">'+Math.round(ex).toLocaleString()+'</b>'+(wall>0?' ／ 限界突破の壁 '+Math.round(wall).toLocaleString():'（助走・壁なし）')+'</div>';
+  s+='<div class="animchips" id="animchips"></div>';
+  s+='<div id="msg"></div>';   // 合流したメッセージ行（lastMsgを復元表示）
+  s+='<div class="menu" id="animctl" style="margin-top:10px">';
   s+=btnRaw("⚔ 強化する","playEnhance()");
   s+=btnRaw("🌳 スキルツリー（SP残 "+g.sp+"）","showTree()");
-  s+=btnRaw("📋 プレイログ保存","exportPlaylog()");   // v0.72 強化画面に常設（送信のみ・no-op安全）
-  s+='</div>';
+  s+=btnRaw("📋 プレイログ保存","exportPlaylog()");   // 強化画面に常設（送信のみ・no-op安全）
+  s+='</div></div>';
   scr(s);
+  applyMsg();   // 直前の結果メッセージを復元表示
 }
 // v0.72.1 1ノードのカードHTML（root/枝共通）。desc は「その時（次のLv）上がる数値」を表示（MAXは現在値）。複数前提を全表示。
 function nodeCard(n, isRoot){
@@ -523,7 +532,7 @@ function playEnhance(){
   if(g._animating) return;
   const rv=buildRevealSteps(); const steps=rv.steps;
   g._animating=true; g._animTimers=[]; g._finalRatePreview=rv.rateFinal;
-  renderAnimStage(rv.wall, rv.rawRate);
+  prepAnimStage(rv.wall, rv.rawRate);   // v0.78 既存パネルをその場でアニメ用に初期化（ページ切替なし）
   let i=0;
   function next(){
     if(!g._animating) return;
@@ -558,6 +567,17 @@ function advanceAfterEnh(){ g._animating=false; g._deferAdvance=false;
   if(g.ended) return; startTurn();
 }
 function skipEnhance(){ if(!g._animating) return; if(g._animTimers) g._animTimers.forEach(clearTimeout); g._animTimers=[]; doReveal(); }
+// v0.78 その場再生：showEnhanceが描いた常設パネル要素（gauge/exnum/chips/animctl/msg）を使い回し初期化する。
+// 要素が無い場合のみ renderAnimStage でフル描画（保険）。
+function prepAnimStage(wall, rawRate){
+  if(!document.getElementById('gaugefill') || !document.getElementById('animctl')){ renderAnimStage(wall, rawRate); return; }
+  const ch=document.getElementById('animchips'); if(ch) ch.innerHTML='';
+  setExNum(0,false);
+  setGauge(rawRate,'ex');
+  setBig('素の成功率 '+pct1(rawRate),'rate');
+  const m=document.getElementById('msg'); if(m) m.textContent='';   // メッセージ行は演出中クリア（結果は判定後に表示）
+  const c=document.getElementById('animctl'); if(c) c.innerHTML='<button class="btn center" onclick="skipEnhance()">⏩ 一気に判定</button>';
+}
 function renderAnimStage(wall, rawRate){ let s='<div id="animstage">';
   s+='<div class="sub" style="color:#ffd24a">'+stageLabel()+'</div>';
   s+='<div class="animpct" id="animpct" style="color:#ffd24a">素の成功率 '+pct1(rawRate)+'</div>';
@@ -610,8 +630,12 @@ function updateTheme(){ if(typeof document==='undefined'||!document.body) return
   if(ri===7) b.classList.add('boss8'); else if(ri===8) b.classList.add('boss9'); else if(ri===9) b.classList.add('bossX');
 }
 function scr(html){ document.getElementById("screen").innerHTML=html; }
-function setMsg(t){ const m=document.getElementById("msg"); if(!m) return; m.textContent=t;
-  if(m.parentElement){ m.parentElement.classList.remove("flash"); void m.offsetWidth; m.parentElement.classList.add("flash"); } }
+// v0.78 メッセージは強化パネル内のメッセージ行(#msg)に合流。最新文言を lastMsg に保持し、
+// パネル再描画時(showEnhance)に復元表示。#msg が無い画面(ツリー/GO/イントロ/演出中)では安全にno-op。
+let lastMsg="";
+function setMsg(t){ lastMsg=t||""; const m=document.getElementById("msg"); if(!m) return; m.textContent=lastMsg;
+  m.classList.remove("flash"); void m.offsetWidth; m.classList.add("flash"); }
+function applyMsg(){ const m=document.getElementById("msg"); if(m) m.textContent=lastMsg; }   // 再描画後にtextContentで安全復元（HTML注入回避）
 function btnRaw(label,onclick){ return '<button class="btn center" onclick="'+onclick+'">'+label+'</button>'; }
 let actx=null;
 function beep(freq,dur){ try{ actx=actx||new (window.AudioContext||window.webkitAudioContext)();
@@ -633,13 +657,13 @@ function buildPlaylogData(reason){
     const totalStage = ((g.maxCycle||1)-1)*100 + (((g.maxStage-1)%100)+1);   // 通算到達段（周回込み）
     const skills={}; TREE.forEach(n=>{ skills[n.id]=skR(n.id); });   // v0.72 最終スキル振り（全ノードid→rank）
     return JSON.stringify({
-      ver:'v0.76', reason:(reason||'manual'), ts:new Date().toISOString(),
+      ver:'v0.78', reason:(reason||'manual'), ts:new Date().toISOString(),
       maxStage: totalStage, cycle:(g.maxCycle||1), turn:(g.turn||0), score:(g.score||0),
       clone:(g.clone||0), fallback:(g.fallbackCount||0),
       success:(g.succCount||0), fail:(g.failCount||0), fever:(g.feverCount||0),
       skills: skills
     });
-  }catch(e){ return JSON.stringify({ver:'v0.76', reason:(reason||'manual'), err:String(e)}); }
+  }catch(e){ return JSON.stringify({ver:'v0.78', reason:(reason||'manual'), err:String(e)}); }
 }
 function uploadPlaylog(reason){
   try{
