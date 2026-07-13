@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>強化脳汁ゲー（仮）— ブラウザ試作 v0.72（6系統スキルツリー版）</title>
+<title>強化脳汁ゲー（仮）— ブラウザ試作 v0.73（火力/クロン/回復 調整版）</title>
 <style>
   :root{ --navy:#000a5a; --navy2:#001080; --gold:#ffd24a; --edge:#6b7bd6; --panel:#00104a; --track:#00003a; }
   *{ box-sizing:border-box; }
@@ -104,7 +104,7 @@
 </head>
 <body>
 <div id="app">
-  <h1>◆ 強化脳汁ゲー（仮）◆ ブラウザ試作 v0.72 — 6系統スキルツリー版</h1>
+  <h1>◆ 強化脳汁ゲー（仮）◆ ブラウザ試作 v0.73 — 火力/クロン/回復 調整版</h1>
 
   <div class="win">
     <div class="row" style="align-items:center; margin-bottom:6px;">
@@ -125,10 +125,12 @@
   <div class="win"><div id="msg"></div></div>
   <div class="win"><div id="screen"></div></div>
 
-  <div class="sub">名称・数値は仮の手触り確認用（v0.72＝root＋6系統スキルツリー版）。</div>
+  <div class="sub">名称・数値は仮の手触り確認用（v0.73＝火力/クロン/回復 調整版）。</div>
   <div class="sub" style="opacity:.7;margin-top:2px">本作は『黒い砂漠』(Pearl Abyss)の非公式ファンメイド作品です。権利者とは一切関係ありません。非営利。</div>
   <details style="margin-top:4px"><summary class="sub" style="cursor:pointer;list-style-position:inside;opacity:.55">開発メモ（版ごとの実装履歴・クリックで開く）</summary>
   <div class="sub" style="text-align:left">
+  ※v0.73【社長v0.72プレイFB反映（段67・限界突破0回・クロン25k余り）＝火力/クロン/回復の3調整（数値は全て仮）】：①<b>ヴォルクス系（火力）を強化</b>＝叫び start1.2→<b>1.3</b>/end3.0→<b>5.0</b>、書 start1.5→<b>2.0</b>/end4.0→<b>8.0</b>。火力全振り(叫び10+書5)で爆発値が壁の約9割に届き、そこに連続成功スノーボール(urami)や失敗スタックが乗れば<b>限界突破(ex≥壁)に到達できる</b>ように（従来は壁の15〜28%止まりで限界突破が不可能だった）。②<b>段戻り防止クロンを段連動に</b>＝クロンの盾のコストをflat800→<b>通算段連動</b>（BASE300×1.05^(通算段-5)＝段5で300→段67で約6,300）。クロン大事にを<b>%軽減(10→50%)</b>に変更（段連動での陳腐化回避）。クロンを"やりくりする資源"に戻す（社長は25k余らせた＝供給過多）。③<b>記憶の欠片を確率式に</b>＝「N回ごと回復」→<b>毎強化ごとにP%(20→50%)で耐久回復</b>（周期カウンタ撤去）。確率は社長指定を維持し、無敵化しないよう回復"量"側（うろ覚えend3→2・あるべきカタチend5→3）を抑えて有限化。<br>
+  ※v0.72【7系統ツリー＋複数前提＋段戻り＋クロン復活＋失敗を力に＋Ⅷ〜Ⅹ色味（社長指示・数値は全て仮）】：①<b>効果モデル拡張</b>＝前提を配列reqs[{id,rank}]で複数前提対応（あるべきカタチ＝記憶の欠片Lv5＋うろ覚えLv3）。②<b>★失敗で段が1つ戻る</b>（下限＝開始段）＋従来の武器耐久-10。③<b>クロンをランリソースに復活</b>（HUDに🪙クロン・詫びクロンが毎ターン供給）。<b>クロンの盾</b>で確率＋クロン消費で段戻りを防ぐ。④<b>ツリー刷新（root＋6系統）</b>＝強化系(叫び/書)・クロン系(詫びクロン/クロンの盾/クロン大事に/クロンはいくらあってもいい)・耐久保護系(記憶の欠片/うろ覚え/あるべきカタチ＝N回ごと耐久回復)・失敗系(スタック/失敗は成功のもと/折れない心＝スタックが成功率を押し上げ、失敗で貯まり、折れない心で成功しても維持)・減衰対抗系(武器知識＝減衰軽減/武器への愛着＝成功率天井+2〜10%)・条件系(連続成功は恨まれる＝スノーボール/二度あることは三度ある＝コンボ上限拡張)。⑤<b>Ⅷ〜Ⅹで色味変化</b>（Ⅷ琥珀/Ⅸ赤橙/Ⅹ深紅の"ボスの気配"・グレードが変わればリセット）。⑥<b>ツリー全表示</b>（前提未達も🔒灰色で最後まで見える）。⑦<b>プレイログ拡充</b>＝clone・段戻り回数・全ノードLv・成功/失敗/限界突破・ver"v0.72"・通算到達段を記録、強化画面にも常設📋ボタン。※<b>ラッキー系（女神の加護・幸運の積立）は社長判断で一旦撤去・将来復活予定</b>。無敵感対策の数値＝下記報告参照。<br>
   ※v0.72【7系統ツリー＋複数前提＋段戻り＋クロン復活＋失敗を力に＋Ⅷ〜Ⅹ色味（社長指示・数値は全て仮）】：①<b>効果モデル拡張</b>＝前提を配列reqs[{id,rank}]で複数前提対応（あるべきカタチ＝記憶の欠片Lv5＋うろ覚えLv3）。②<b>★失敗で段が1つ戻る</b>（下限＝開始段）＋従来の武器耐久-10。③<b>クロンをランリソースに復活</b>（HUDに🪙クロン・詫びクロンが毎ターン供給）。<b>クロンの盾</b>で確率＋クロン消費で段戻りを防ぐ。④<b>ツリー刷新（root＋6系統）</b>＝強化系(叫び/書)・クロン系(詫びクロン/クロンの盾/クロン大事に/クロンはいくらあってもいい)・耐久保護系(記憶の欠片/うろ覚え/あるべきカタチ＝N回ごと耐久回復)・失敗系(スタック/失敗は成功のもと/折れない心＝スタックが成功率を押し上げ、失敗で貯まり、折れない心で成功しても維持)・減衰対抗系(武器知識＝減衰軽減/武器への愛着＝成功率天井+2〜10%)・条件系(連続成功は恨まれる＝スノーボール/二度あることは三度ある＝コンボ上限拡張)。⑤<b>Ⅷ〜Ⅹで色味変化</b>（Ⅷ琥珀/Ⅸ赤橙/Ⅹ深紅の"ボスの気配"・グレードが変わればリセット）。⑥<b>ツリー全表示</b>（前提未達も🔒灰色で最後まで見える）。⑦<b>プレイログ拡充</b>＝clone・段戻り回数・全ノードLv・成功/失敗/限界突破・ver"v0.72"・通算到達段を記録、強化画面にも常設📋ボタン。※<b>ラッキー系（女神の加護・幸運の積立）は社長判断で一旦撤去・将来復活予定</b>。無敵感対策の数値＝下記報告参照。<br>
   ※v0.71【本格スキルツリー化＋プレイログ移植＋権利注記（社長指示・数値は全て仮）】：①ツリーを<b>「細かいランク＋Lv前提＋rank線形補間」の本格版</b>に作り替え。各ノードに req/reqRank（前提のLv条件）と start→end（rankで線形補間する効果値）を持たせ、SPコストもノードごと（root1/入口2/奥3）。root=ブラックストーン（fireMult基礎×1.15＋成功率+2%）→強化系（ヴォルクスの叫び10rank×1.2→×3.0／ヴォルクスの書5rank×1.5→×4.0）・保険系（頑丈な柄5rank+10→+50／クロン石3rank帳消し10→30%）・回復系（メモリ断片5rank+1→+5／生命の秘薬3rank+3→+9）・ラッキー系（女神の加護5rank2→10%／幸運の積立3rank満タン5→3）・条件系（火事場の馬鹿力5rank+2→+10%／背水の一撃3rank×1.5→×2.5）。奥ノードの解放はreqRank2＝前提をLv2以上。②<b>プレイログ保存を移植</b>（v0.65と同じGAS URL・ドライブ「強化脳汁ゲー_プレイログ」へno-cors送信・ゲームオーバーで自動1回＋画面の📋保存ボタン・URL/fetch無しならno-op）。記録＝ver/通算到達段/周回/turn/score/成功・失敗・限界突破回数/最終スキル振り/timestamp。③<b>ファンメイド権利注記</b>をイントロ下部とフッターに常時表示。無敵感対策の数値変更＝下記報告参照。<br>
   ※v0.70【ラン内スキルツリー版・最小プロト（社長指示・数値は全て仮）】：v0.65（商店/装備/クロン/モチベ/寿命/コスト制/アイテム40種）を全廃し、<b>リソースを武器耐久とSPの2つだけ</b>に絞る大転換。準備フェーズ/商店なし＝毎ターン「強化する」のみ。<b>成功で段+1・SP+1／失敗しても段は落ちず武器耐久のみ減少／耐久0でゲームオーバー</b>。貯めたSPは<b>5系統13ノードのスキルツリー</b>（強化系＝爆発/冷静/抗、保険系＝頑丈/軽減/帳消し、回復系＝修復/大回復、ラッキー系＝女神の気まぐれ/幸運の積立、条件系＝火事場/連撃/一発勝負）に振り分けてビルドを組む（開いたら常時有効・付け替えなし・ランごとにリセット）。段5・SP5で開始（段5〜7は壁ゼロでほぼ確定成功の短い助走）。減衰・限界突破・成功率天井・失敗スタック・強化演出（ゲージ式）は v0.65 のロジックをそのまま移植し、爆発値の出所だけスキルツリー由来に差し替え。開発中に社長指示でスキルツリーを当初の「幹+3枝9ノード」案から<b>「5系統13ノード・幹なしフラット」</b>に全面差し替え（保護＝クロンは廃止確定・保険/回復の2系統で代替）。detail は Output 提出時の報告を参照。<br>
@@ -171,7 +173,10 @@ const EX_BASE_MULT=2;
 const KOU_TOTAL_CAP=0.40;             // 減衰軽減の総上限（武器知識のdecayReliefをここでclamp）【仮】
 const STACK_RATE_COEF=0.015;          // v0.72 失敗スタック→成功率の変換係数（stackRateBonus=min(0.40, g.stack×これ)）＝"結構上がる"手触り【仮・ボット調整】
 const STACK_RATE_CAP=0.40;            // スタック成功率ボーナスの上限【仮】
-const FALLBACK_COST_BASE=800;         // クロンの盾：段戻り防止1回のクロン消費ベース（クロン大事にで軽減）【仮】
+// v0.73 段戻り防止コストを通算段連動に（社長FB：段67でクロン25kも余った＝flat800が深段で軽すぎ）
+// fallbackCost(通算段)=round(BASE×GROWTH^(通算段-STAGE_START))＝段5で400 → 段40で約4,600 → 段67で約2万【仮】
+// ボット検証でクロン供給(詫びクロン全振り最大6000/ターン)に対し盾コストがちゃんと"やりくり資源"になる勾配に調整。
+const FALLBACK_COST_BASE=400, FALLBACK_GROWTH=1.07;
 // v0.71 段階SP獲得（社長指示）：クリアした段のローマ数字位で獲得量が変わる（Ⅹ＝ボスで+3・Ⅸで+2・他+1）
 const SP_GAIN_NORMAL=1, SP_GAIN_IX=2, SP_GAIN_X=3;
 // root（ブラックストーン）の基礎効果
@@ -184,27 +189,27 @@ const ROOT_FIRE_BASE=1.15, ROOT_RATE_BONUS=0.02;
 const TREE=[
  {id:'root', branch:'根', name:'ブラックストーン', maxRank:1, cost:1, reqs:[], start:0, end:0,
    desc:(r,v)=>'火力の基礎倍率 ×'+ROOT_FIRE_BASE+' かつ 成功率+'+Math.round(ROOT_RATE_BONUS*100)+'%。すべての系統の入口を開放する'},
- // 強化系
- {id:'voice', branch:'強化系', name:'ヴォルクスの叫び', maxRank:10, cost:2, reqs:[{id:'root',rank:1}], start:1.2, end:3.0,
+ // 強化系（v0.73 火力強化：社長プレイで限界突破fever=0＝壁の15〜28%までしか届かず不可能だったため、叫び/書を底上げ）
+ {id:'voice', branch:'強化系', name:'ヴォルクスの叫び', maxRank:10, cost:2, reqs:[{id:'root',rank:1}], start:1.3, end:5.0,
    desc:(r,v)=>'爆発値の火力倍率 ×'+v.toFixed(2)},
- {id:'book', branch:'強化系', name:'ヴォルクスの書', maxRank:5, cost:3, reqs:[{id:'voice',rank:2}], start:1.5, end:4.0,
+ {id:'book', branch:'強化系', name:'ヴォルクスの書', maxRank:5, cost:3, reqs:[{id:'voice',rank:2}], start:2.0, end:8.0,
    desc:(r,v)=>'ヴォルクスの叫びの火力倍率にさらに ×'+v.toFixed(2)+' を乗算'},
  // クロン系
  {id:'wabi', branch:'クロン系', name:'詫びクロン', maxRank:10, cost:2, reqs:[{id:'root',rank:1}], start:100, end:1000,
    desc:(r,v)=>'毎ターン クロン+'+Math.round(v)},
  {id:'kuron_shield', branch:'クロン系', name:'クロンの盾', maxRank:5, cost:3, reqs:[{id:'wabi',rank:3}], start:0.2, end:1.0,
-   desc:(r,v)=>'失敗の段戻りを '+Math.round(v*100)+'% の確率で防ぐ（クロン'+FALLBACK_COST_BASE+'消費）'},
- {id:'kuron_care', branch:'クロン系', name:'クロン大事に', maxRank:5, cost:3, reqs:[{id:'kuron_shield',rank:3}], start:100, end:500,
-   desc:(r,v)=>'クロンの盾の段戻り防止で使うクロンを -'+Math.round(v)},
+   desc:(r,v)=>'失敗の段戻りを '+Math.round(v*100)+'% の確率で防ぐ（今の消費クロン '+fallbackCost().toLocaleString()+'・深い段ほど高い）'},
+ {id:'kuron_care', branch:'クロン系', name:'クロン大事に', maxRank:5, cost:3, reqs:[{id:'kuron_shield',rank:3}], start:0.10, end:0.50,
+   desc:(r,v)=>'クロンの盾の段戻り防止で使うクロンを '+Math.round(v*100)+'% 軽減'},
  {id:'kuron_more', branch:'クロン系', name:'クロンはいくらあってもいい', maxRank:5, cost:3, reqs:[{id:'wabi',rank:5}], start:2, end:6,
    desc:(r,v)=>'詫びクロンの毎ターン供給量 ×'+v.toFixed(1)},
- // 耐久保護系（記憶の欠片チェーン）※無敵感検証で「周期回復が失敗の耐久減を上回り不死身化」したため
- // 周期の下限を4回に・回復値を抑制（有限化しつつ"守り"の手触りは残す）【仮】
- {id:'kakera', branch:'耐久保護系', name:'記憶の欠片', maxRank:5, cost:2, reqs:[{id:'root',rank:1}], start:10, end:4,
-   desc:(r,v)=>Math.round(v)+'回の強化ごとに耐久+'+kakeraHeal()},
- {id:'urooboe', branch:'耐久保護系', name:'うろ覚え', maxRank:5, cost:3, reqs:[{id:'kakera',rank:3}], start:1, end:3,
+ // 耐久保護系（記憶の欠片チェーン）※v0.73 社長指示で「確率式」に変更：毎強化ごとにP%で耐久回復（周期カウンタ撤去）。
+ // 確率は社長指定(0.20→0.50)を維持し、無敵化しないよう回復"量"側（うろ覚え/あるべきカタチのend）を抑えて有限化【仮】
+ {id:'kakera', branch:'耐久保護系', name:'記憶の欠片', maxRank:5, cost:2, reqs:[{id:'root',rank:1}], start:0.20, end:0.50,
+   desc:(r,v)=>'強化のたび '+Math.round(v*100)+'% の確率で耐久+'+kakeraHeal()},
+ {id:'urooboe', branch:'耐久保護系', name:'うろ覚え', maxRank:5, cost:3, reqs:[{id:'kakera',rank:3}], start:1, end:2,
    desc:(r,v)=>'記憶の欠片の回復値+'+Math.round(v)},
- {id:'katachi', branch:'耐久保護系', name:'あるべきカタチ', maxRank:5, cost:5, reqs:[{id:'kakera',rank:5},{id:'urooboe',rank:3}], start:2, end:5,
+ {id:'katachi', branch:'耐久保護系', name:'あるべきカタチ', maxRank:5, cost:5, reqs:[{id:'kakera',rank:5},{id:'urooboe',rank:3}], start:2, end:3,
    desc:(r,v)=>'記憶の欠片の回復値にさらに+'+Math.round(v)},
  // 失敗系（スタックチェーン）
  {id:'stack', branch:'失敗系', name:'スタック', maxRank:10, cost:1, reqs:[{id:'root',rank:1}], start:1, end:10,
@@ -264,8 +269,11 @@ function stackRateBonus(){ if(skR('stack')<=0) return 0; return Math.min(STACK_R
 // v0.72 減衰対抗系：武器知識のdecayReliefを復活（合算上限KOU_TOTAL_CAP）
 function decayReliefTotal(){ let r = skR('buki_know')>0 ? nodeVal('buki_know') : 0; return Math.min(KOU_TOTAL_CAP, Math.max(0,r)); }
 function ceilBoost(){ return skR('buki_love')>0 ? nodeVal('buki_love') : 0; }   // 武器への愛着：成功率上限（天井）を押し上げ
-// v0.72 クロンの盾：段戻り防止1回のクロン消費（クロン大事いで軽減）
-function fallbackCost(){ let c=FALLBACK_COST_BASE; if(skR('kuron_care')>0) c-=Math.round(nodeVal('kuron_care')); return Math.max(0,c); }
+// v0.73 クロンの盾：段戻り防止1回のクロン消費＝通算段連動（深いほど高い）×クロン大事に%軽減
+function totalStageNow(){ return ((g.cycle||1)-1)*100 + g.stage; }
+function fallbackCost(){ let c=FALLBACK_COST_BASE*Math.pow(FALLBACK_GROWTH, Math.max(0, totalStageNow()-STAGE_START));
+  if(skR('kuron_care')>0) c*=(1-nodeVal('kuron_care'));   // %軽減（10→50%）
+  return Math.max(1, Math.round(c)); }
 // v0.72 詫びクロンの毎ターン供給量（クロンはいくらあってもいい倍率込み）
 function wabiSupply(){ if(skR('wabi')<=0) return 0; let a=nodeVal('wabi'); if(skR('kuron_more')>0) a*=nodeVal('kuron_more'); return Math.round(a); }
 function reqMet(id){ const n=TREE_MAP[id]; if(!n) return false; return (n.reqs||[]).every(rq=>skR(rq.id) >= rq.rank); }   // v0.72 複数前提：全reqsを満たすか
@@ -309,10 +317,8 @@ function tryEnh(){
   const ok = Math.random()<rate;
   g._lastRate=rate; g._lastEx=ex;
   if(ok) onSuccess(ex); else onFail(ex);
-  // v0.72 記憶の欠片：N回の強化ごと（成否問わず）に耐久回復
-  if(!g.ended && skR('kakera')>0){ g.kakeraTick=(g.kakeraTick||0)+1;
-    const interval=Math.max(1, Math.round(nodeVal('kakera')));
-    if(g.kakeraTick>=interval){ g.kakeraTick=0; const h=kakeraHeal(); if(h>0) g.dur=Math.min(maxDur(), g.dur+h); } }
+  // v0.73 記憶の欠片：毎強化ごと（成否問わず）に確率P%で耐久回復（周期式→確率式・社長指示）
+  if(!g.ended && skR('kakera')>0 && Math.random()<nodeVal('kakera')){ const h=kakeraHeal(); if(h>0) g.dur=Math.min(maxDur(), g.dur+h); }
   if(g.ended) return;
   render();
   if(checkDead()) return;
@@ -377,7 +383,7 @@ function startTurn(){ g.turn++;
   g.phase='enhance'; render(); showEnhance(); }
 function showIntro(){
   g.phase='intro'; render();
-  let s='<div class="center" style="color:#ffd24a;font-size:15px;margin-bottom:8px">◆ 遊び方（v0.72）◆</div>';
+  let s='<div class="center" style="color:#ffd24a;font-size:15px;margin-bottom:8px">◆ 遊び方（v0.73）◆</div>';
   s+='<div style="font-size:13px;line-height:1.8">'
     +'・リソースは<b>武器耐久・SP・クロン</b>の3つ。準備フェーズや商店はない。<br>'
     +'・毎ターン<b>「強化する」</b>を選ぶだけ。成功すれば<b>段+1・SP+1</b>（Ⅸで+2・Ⅹで+3）。<br>'
@@ -573,13 +579,13 @@ function buildPlaylogData(reason){
     const totalStage = ((g.maxCycle||1)-1)*100 + (((g.maxStage-1)%100)+1);   // 通算到達段（周回込み）
     const skills={}; TREE.forEach(n=>{ skills[n.id]=skR(n.id); });   // v0.72 最終スキル振り（全ノードid→rank）
     return JSON.stringify({
-      ver:'v0.72', reason:(reason||'manual'), ts:new Date().toISOString(),
+      ver:'v0.73', reason:(reason||'manual'), ts:new Date().toISOString(),
       maxStage: totalStage, cycle:(g.maxCycle||1), turn:(g.turn||0), score:(g.score||0),
       clone:(g.clone||0), fallback:(g.fallbackCount||0),
       success:(g.succCount||0), fail:(g.failCount||0), fever:(g.feverCount||0),
       skills: skills
     });
-  }catch(e){ return JSON.stringify({ver:'v0.72', reason:(reason||'manual'), err:String(e)}); }
+  }catch(e){ return JSON.stringify({ver:'v0.73', reason:(reason||'manual'), err:String(e)}); }
 }
 function uploadPlaylog(reason){
   try{
