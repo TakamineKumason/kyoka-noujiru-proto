@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>強化脳汁ゲー（仮）— ブラウザ試作 v0.83（減衰が味方になる不具合を修正）</title>
+<title>強化脳汁ゲー（仮）— ブラウザ試作 v0.84（NaNで全失敗する緊急修正）</title>
 <style>
   :root{ --navy:#000a5a; --navy2:#001080; --gold:#ffd24a; --edge:#6b7bd6; --panel:#00104a; --track:#00003a; }
   *{ box-sizing:border-box; }
@@ -109,7 +109,7 @@
 </head>
 <body>
 <div id="app">
-  <h1>◆ 強化脳汁ゲー（仮）◆ ブラウザ試作 v0.83 — 減衰が味方になる不具合を修正</h1>
+  <h1>◆ 強化脳汁ゲー（仮）◆ ブラウザ試作 v0.84 — NaNで全失敗する緊急修正</h1>
 
   <div class="win">
     <div class="row" style="align-items:center; margin-bottom:6px;">
@@ -320,7 +320,8 @@ function capEff(){ const maxCap=CAP_RATE+ceilBoost();
   if(!CEIL_ON) return maxCap;
   const d=decayD(); const c=maxCap - CEIL_SLOPE*(1-d) + okPushPt()/100;   // ★relief抜きの生の減衰dで天井を計算
   return Math.max(CEIL_MIN, Math.min(maxCap, c)); }
-function decayedRateEX(ex){ const d=decayEffD(); const Kv=K(g.stage,g.cycle);
+function decayedRateEX(ex){ const Kv=K(g.stage,g.cycle); if(Kv<=0) return capEff();   // v0.84 助走(壁K=0)は爆発値0で0/0=NaNになるため天井を返す（v0.83の減衰clampが入れたNaN不具合を修正）
+  const d=decayEffD();
   const exd=Math.min(ex, 100*Math.pow(Math.max(1,ex/100), d));   // v0.83 減衰は素の率を超えて上げない（爆発値<100で減衰が"有利"になり素より上がる不具合を修正）
   return Math.min(capEff(), exd/(exd+Kv)); }
 function okPushPt(){ const wall=FL(g.stage,g.cycle); if(wall<=0) return 0;
