@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>強化脳汁ゲー（仮）— ブラウザ試作 v0.79（画面切替でホーム位置に戻す）</title>
+<title>強化脳汁ゲー（仮）— ブラウザ試作 v0.80（画面切替のみホームへ・Lv上げは位置維持）</title>
 <style>
   :root{ --navy:#000a5a; --navy2:#001080; --gold:#ffd24a; --edge:#6b7bd6; --panel:#00104a; --track:#00003a; }
   *{ box-sizing:border-box; }
@@ -109,7 +109,7 @@
 </head>
 <body>
 <div id="app">
-  <h1>◆ 強化脳汁ゲー（仮）◆ ブラウザ試作 v0.79 — 画面切替でホーム位置に戻す</h1>
+  <h1>◆ 強化脳汁ゲー（仮）◆ ブラウザ試作 v0.80 — 画面切替のみホームへ（Lv上げは位置維持）</h1>
 
   <div class="win">
     <div class="row" style="align-items:center; margin-bottom:6px;">
@@ -629,8 +629,10 @@ function updateTheme(){ if(typeof document==='undefined'||!document.body) return
   const b=document.body; b.classList.remove('boss8','boss9','bossX');
   if(ri===7) b.classList.add('boss8'); else if(ri===8) b.classList.add('boss9'); else if(ri===9) b.classList.add('bossX');
 }
+let _lastScrPhase=null;
 function scr(html){ document.getElementById("screen").innerHTML=html;
-  try{ if(typeof window!=='undefined' && window.scrollTo){ window.scrollTo(0,0); if(document.scrollingElement) document.scrollingElement.scrollTop=0; } }catch(e){} }   // v0.79 画面切替のたびホームポジション（画面一番上）へ戻す（スマホで戻る後に下に取り残される問題）
+  try{ const ph=(typeof g!=='undefined'&&g)?g.phase:null;   // v0.80 画面が切り替わった時だけホームへ（同じ画面の再描画＝Lv上げ等ではスクロールしない・社長FB）
+    if(ph!==_lastScrPhase){ _lastScrPhase=ph; if(typeof window!=='undefined'&&window.scrollTo){ window.scrollTo(0,0); if(document.scrollingElement) document.scrollingElement.scrollTop=0; } } }catch(e){} }
 // v0.78 メッセージは強化パネル内のメッセージ行(#msg)に合流。最新文言を lastMsg に保持し、
 // パネル再描画時(showEnhance)に復元表示。#msg が無い画面(ツリー/GO/イントロ/演出中)では安全にno-op。
 let lastMsg="";
