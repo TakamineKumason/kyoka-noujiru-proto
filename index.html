@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>強化脳汁ゲー（仮）— ブラウザ試作 v0.81（スキルツリー全面リニューアル・段戻り変更）</title>
+<title>強化脳汁ゲー（仮）— ブラウザ試作 v0.82（失敗ティア・耐久=段戻り×10）</title>
 <style>
   :root{ --navy:#000a5a; --navy2:#001080; --gold:#ffd24a; --edge:#6b7bd6; --panel:#00104a; --track:#00003a; }
   *{ box-sizing:border-box; }
@@ -109,7 +109,7 @@
 </head>
 <body>
 <div id="app">
-  <h1>◆ 強化脳汁ゲー（仮）◆ ブラウザ試作 v0.81 — スキルツリー全面リニューアル・段戻り変更</h1>
+  <h1>◆ 強化脳汁ゲー（仮）◆ ブラウザ試作 v0.82 — 失敗ティア・耐久=段戻り×10</h1>
 
   <div class="win">
     <div class="row" style="align-items:center; margin-bottom:6px;">
@@ -130,10 +130,11 @@
   <!-- v0.78 msgログ窓を廃止＝強化パネル(#screen)内のメッセージ行に合流。強化フェーズはこの1箱が常設パネル。 -->
   <div class="win"><div id="screen"></div></div>
 
-  <div class="sub">名称・数値は仮の手触り確認用（v0.81＝スキルツリー全面リニューアル・段戻り変更）。</div>
+  <div class="sub">名称・数値は仮の手触り確認用（v0.82＝失敗ティア・耐久=段戻り×10）。</div>
   <div class="sub" style="opacity:.7;margin-top:2px">本作は『黒い砂漠』(Pearl Abyss)の非公式ファンメイド作品です。権利者とは一切関係ありません。非営利。</div>
   <details style="margin-top:4px"><summary class="sub" style="cursor:pointer;list-style-position:inside;opacity:.55">開発メモ（版ごとの実装履歴・クリックで開く）</summary>
   <div class="sub" style="text-align:left">
+  ※v0.82【失敗ペナルティ改定（社長指示・onFailのみ改定・ツリーは維持）】：<b>失敗ティア＋耐久=段戻り×10</b>。現在段のグレードgi・ローマ位riでティア決定＝無印(gi0)段-1／真以上(gi≥1)Ⅰ〜Ⅳ段-1・Ⅴ〜Ⅷ段-2・Ⅸ・Ⅹ段-3。<b>耐久ダメ＝ティア(段戻り幅)×DUR_PER_STEP(=10)</b>（-1→-10/-2→-20/-3→-30）。<b>闇捕食は耐久ダメ+5</b>（旧「15固定」を撤去しこの加算に）。<b>★保護系は段の下がり幅だけ軽減し耐久ダメは軽減しない</b>（軽減前ティアで耐久計算）＝Ｊハンで段を守っても耐久は食らう＝耐久が純粋な生存タイマー。下限段=開始段。<b>★旧DUR_LOSSの指数段連動ガード(KNEE60/GROWTH1.03)を撤去</b>＝ティア方式が深部の重さ(Ⅸ/Ⅹで-30)を内包するため。撤去後も複合ビルドは有限（検証で無敵化なしを確認・締めたガードはゼロ）。火力・ツリー値は据え置き。UI(v0.78)/要素分解演出(v0.74)/スクロール(v0.80)は維持。<br>
   ※v0.81【スキルツリー全面リニューアル＋段戻りルール変更（社長詳細スペック・数値は全て仮）】：TREEを<b>root＋5系統</b>に総入れ替え・多効果/修飾ノードに対応。<b>根っこ系</b>＝ブラックストーン(5rank・火力×[1.1〜1.5]かつ成功率+[1〜5]%)→凝縮(効果×2)→無欠(さらに×3＝積み上げ×6＝火力最大1.5×6=9・成功率最大30%)。<b>強化系</b>＝叫び(×1.2〜3.0)→助言(×2〜10)→闇捕食(叫び²×助言²・失敗耐久減15)。<b>耐久回復系</b>＝記憶の欠片(確率10〜50%で耐久+1)→職人の記憶(回復×5)→トラナンの秘訣(2連敗以上で確定発動)。<b>失敗系</b>＝スタック(失敗で+1〜10・1スタック成功率+2%)→失敗は成功のもと(+3/4/5%)→折れない心(成功でスタック50%残す)。<b>減衰対抗系</b>＝わるあがき(減衰-5〜25%)→まだいける(×1.5)→ＫＩＡＩ(r→1-(1-r)²)。<b>保護系</b>＝詫びクロン(成功時クロン+100〜500・閾値保有で段戻り-1)→ハイデル宴会(12回に1回+10000)→Ｊハン(閾値保有で段戻り完全無効)。<b>★段戻り変更</b>＝通常失敗-1／真グレード以上(段≥11)のⅤ〜Ⅹ失敗-2／保護で緩和。旧ノード(頑丈/軽減/帳消し/うろ覚え/あるべきカタチ/クロンの盾/武器知識/武器への愛着/連続成功は恨まれる 等)は撤去。<b>火力は据え置き＝限界突破は高頻度でOK</b>、有限性は生存ガード(DUR_LOSS段連動・KOU_TOTAL_CAP・詫びクロン閾値・段戻り-2)で担保（締めた値は報告参照）。v0.78のUI統合・v0.74要素分解演出は維持。<br>
   ※v0.78【強化パネル統合・ログ合流（社長指示・レイアウトのみ／バランス・判定・演出シーケンスは不変）】：独立していた<b>ログ窓(#msg)を廃止</b>し、強化フェーズを<b>1つの常設パネル</b>に統合。上から①<b>素の成功率ゲージ</b>（旧ログ窓があった目立つ位置）＋爆発値/限界突破の壁 ②<b>メッセージ行</b>（合流したログ＝setMsgの出力先をパネル内#msgに変更・最新文言をlastMsgに保持し再描画時に復元・#msgが無い画面ではno-op） ③行動ボタン（⚔強化する/🌳スキルツリー/📋プレイログ保存）。<b>強化演出はこの常設パネル内でその場再生</b>（prepAnimStageで既存要素gauge/exnum/chips/animctl/msgを使い回し初期化＝ページ切替なし・演出中もHUD/ゲージが同じ場所に居続ける）。ボタン行だけ⏩一気に判定／▶次へに切替。ツリー/GO/イントロは従来どおり同パネルに描画。buildRevealSteps/tryEnh/computeEX/successRateEXのロジック・数値・演出の中身は不変（ex/最終率一致・回帰分布同一）。<br>
   ※v0.76【社長FB3点（回復確率down・ゲージ演出・DUR_LOSS緩和）・数値は仮】：①<b>記憶の欠片の回復確率down</b>＝vals[30/40/50/60/75]%→<b>[10/20/30/40/50]%</b>（最大75→50%）。うろ覚え(+1〜5)・あるべきカタチ(+2〜6)は据え置き。②<b>ゲージ演出を「最初に素の確率→そこから上下」に</b>＝リビール開始でまずゲージを『素の成功率』に表示→爆発値の内訳チップは大きい数字だけ育て<b>ゲージは素に据え置き</b>→続いて🗡武器の抵抗で↓→🧊武器知識/⚡オーバーキル/🖤/📚で↑→最終。上下のドラマが明確に（判定・最終率=successRateEXは不変・ex/率一致アサート維持）。③<b>DUR_LOSS段連動を最軽量化</b>＝回復弱化でflatでも大半有限だが火力+耐久保護の一部が不死身化→ボット掃引で無敵化しない最軽量点を採用＝<b>KNEE=50/GROWTH=1.06（v0.75）→KNEE=60/GROWTH=1.03</b>（段80=約18・段100=約33・段120=約59＝v0.75の段80=57/段90=103より大幅に緩く深部の理不尽さを軽減）。全670ラン例外0・無限0。<br>
@@ -177,12 +178,15 @@ const OK_BETA=1.5, OK_CAP=5, OK_TH=3;
 const CAP_RATE=0.99;
 
 // ---- コアリソース（武器耐久・SP・クロン） ----
-const DUR_START=100, DUR_LOSS=10, YAMI_DUR_LOSS=15;   // v0.81 闇捕食で失敗時の耐久減が10→15
+const DUR_START=100, DUR_LOSS=10;
 const SP_START=5, STAGE_START=5;
 const EX_BASE_MULT=2;
-// v0.81 生存ガード（社長明示：火力は据え置き＝限界突破は出まくってよい・有限性だけ生存側で担保）
-// ① 失敗時の耐久減を通算段連動（KNEE=60まで据置／以降 ×1.03^超過段）＝深部ほど失敗が重い【ガード・調整可】
-const DUR_LOSS_KNEE=60, DUR_LOSS_GROWTH=1.03;
+// v0.82 失敗ペナルティ改定（社長指示）：段戻りをローマ帯でティア化し、耐久ダメ＝ティア(段戻り幅)×DUR_PER_STEP。
+//   無印(gi0)=-1／真以上(gi≥1)のⅠ〜Ⅳ=-1・Ⅴ〜Ⅷ=-2・Ⅸ・Ⅹ=-3。耐久=段-1→-10/-2→-20/-3→-30。闇捕食で耐久+YAMI_DUR_ADD。
+//   ★保護系は「段の下がり幅」だけ軽減し、耐久ダメは軽減しない（軽減前ティアで耐久計算）＝耐久が純粋な生存タイマー。
+const DUR_PER_STEP=10;        // 段戻り1段あたりの耐久ダメ【ガード・調整可】
+const YAMI_DUR_ADD=5;         // 闇捕食：失敗時の耐久ダメ+5（旧「15固定」を撤去しこの加算方式に）
+// v0.82 旧DUR_LOSSの指数段連動ガード(KNEE/GROWTH)はティア方式が深部の重さを内包するため撤去（下記durLossEffは廃止）。
 // ② 減衰軽減(わるあがき/まだいける/KIAI)の合算上限＝これが高いと減衰天井が上がり成功率が下がらず無限化する主因。【ガード・最重要】
 const KOU_TOTAL_CAP=0.40;
 // ③ 失敗スタック→成功率：1スタックあたり基礎+2%（失敗は成功のもとで上書き）・合算上限【ガード】
@@ -273,9 +277,13 @@ function totalStageNow(){ return ((g.cycle||1)-1)*100 + g.stage; }
 function rootScale(){ return skR('root3')>0 ? 6 : (skR('root2')>0 ? 2 : 1); }
 function rootFireMult(){ if(skR('root')<=0) return 1; return TREE_MAP.root.fireVals[skR('root')-1] * rootScale(); }   // 火力倍率寄与（最大1.5×6=9）
 function rootRateBonus(){ if(skR('root')<=0) return 0; return TREE_MAP.root.rateVals[skR('root')-1] * rootScale(); }  // 成功率寄与（最大5%×6=30%）
-// v0.81 闇捕食：失敗時の耐久減の基礎が15に。以降 通算段連動（KNEE=60まで据置）
-function durLossBase(){ return skR('yami')>0 ? YAMI_DUR_LOSS : DUR_LOSS; }
-function durLossEff(){ const over=Math.max(0, totalStageNow()-DUR_LOSS_KNEE); return Math.round(durLossBase()*Math.pow(DUR_LOSS_GROWTH, over)); }
+// v0.82 失敗ティア：現在段のグレードgi・ローマ位riで段戻り幅（＝耐久ダメ倍率）を決める。
+//   無印(gi0)=1／真以上(gi≥1)：Ⅰ〜Ⅳ(ri0-3)=1・Ⅴ〜Ⅷ(ri4-7)=2・Ⅸ・Ⅹ(ri8-9)=3
+function failTier(){ const gi=Math.floor((g.stage-1)/10), ri=(g.stage-1)%10;
+  if(gi<=0) return 1;
+  return ri<=3 ? 1 : (ri<=7 ? 2 : 3); }
+// 失敗時の耐久ダメ＝ティア×DUR_PER_STEP（＋闇捕食）。保護では軽減しない（軽減前ティアで計算）
+function failDurDamage(){ return failTier()*DUR_PER_STEP + (skR('yami')>0 ? YAMI_DUR_ADD : 0); }
 // v0.81 火力＝root寄与 × 叫び × 助言 ×（闇捕食なら叫び・助言をもう一度＝叫び²×助言²）
 function fireMult(){ const vM=skR('voice')>0?nodeVal('voice'):1, bM=skR('book')>0?nodeVal('book'):1;
   let m=rootFireMult()*vM*bM;
@@ -304,10 +312,13 @@ function openNode(id){ if(!canOpen(id)) return;
 }
 
 // ===== 爆発値・成功率（v0.65のK/FL/decayD/capEff/decayedRateEX/okPushPt/successRateEXの式を移植） =====
+// v0.82 減衰対抗系のバグ修正（社長指示）：reliefは「武器の抵抗(exd低下)の打ち消し」にのみ使う。
+//   decayEffD(relief込み)＝exd計算用。capEff(成功率の天井)は"生の減衰"decayD()で計算＝reliefで天井を押し上げない。
+//   ＝助走/浅い段(減衰が小さい所)ではわるあがきを取っても成功率は変わらず、減衰が効く段でも素の率を超えない。
 function decayEffD(){ let d=decayD(); const rel=decayReliefTotal(); if(rel>0) d=Math.min(1, d+(1-d)*rel); return d; }
-function capEff(){ const maxCap=CAP_RATE+ceilBoost();   // v0.72 武器への愛着で天井を押し上げ
+function capEff(){ const maxCap=CAP_RATE+ceilBoost();
   if(!CEIL_ON) return maxCap;
-  const d=decayEffD(); const c=maxCap - CEIL_SLOPE*(1-d) + okPushPt()/100;
+  const d=decayD(); const c=maxCap - CEIL_SLOPE*(1-d) + okPushPt()/100;   // ★relief抜きの生の減衰dで天井を計算
   return Math.max(CEIL_MIN, Math.min(maxCap, c)); }
 function decayedRateEX(ex){ const d=decayEffD(); const Kv=K(g.stage,g.cycle);
   const exd=100*Math.pow(Math.max(1,ex/100), d);
@@ -373,24 +384,21 @@ function onFail(ex){
   g.stack += stackGain();
   g.combo=0; g.lastFailed=true; g.failStreak=(g.failStreak||0)+1;
   g.failCount=(g.failCount||0)+1;   // plog用カウンタ
-  const loss=durLossEff();   // 段連動＝段戻りの前に確定
-  g.dur=Math.max(0, g.dur-loss);   // 失敗＝武器耐久-loss（闇捕食で基礎15・深部ほど重い）
-  // v0.81 ★段戻りルール：真グレード以上(段>=11=gi>=1)かつⅤ〜Ⅹ(ri4-9)で失敗は段-2、他は段-1。
-  // 保護系：詫びクロン閾値保有で-1緩和／Ｊハンありなら完全無効（段減少0）。
-  let drop=0, note='';
-  if(g.stage>STAGE_START){
-    const gi=Math.floor((g.stage-1)/10), ri=(g.stage-1)%10;
-    let base=(gi>=1 && ri>=4) ? 2 : 1;
-    if(wabiProtected()){
-      if(skR('jhan')>0){ base=0; note="\n🪙 Ｊハン：クロン閾値保有で段が下がらない！"; }
-      else { base=Math.max(0, base-1); note="\n🪙 詫びクロン：段戻りを-1緩和。"; }
-    }
-    drop=base;
-    if(drop>0){ g.stage=Math.max(STAGE_START, g.stage-drop); g.fallbackCount=(g.fallbackCount||0)+1; }
+  // v0.82 ★失敗ティア：ローマ帯で段戻り幅＝ティアを決める。耐久ダメ＝ティア×DUR_PER_STEP(+闇捕食)＝保護で減らない
+  const tier=failTier();
+  const dmg=failDurDamage();       // 軽減前ティア基準（保護は段のみ軽減・耐久は常にこの量）
+  g.dur=Math.max(0, g.dur-dmg);
+  // 段戻りはティアぶん。保護系で「段の下がり幅だけ」軽減（-1／Ｊハンで0）。
+  let drop=tier, note='';
+  if(wabiProtected()){
+    if(skR('jhan')>0){ drop=0; note="\n🪙 Ｊハン：クロン閾値保有で段が下がらない！（耐久は食らう）"; }
+    else { drop=Math.max(0, tier-1); note="\n🪙 詫びクロン：段戻りを-1緩和（耐久は食らう）。"; }
   }
-  let m="💥 失敗…… 武器耐久-"+loss+"（"+Math.max(0,g.dur)+"/"+maxDur()+"）。";
-  if(drop>0) m+="\n⬇ 段-"+drop+" → "+stageName(g.stage)+"。"+note;
-  else m+=(note?note.replace(/^\n/,'')+" ("+stageName(g.stage)+"を維持)":"段は維持＝"+stageName(g.stage)+"に再挑戦。");
+  if(g.stage<=STAGE_START) drop=0;   // 開始段では段は下がらない（耐久は上のとおり食らう）
+  if(drop>0){ g.stage=Math.max(STAGE_START, g.stage-drop); g.fallbackCount=(g.fallbackCount||0)+1; }
+  let m="💥 失敗…… 段-"+drop+"・耐久-"+dmg+"（"+Math.max(0,g.dur)+"/"+maxDur()+"）。";
+  if(drop>0) m+=" → "+stageName(g.stage)+"。"+note;
+  else m+=(note?note:" 段は維持＝"+stageName(g.stage)+"。");
   setMsg(m);
 }
 function checkDead(){ if(g.dur<=0){ gameOver(); return true; } return false; }
@@ -414,12 +422,12 @@ function startTurn(){ g.turn++;
   g.phase='enhance'; render(); showEnhance(); }   // v0.81 詫びクロンは"成功時獲得"に変更＝毎ターン供給は廃止
 function showIntro(){
   g.phase='intro'; render();
-  let s='<div class="center" style="color:#ffd24a;font-size:15px;margin-bottom:8px">◆ 遊び方（v0.81）◆</div>';
+  let s='<div class="center" style="color:#ffd24a;font-size:15px;margin-bottom:8px">◆ 遊び方（v0.82）◆</div>';
   s+='<div style="font-size:13px;line-height:1.8">'
     +'・リソースは<b>武器耐久・SP・クロン</b>の3つ。準備フェーズや商店はない。<br>'
     +'・毎ターン<b>「強化する」</b>を選ぶだけ。成功すれば<b>段+1・SP+1</b>（Ⅸで+2・Ⅹで+3）。<br>'
-    +'・<b>失敗すると武器耐久が減り、段も戻る</b>：通常は段-1、<b>真グレード以上のⅤ〜Ⅹで失敗すると段-2</b>（下限は開始段）。<b>耐久が0でゲームオーバー</b>。<br>'
-    +'・<b>クロン</b>は「詫びクロン」を取ると<b>強化成功時</b>に貯まる。<b>閾値以上のクロンを保有</b>していると失敗の段戻りが緩和（Ｊハンで完全無効）。<br>'
+    +'・<b>失敗すると段が戻り、その幅ぶん武器耐久が減る</b>：無印は段-1。真グレード以上は<b>Ⅰ〜Ⅳ=段-1／Ⅴ〜Ⅷ=段-2／Ⅸ・Ⅹ=段-3</b>。<b>耐久ダメ＝段の下がり幅×10</b>（-1なら-10・-3なら-30）。<b>耐久が0でゲームオーバー</b>（下限は開始段）。<br>'
+    +'・<b>クロン</b>は「詫びクロン」を取ると<b>強化成功時</b>に貯まる。<b>閾値以上のクロン保有</b>で段の下がり幅を緩和（Ｊハンで段は完全無効）。※<b>耐久ダメは保護でも減らない</b>＝耐久が生存タイマー。<br>'
     +'・貯めたSPは<b>🌳スキルツリー</b>で使う。根「ブラックストーン」を取ると<b>強化・耐久回復・失敗・減衰対抗・保護</b>の5系統が開く（凝縮/無欠でブラックストーンを最大×6）。手前ノードを必要Lvまで育てると奥が解放。<br>'
     +'・<b>火力を積めば爆発値が壁を超えて限界突破が出まくる</b>のが狙い。ただし深いほど失敗は重く、いつか耐久が尽きる。<b>どこまで登れるかはビルド次第。</b>'
     +'</div>';
@@ -676,13 +684,13 @@ function buildPlaylogData(reason){
     const totalStage = ((g.maxCycle||1)-1)*100 + (((g.maxStage-1)%100)+1);   // 通算到達段（周回込み）
     const skills={}; TREE.forEach(n=>{ skills[n.id]=skR(n.id); });   // v0.72 最終スキル振り（全ノードid→rank）
     return JSON.stringify({
-      ver:'v0.81', reason:(reason||'manual'), ts:new Date().toISOString(),
+      ver:'v0.82', reason:(reason||'manual'), ts:new Date().toISOString(),
       maxStage: totalStage, cycle:(g.maxCycle||1), turn:(g.turn||0), score:(g.score||0),
       clone:(g.clone||0), fallback:(g.fallbackCount||0),
       success:(g.succCount||0), fail:(g.failCount||0), fever:(g.feverCount||0),
       skills: skills
     });
-  }catch(e){ return JSON.stringify({ver:'v0.81', reason:(reason||'manual'), err:String(e)}); }
+  }catch(e){ return JSON.stringify({ver:'v0.82', reason:(reason||'manual'), err:String(e)}); }
 }
 function uploadPlaylog(reason){
   try{
