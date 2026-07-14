@@ -199,6 +199,9 @@ const EX_BASE_MULT=2;
 //   ★保護系は「段の下がり幅」だけ軽減し、耐久ダメは軽減しない（軽減前ティアで耐久計算）＝耐久が純粋な生存タイマー。
 const DUR_PER_STEP=10;        // 段戻り1段あたりの耐久ダメ【ガード・調整可】
 const DUR_FAIL_ESCALATE=0.006;   // v0.90 無敵化防止：失敗を重ねるほど失敗時の耐久ダメが増える（回復均衡での永久ループを防ぐ・全数値仮）
+// v0.90 ★深さ連動の耐久ダメ（社長指示）：通算段がKNEEを超えると失敗1回の耐久ダメが指数的に跳ね上がる＝深いほど失敗が致命的。
+//   回復/保護で成功率をどれだけ盛っても、深部の失敗で耐久が尽きる「深さの天井」を作る（最強フルビルドで段100前後）。減衰(成功率)とは別軸。
+const DUR_DEPTH_KNEE=60, DUR_DEPTH_GROWTH=1.06;
 const YAMI_DUR_MULT=2;        // v0.90 闇捕食：失敗時の耐久ダメを×2（社長指示・強い分リスク大・旧+5固定を撤去）
 // v0.82 旧DUR_LOSSの指数段連動ガード(KNEE/GROWTH)はティア方式が深部の重さを内包するため撤去（下記durLossEffは廃止）。
 // ② 減衰軽減(わるあがき/まだいける/KIAI)の合算上限＝これが高いと減衰天井が上がり成功率が下がらず無限化する主因。【ガード・最重要】
@@ -301,7 +304,8 @@ function failTier(){ const gi=Math.floor((g.stage-1)/10), ri=(g.stage-1)%10;
 // 失敗時の耐久ダメ＝ティア×DUR_PER_STEP（＋闇捕食）。保護では軽減しない（軽減前ティアで計算）
 function failDurDamage(){ let raw=failTier()*DUR_PER_STEP;
   if(skR('yami')>0) raw*=YAMI_DUR_MULT;   // v0.90 闇捕食：失敗時の耐久ダメ2倍（強い分リスク大）
-  return Math.round(raw*(1+DUR_FAIL_ESCALATE*(g.failCount||0))); }
+  const depthMult=Math.pow(DUR_DEPTH_GROWTH, Math.max(0, totalStageNow()-DUR_DEPTH_KNEE));   // v0.90 深さ連動：段60超で失敗の耐久ダメが跳ね上がる（最強ビルドに段100前後の天井）
+  return Math.round(raw*depthMult*(1+DUR_FAIL_ESCALATE*(g.failCount||0))); }
 // v0.81 火力＝root寄与 × 叫び × 助言 ×（闇捕食なら叫び・助言をもう一度＝叫び²×助言²）
 function fireMult(){ const vM=skR('voice')>0?nodeVal('voice'):1, bM=skR('book')>0?nodeVal('book'):1;
   let m=rootFireMult()*vM*bM;
