@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>強化脳汁ゲー（仮）— ブラウザ試作 v0.85（保存の手応え・段の色演出・ボタン上固定）</title>
+<title>強化脳汁ゲー（仮）— ブラウザ試作 v0.86（ブラックストーンの成功率効果を半減）</title>
 <style>
   :root{ --navy:#000a5a; --navy2:#001080; --gold:#ffd24a; --edge:#6b7bd6; --panel:#00104a; --track:#00003a; }
   *{ box-sizing:border-box; }
@@ -113,7 +113,7 @@
 </head>
 <body>
 <div id="app">
-  <h1>◆ 強化脳汁ゲー（仮）◆ ブラウザ試作 v0.85 — 保存の手応え・段の色演出・ボタン上固定</h1>
+  <h1>◆ 強化脳汁ゲー（仮）◆ ブラウザ試作 v0.86 — ブラックストーンの成功率効果を半減</h1>
   <div id="heatbar"></div><!-- v0.85 段のテーマ色アクセント帯 -->
 
   <div class="win">
@@ -212,7 +212,7 @@ const SP_GAIN_NORMAL=1, SP_GAIN_IX=2, SP_GAIN_X=3;
 const TREE=[
  // 根っこ系（root chain）
  {id:'root', branch:'根', name:'ブラックストーン', cost:1, maxRank:5, reqs:[],
-   fireVals:[1.1,1.2,1.3,1.4,1.5], rateVals:[0.01,0.02,0.03,0.04,0.05],
+   fireVals:[1.1,1.2,1.3,1.4,1.5], rateVals:[0.005,0.01,0.015,0.02,0.025],   // v0.86 成功率寄与を半減（最大30%→15%・社長指示。爆発値寄与fireValsは据え置き）
    desc:(r)=>{ const L=Math.max(1,r); const sc=rootScale(); return '火力倍率 ×'+(TREE_MAP.root.fireVals[L-1]*sc).toFixed(2)+' かつ 成功率+'+Math.round(TREE_MAP.root.rateVals[L-1]*sc*100)+'%'+(sc>1?'（凝縮/無欠 ×'+sc+'反映）':'')+'（全系統の入口）'; }},
  {id:'root2', branch:'根', name:'凝縮された魔力のブラックストーン', cost:5, maxRank:1, reqs:[{id:'root',rank:5}],
    desc:()=>'ブラックストーンの効果（火力・成功率）を ×2'},
