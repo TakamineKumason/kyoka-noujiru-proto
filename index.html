@@ -208,7 +208,7 @@ const PERSTACK_BASE=0.02, STACK_RATE_CAP=0.40;
 // v0.87 スタックの基本蓄積＝失敗ごと+1（スタックスキル無しでも付き、HUDに表示）。スタックスキルの値はこの上に加算される。
 const STACK_BASE_GAIN=1;
 // ④ 詫びクロン保護の閾値（段連動）：クロン収入(+100〜500/成功)が辛うじて追いつくか際どい値に【ガード・調整可】
-const WABI_THRESH_BASE=500, WABI_THRESH_GROWTH=1.08;
+const WABI_THRESH_BASE=25, WABI_THRESH_GROWTH=1.08;   // v0.90 クロン保護の閾値を1/20に（社長「多すぎて全然届かない」・旧500→25）
 // ハイデル宴会：N回の強化ごとにクロン大量獲得
 const HEIDEL_INTERVAL=12, HEIDEL_AMOUNT=10000;
 // v0.90 段階SP獲得（社長指示）：Ⅰ〜Ⅲ=+1／Ⅳ〜Ⅷ=+2／Ⅸ=+3／Ⅹ（ボス）=+5
