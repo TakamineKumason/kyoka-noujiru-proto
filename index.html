@@ -187,7 +187,7 @@ const CAP_RATE=0.99;
 // ===== v0.90 成功率ベース・モデル（社長方針：素の成功率を土台に±%で積む）。全数値【仮】=あとで調整 =====
 const BASE_HI=0.95, BASE_DECAY=0.048, BASE_PROG0=5, BASE_FLOOR=0.005, BASE_CAP=0.95; // 素の成功率カーブ（段で低下）
 const FIRE_INFLUENCE=0.60;                     // 火力の影響：爆発値が壁に到達(限界突破)で +60%。爆発値の影響力＝ここで調整
-const OVERKILL_INFLUENCE=0.02, OVERKILL_CAP=0.15; // オーバーキル：壁超えの超過分×係数、上限+15%
+const OVERKILL_INFLUENCE=0.08, OVERKILL_CAP=0.40; // v0.90 オーバーキル：壁を超えた"倍率"の対数に比例＝積むほど効く（社長指示で拡大・頭打ちを緩く）
 const RESIST_PER=0.003, RESIST_CAP=0.25;       // 武器抵抗：段で増大・最大-25%。減衰対抗で軽減
 
 // ---- コアリソース（武器耐久・SP・クロン） ----
@@ -363,7 +363,7 @@ function successRateEX(ex){
 function baseRateStage(){ const prog=totalStageNow();
   return Math.max(BASE_FLOOR, Math.min(BASE_CAP, BASE_HI*Math.exp(-BASE_DECAY*(prog-BASE_PROG0)))); }
 function fireBonusOf(exVal){ const wall=FL(g.stage,g.cycle); if(wall<=0) return 0; return Math.min(1, exVal/wall)*FIRE_INFLUENCE; }
-function overkillBonus(exVal){ const wall=FL(g.stage,g.cycle); if(wall<=0) return 0; const over=exVal/wall-1; return over>0?Math.min(OVERKILL_CAP, over*OVERKILL_INFLUENCE):0; }
+function overkillBonus(exVal){ const wall=FL(g.stage,g.cycle); if(wall<=0) return 0; const ratio=exVal/wall; if(ratio<=1) return 0; return Math.min(OVERKILL_CAP, OVERKILL_INFLUENCE*Math.log10(ratio)); }   // v0.90 壁の何倍かの対数に比例（壁×2で+2.4%/×10で+8%/×100で+16%/×1000で+24%…上限+40%）
 function weaponResistRaw(){ const prog=totalStageNow(); return Math.min(RESIST_CAP, RESIST_PER*Math.max(0,prog-1)); }
 function decayReliefFrac(){ let r=skR('waru')>0?nodeVal('waru'):0; if(skR('madaikeru')>0) r*=1.5; if(skR('kiai')>0) r=1-(1-r)*(1-r); return Math.max(0,Math.min(1,r)); }
 // v0.90 判定と演出の唯一の真実：素→火力(爆発値1要素ずつ)→武器抵抗→減衰対抗→オーバーキル→ブラックストーン%→スタック%→最終
