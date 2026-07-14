@@ -204,7 +204,7 @@ const YAMI_DUR_MULT=2;        // v0.90 闇捕食：失敗時の耐久ダメを×
 // ② 減衰軽減(わるあがき/まだいける/KIAI)の合算上限＝これが高いと減衰天井が上がり成功率が下がらず無限化する主因。【ガード・最重要】
 const KOU_TOTAL_CAP=0.40;
 // ③ 失敗スタック→成功率：1スタックあたり基礎+2%（失敗は成功のもとで上書き）・合算上限【ガード】
-const PERSTACK_BASE=0.02, STACK_RATE_CAP=0.40;
+const PERSTACK_BASE=0.01, STACK_RATE_CAP=0.40;   // v0.90 スタック1つの成功率寄与を2%→1%に下げる（社長指示・減衰の打ち消しを弱める）
 // v0.87 スタックの基本蓄積＝失敗ごと+1（スタックスキル無しでも付き、HUDに表示）。スタックスキルの値はこの上に加算される。
 const STACK_BASE_GAIN=1;
 // ④ 詫びクロン保護の閾値（段連動）：クロン収入(+100〜500/成功)が辛うじて追いつくか際どい値に【ガード・調整可】
@@ -246,7 +246,7 @@ const TREE=[
  {id:'stack', branch:'失敗系', name:'スタック', cost:2, maxRank:10, reqs:[{id:'root',rank:1}],
    vals:[1,2,3,4,5,6,7,8,9,10], desc:(r,v)=>'失敗のたびスタック+'+(STACK_BASE_GAIN+Math.round(v))+'（基本+'+STACK_BASE_GAIN+'＋この技+'+Math.round(v)+'）。スタック1につき成功率+'+Math.round(perStackBonus()*100)+'%（上限+'+Math.round(STACK_RATE_CAP*100)+'%・%はこの技を取ると有効）'},
  {id:'stack_mult', branch:'失敗系', name:'失敗は成功のもと', cost:5, maxRank:3, reqs:[{id:'stack',rank:5}],
-   vals:[0.03,0.04,0.05], desc:(r,v)=>'1スタックあたりの成功率を +'+Math.round(v*100)+'% に'},
+   vals:[0.02,0.03,0.04], desc:(r,v)=>'1スタックあたりの成功率を +'+Math.round(v*100)+'% に'},   // v0.90 3/4/5%→2/3/4%（社長指示）
  {id:'orenai', branch:'失敗系', name:'折れない心', cost:10, maxRank:1, reqs:[{id:'stack_mult',rank:3}],
    desc:()=>'成功してもスタックが50%残る（端数切り上げ）'},
  // 減衰対抗系
