@@ -230,9 +230,9 @@ const TREE=[
    desc:()=>'ブラックストーンの効果をさらに ×3（凝縮×2と積み上げ＝×6）'},
  // 強化系
  {id:'voice', branch:'強化系', name:'ヴォルクスの叫び', cost:2, maxRank:10, reqs:[{id:'root',rank:1}],
-   vals:[1.2,1.4,1.6,1.8,2.0,2.2,2.4,2.6,2.8,3.0], desc:(r,v)=>'爆発値倍率 ×'+v.toFixed(2)},
+   vals:[2,4,6,8,10,12,14,16,18,20], desc:(r,v)=>'爆発値倍率 ×'+v.toFixed(0)},   // v0.90 社長指示でヴォルクス系強化（叫び ×2〜×20）
  {id:'book', branch:'強化系', name:'ヴォルクスの助言', cost:5, maxRank:5, reqs:[{id:'voice',rank:5}],
-   vals:[2,4,6,8,10], desc:(r,v)=>'爆発値倍率 ×'+v.toFixed(0)+'（叫びに乗算）'},
+   vals:[5,10,15,20,25], desc:(r,v)=>'爆発値倍率 ×'+v.toFixed(0)+'（叫びに乗算）'},   // v0.90 社長指示で強化（書 ×5〜×25）
  {id:'yami', branch:'強化系', name:'闇捕食', cost:15, maxRank:1, reqs:[{id:'book',rank:3}],
    desc:()=>'叫び・助言の倍率がもう一度かかる（叫び²×助言²）。代わりに失敗時の耐久減が15に'},
  // 耐久回復系
@@ -376,7 +376,7 @@ function rateBreakdown(){
   pushFire(ex,'基礎火力');
   if(skR('root')>0){ const m=rootFireMult(); ex*=m; pushFire(ex,'🖤 ブラックストーン ×'+m.toFixed(2)+(rootScale()>1?'（×'+rootScale()+'）':'')); }
   const vM=skR('voice')>0?nodeVal('voice'):1, bM=skR('book')>0?nodeVal('book'):1;
-  if(skR('voice')>0){ ex*=vM; pushFire(ex,'📣 ヴォルクスの叫び ×'+vM.toFixed(2)); }
+  if(skR('voice')>0){ ex*=vM; pushFire(ex,'📣 ヴォルクスの叫び ×'+vM.toFixed(0)); }
   if(skR('book')>0){ ex*=bM; pushFire(ex,'📖 ヴォルクスの助言 ×'+bM.toFixed(0)); }
   if(skR('yami')>0){ ex*=vM*bM; pushFire(ex,'🌑 闇捕食（再発動）×'+(vM*bM).toFixed(1)); }
   if((g.stack||0)>0){ ex+=g.stack; pushFire(ex,'📚 失敗スタック +'+Math.round(g.stack)); }
