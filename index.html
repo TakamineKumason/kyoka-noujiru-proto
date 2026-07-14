@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>強化脳汁ゲー（仮）— ブラウザ試作 v0.80（画面切替のみホームへ・Lv上げは位置維持）</title>
+<title>強化脳汁ゲー（仮）— ブラウザ試作 v0.81（スキルツリー全面リニューアル・段戻り変更）</title>
 <style>
   :root{ --navy:#000a5a; --navy2:#001080; --gold:#ffd24a; --edge:#6b7bd6; --panel:#00104a; --track:#00003a; }
   *{ box-sizing:border-box; }
@@ -109,7 +109,7 @@
 </head>
 <body>
 <div id="app">
-  <h1>◆ 強化脳汁ゲー（仮）◆ ブラウザ試作 v0.80 — 画面切替のみホームへ（Lv上げは位置維持）</h1>
+  <h1>◆ 強化脳汁ゲー（仮）◆ ブラウザ試作 v0.81 — スキルツリー全面リニューアル・段戻り変更</h1>
 
   <div class="win">
     <div class="row" style="align-items:center; margin-bottom:6px;">
@@ -130,10 +130,11 @@
   <!-- v0.78 msgログ窓を廃止＝強化パネル(#screen)内のメッセージ行に合流。強化フェーズはこの1箱が常設パネル。 -->
   <div class="win"><div id="screen"></div></div>
 
-  <div class="sub">名称・数値は仮の手触り確認用（v0.78＝強化パネル統合・ログ合流）。</div>
+  <div class="sub">名称・数値は仮の手触り確認用（v0.81＝スキルツリー全面リニューアル・段戻り変更）。</div>
   <div class="sub" style="opacity:.7;margin-top:2px">本作は『黒い砂漠』(Pearl Abyss)の非公式ファンメイド作品です。権利者とは一切関係ありません。非営利。</div>
   <details style="margin-top:4px"><summary class="sub" style="cursor:pointer;list-style-position:inside;opacity:.55">開発メモ（版ごとの実装履歴・クリックで開く）</summary>
   <div class="sub" style="text-align:left">
+  ※v0.81【スキルツリー全面リニューアル＋段戻りルール変更（社長詳細スペック・数値は全て仮）】：TREEを<b>root＋5系統</b>に総入れ替え・多効果/修飾ノードに対応。<b>根っこ系</b>＝ブラックストーン(5rank・火力×[1.1〜1.5]かつ成功率+[1〜5]%)→凝縮(効果×2)→無欠(さらに×3＝積み上げ×6＝火力最大1.5×6=9・成功率最大30%)。<b>強化系</b>＝叫び(×1.2〜3.0)→助言(×2〜10)→闇捕食(叫び²×助言²・失敗耐久減15)。<b>耐久回復系</b>＝記憶の欠片(確率10〜50%で耐久+1)→職人の記憶(回復×5)→トラナンの秘訣(2連敗以上で確定発動)。<b>失敗系</b>＝スタック(失敗で+1〜10・1スタック成功率+2%)→失敗は成功のもと(+3/4/5%)→折れない心(成功でスタック50%残す)。<b>減衰対抗系</b>＝わるあがき(減衰-5〜25%)→まだいける(×1.5)→ＫＩＡＩ(r→1-(1-r)²)。<b>保護系</b>＝詫びクロン(成功時クロン+100〜500・閾値保有で段戻り-1)→ハイデル宴会(12回に1回+10000)→Ｊハン(閾値保有で段戻り完全無効)。<b>★段戻り変更</b>＝通常失敗-1／真グレード以上(段≥11)のⅤ〜Ⅹ失敗-2／保護で緩和。旧ノード(頑丈/軽減/帳消し/うろ覚え/あるべきカタチ/クロンの盾/武器知識/武器への愛着/連続成功は恨まれる 等)は撤去。<b>火力は据え置き＝限界突破は高頻度でOK</b>、有限性は生存ガード(DUR_LOSS段連動・KOU_TOTAL_CAP・詫びクロン閾値・段戻り-2)で担保（締めた値は報告参照）。v0.78のUI統合・v0.74要素分解演出は維持。<br>
   ※v0.78【強化パネル統合・ログ合流（社長指示・レイアウトのみ／バランス・判定・演出シーケンスは不変）】：独立していた<b>ログ窓(#msg)を廃止</b>し、強化フェーズを<b>1つの常設パネル</b>に統合。上から①<b>素の成功率ゲージ</b>（旧ログ窓があった目立つ位置）＋爆発値/限界突破の壁 ②<b>メッセージ行</b>（合流したログ＝setMsgの出力先をパネル内#msgに変更・最新文言をlastMsgに保持し再描画時に復元・#msgが無い画面ではno-op） ③行動ボタン（⚔強化する/🌳スキルツリー/📋プレイログ保存）。<b>強化演出はこの常設パネル内でその場再生</b>（prepAnimStageで既存要素gauge/exnum/chips/animctl/msgを使い回し初期化＝ページ切替なし・演出中もHUD/ゲージが同じ場所に居続ける）。ボタン行だけ⏩一気に判定／▶次へに切替。ツリー/GO/イントロは従来どおり同パネルに描画。buildRevealSteps/tryEnh/computeEX/successRateEXのロジック・数値・演出の中身は不変（ex/最終率一致・回帰分布同一）。<br>
   ※v0.76【社長FB3点（回復確率down・ゲージ演出・DUR_LOSS緩和）・数値は仮】：①<b>記憶の欠片の回復確率down</b>＝vals[30/40/50/60/75]%→<b>[10/20/30/40/50]%</b>（最大75→50%）。うろ覚え(+1〜5)・あるべきカタチ(+2〜6)は据え置き。②<b>ゲージ演出を「最初に素の確率→そこから上下」に</b>＝リビール開始でまずゲージを『素の成功率』に表示→爆発値の内訳チップは大きい数字だけ育て<b>ゲージは素に据え置き</b>→続いて🗡武器の抵抗で↓→🧊武器知識/⚡オーバーキル/🖤/📚で↑→最終。上下のドラマが明確に（判定・最終率=successRateEXは不変・ex/率一致アサート維持）。③<b>DUR_LOSS段連動を最軽量化</b>＝回復弱化でflatでも大半有限だが火力+耐久保護の一部が不死身化→ボット掃引で無敵化しない最軽量点を採用＝<b>KNEE=50/GROWTH=1.06（v0.75）→KNEE=60/GROWTH=1.03</b>（段80=約18・段100=約33・段120=約59＝v0.75の段80=57/段90=103より大幅に緩く深部の理不尽さを軽減）。全670ラン例外0・無限0。<br>
   ※v0.75【耐久回復系の新数値＋演出のゲージ同期＋📋フィードバック（社長指示・数値は仮）】：①<b>記憶の欠片チェーンを社長指定値に</b>＝記憶の欠片の回復確率を非線形<b>[30/40/50/60/75]%</b>（ノードに vals 明示配列を持たせlerpVal/nodeValが優先参照）、うろ覚え<b>+1/2/3/4/5</b>（start1/end5）、あるべきカタチ<b>+2/3/4/5/6</b>（start2/end6）＝毎Lv+1ずつ動く（旧「2Lvごとにしか上がらない」丸め問題を解消）。回復量kakeraHeal＝1(基礎)+うろ覚え+カタチ＝最大<b>+12</b>。②<b>★無敵感対策＝社長指定の回復値は不変のまま別レバーで有限化</b>：検証で火力+耐久保護の複合が2000ターン張り付き（不死身）を確認→<b>失敗時の耐久減を通算段連動に</b>（KNEE=50までDUR_LOSS=10据え置き＝浅中盤は従来どおり／KNEE超で×1.06^超過段＝段60約18・段80約57・段90約103）＝深部ほど失敗が重く回復(+9/強化期待)が追いつかず有限化。③<b>演出のゲージも爆発値ステップで動かす</b>（社長「演出ごとにゲージも上下してほしい」）＝各爆発値積み上げステップにその時点の素の成功率を持たせsetGauge＝溜め(ゲージ↑)→武器の抵抗(↓)→押し返し(↑)が視覚化。④<b>📋プレイログ保存に手応え</b>＝押すと「📋 プレイログを保存しました」をmsg窓に表示（flash演出付き）。判定ロジック不変・ex/最終率一致は維持。<br>
@@ -175,85 +176,85 @@ const CEIL_ON=true, CEIL_SLOPE=0.12, CEIL_MIN=0.50;
 const OK_BETA=1.5, OK_CAP=5, OK_TH=3;
 const CAP_RATE=0.99;
 
-// ---- コアリソース（v0.72：2→3リソース化＝武器耐久・SP・クロン） ----
-const DUR_START=100, DUR_LOSS=10;
+// ---- コアリソース（武器耐久・SP・クロン） ----
+const DUR_START=100, DUR_LOSS=10, YAMI_DUR_LOSS=15;   // v0.81 闇捕食で失敗時の耐久減が10→15
 const SP_START=5, STAGE_START=5;
-// v0.76 無敵感対策（社長指定の回復値は不変・別レバー）：失敗時の耐久減を通算段連動。回復弱化(最大+12を50%=期待+6/強化)で
-// flatでも大半有限だが火力+耐久保護の一部が不死身化→無敵化しない範囲で最軽量の段連動をボット掃引で探索した結果を採用。
-// KNEE=60までDUR_LOSS(10)据え置き（浅〜中盤は従来どおり）／KNEE超で×1.03^超過段＝段80=約18・段100=約33・段120=約59
-// ＝v0.75(KNEE50/G1.06＝段80=57/段90=103)より大幅に緩く、深部の理不尽さを軽減しつつ有限化【仮】。
-const DUR_LOSS_KNEE=60, DUR_LOSS_GROWTH=1.03;
-// v0.72 無敵感対策：失敗が力になる設計（スタック→成功率↑）＋uramiスノーボール＋クロン段戻り防止で盛れるため EX_BASE_MULT=2 に締める（詳細は報告）【仮】
 const EX_BASE_MULT=2;
-const KOU_TOTAL_CAP=0.40;             // 減衰軽減の総上限（武器知識のdecayReliefをここでclamp）【仮】
-const STACK_RATE_COEF=0.015;          // v0.72 失敗スタック→成功率の変換係数（stackRateBonus=min(0.40, g.stack×これ)）＝"結構上がる"手触り【仮・ボット調整】
-const STACK_RATE_CAP=0.40;            // スタック成功率ボーナスの上限【仮】
-// v0.73 段戻り防止コストを通算段連動に（社長FB：段67でクロン25kも余った＝flat800が深段で軽すぎ）
-// fallbackCost(通算段)=round(BASE×GROWTH^(通算段-STAGE_START))＝段5で400 → 段40で約4,600 → 段67で約2万【仮】
-// ボット検証でクロン供給(詫びクロン全振り最大6000/ターン)に対し盾コストがちゃんと"やりくり資源"になる勾配に調整。
-const FALLBACK_COST_BASE=400, FALLBACK_GROWTH=1.07;
-// v0.71 段階SP獲得（社長指示）：クリアした段のローマ数字位で獲得量が変わる（Ⅹ＝ボスで+3・Ⅸで+2・他+1）
+// v0.81 生存ガード（社長明示：火力は据え置き＝限界突破は出まくってよい・有限性だけ生存側で担保）
+// ① 失敗時の耐久減を通算段連動（KNEE=60まで据置／以降 ×1.03^超過段）＝深部ほど失敗が重い【ガード・調整可】
+const DUR_LOSS_KNEE=60, DUR_LOSS_GROWTH=1.03;
+// ② 減衰軽減(わるあがき/まだいける/KIAI)の合算上限＝これが高いと減衰天井が上がり成功率が下がらず無限化する主因。【ガード・最重要】
+const KOU_TOTAL_CAP=0.40;
+// ③ 失敗スタック→成功率：1スタックあたり基礎+2%（失敗は成功のもとで上書き）・合算上限【ガード】
+const PERSTACK_BASE=0.02, STACK_RATE_CAP=0.40;
+// ④ 詫びクロン保護の閾値（段連動）：クロン収入(+100〜500/成功)が辛うじて追いつくか際どい値に【ガード・調整可】
+const WABI_THRESH_BASE=500, WABI_THRESH_GROWTH=1.08;
+// ハイデル宴会：N回の強化ごとにクロン大量獲得
+const HEIDEL_INTERVAL=12, HEIDEL_AMOUNT=10000;
+// v0.71 段階SP獲得：クリアした段のローマ数字位で獲得量が変わる（Ⅹ＝ボスで+3・Ⅸで+2・他+1）
 const SP_GAIN_NORMAL=1, SP_GAIN_IX=2, SP_GAIN_X=3;
-// root（ブラックストーン）の基礎効果
-const ROOT_FIRE_BASE=1.15, ROOT_RATE_BONUS=0.02;
 
 // ---- スキルツリー定義（v0.72 本格版：reqs配列[{id,rank}]＝複数前提／rank線形補間 start→end／ノード別SPコスト） ----
 // 効果値 val(r)=start+(end-start)*(r-1)/(maxRank-1)（maxRank=1なら常にstart・r=0＝未取得は効果なし）。
 // reqMet＝全reqsで skR(id)>=rank（root＝reqs空）。名称・数値は全て【仮】＝社長指定どおり。
 // ※ラッキー系（女神の加護・幸運の積立）は社長判断で一旦撤去・将来復活予定。ここでは root+6系統。
+// ---- スキルツリー（v0.81 全面リニューアル：root＋5系統・多効果/修飾ノード対応・数値は全て社長指定【仮】）----
 const TREE=[
- {id:'root', branch:'根', name:'ブラックストーン', maxRank:1, cost:1, reqs:[], start:0, end:0,
-   desc:(r,v)=>'火力の基礎倍率 ×'+ROOT_FIRE_BASE+' かつ 成功率+'+Math.round(ROOT_RATE_BONUS*100)+'%。すべての系統の入口を開放する'},
- // 強化系（v0.73 火力強化：社長プレイで限界突破fever=0＝壁の15〜28%までしか届かず不可能だったため、叫び/書を底上げ）
- {id:'voice', branch:'強化系', name:'ヴォルクスの叫び', maxRank:10, cost:2, reqs:[{id:'root',rank:1}], start:1.3, end:5.0,
-   desc:(r,v)=>'爆発値の火力倍率 ×'+v.toFixed(2)},
- {id:'book', branch:'強化系', name:'ヴォルクスの書', maxRank:5, cost:3, reqs:[{id:'voice',rank:2}], start:2.0, end:8.0,
-   desc:(r,v)=>'ヴォルクスの叫びの火力倍率にさらに ×'+v.toFixed(2)+' を乗算'},
- // クロン系
- {id:'wabi', branch:'クロン系', name:'詫びクロン', maxRank:10, cost:2, reqs:[{id:'root',rank:1}], start:100, end:1000,
-   desc:(r,v)=>'毎ターン クロン+'+Math.round(v)},
- {id:'kuron_shield', branch:'クロン系', name:'クロンの盾', maxRank:5, cost:3, reqs:[{id:'wabi',rank:3}], start:0.2, end:1.0,
-   desc:(r,v)=>'失敗の段戻りを '+Math.round(v*100)+'% の確率で防ぐ（今の消費クロン '+fallbackCost().toLocaleString()+'・深い段ほど高い）'},
- {id:'kuron_care', branch:'クロン系', name:'クロン大事に', maxRank:5, cost:3, reqs:[{id:'kuron_shield',rank:3}], start:0.10, end:0.50,
-   desc:(r,v)=>'クロンの盾の段戻り防止で使うクロンを '+Math.round(v*100)+'% 軽減'},
- {id:'kuron_more', branch:'クロン系', name:'クロンはいくらあってもいい', maxRank:5, cost:3, reqs:[{id:'wabi',rank:5}], start:2, end:6,
-   desc:(r,v)=>'詫びクロンの毎ターン供給量 ×'+v.toFixed(1)},
- // 耐久保護系（記憶の欠片チェーン）※v0.73「確率式」＝毎強化ごとにP%で耐久回復。v0.75 社長指定の新数値。
- // 記憶の欠片の確率は非線形(30/40/50/60/75%)なので vals 明示配列で持たせる（nodeVal/lerpValが優先参照）。
- {id:'kakera', branch:'耐久保護系', name:'記憶の欠片', maxRank:5, cost:2, reqs:[{id:'root',rank:1}], vals:[0.10,0.20,0.30,0.40,0.50],
-   desc:(r,v)=>'強化のたび '+Math.round(v*100)+'% の確率で耐久+'+(1+Math.round(nodeVal('urooboe'))+Math.round(nodeVal('katachi')))},
- {id:'urooboe', branch:'耐久保護系', name:'うろ覚え', maxRank:5, cost:3, reqs:[{id:'kakera',rank:3}], start:1, end:5,
-   desc:(r,v)=>'記憶の欠片の回復値+'+Math.round(v)},
- {id:'katachi', branch:'耐久保護系', name:'あるべきカタチ', maxRank:5, cost:5, reqs:[{id:'kakera',rank:5},{id:'urooboe',rank:3}], start:2, end:6,
-   desc:(r,v)=>'記憶の欠片の回復値にさらに+'+Math.round(v)},
- // 失敗系（スタックチェーン）
- {id:'stack', branch:'失敗系', name:'スタック', maxRank:10, cost:1, reqs:[{id:'root',rank:1}], start:1, end:10,
-   desc:(r,v)=>'失敗するたび失敗スタック+'+Math.round(v)+'。スタックが厚いほど成功率+（最大+'+Math.round(STACK_RATE_CAP*100)+'%）'},
- {id:'stack_mult', branch:'失敗系', name:'失敗は成功のもと', maxRank:5, cost:2, reqs:[{id:'stack',rank:5}], start:2, end:10,
-   desc:(r,v)=>'失敗スタックの貯まる値 ×'+v.toFixed(1)},
- {id:'orenai', branch:'失敗系', name:'折れない心', maxRank:1, cost:10, reqs:[{id:'stack_mult',rank:2}], start:1, end:1,
-   desc:(r,v)=>'成功しても失敗スタックをリセットしない（積み上げた失敗が永続の力に）'},
+ // 根っこ系（root chain）
+ {id:'root', branch:'根', name:'ブラックストーン', cost:1, maxRank:5, reqs:[],
+   fireVals:[1.1,1.2,1.3,1.4,1.5], rateVals:[0.01,0.02,0.03,0.04,0.05],
+   desc:(r)=>{ const L=Math.max(1,r); const sc=rootScale(); return '火力倍率 ×'+(TREE_MAP.root.fireVals[L-1]*sc).toFixed(2)+' かつ 成功率+'+Math.round(TREE_MAP.root.rateVals[L-1]*sc*100)+'%'+(sc>1?'（凝縮/無欠 ×'+sc+'反映）':'')+'（全系統の入口）'; }},
+ {id:'root2', branch:'根', name:'凝縮された魔力のブラックストーン', cost:5, maxRank:1, reqs:[{id:'root',rank:5}],
+   desc:()=>'ブラックストーンの効果（火力・成功率）を ×2'},
+ {id:'root3', branch:'根', name:'無欠な魔力のブラックストーン', cost:15, maxRank:1, reqs:[{id:'root2',rank:1}],
+   desc:()=>'ブラックストーンの効果をさらに ×3（凝縮×2と積み上げ＝×6）'},
+ // 強化系
+ {id:'voice', branch:'強化系', name:'ヴォルクスの叫び', cost:2, maxRank:10, reqs:[{id:'root',rank:1}],
+   vals:[1.2,1.4,1.6,1.8,2.0,2.2,2.4,2.6,2.8,3.0], desc:(r,v)=>'爆発値倍率 ×'+v.toFixed(2)},
+ {id:'book', branch:'強化系', name:'ヴォルクスの助言', cost:5, maxRank:5, reqs:[{id:'voice',rank:5}],
+   vals:[2,4,6,8,10], desc:(r,v)=>'爆発値倍率 ×'+v.toFixed(0)+'（叫びに乗算）'},
+ {id:'yami', branch:'強化系', name:'闇捕食', cost:15, maxRank:1, reqs:[{id:'book',rank:3}],
+   desc:()=>'叫び・助言の倍率がもう一度かかる（叫び²×助言²）。代わりに失敗時の耐久減が15に'},
+ // 耐久回復系
+ {id:'kakera', branch:'耐久回復系', name:'記憶の欠片', cost:3, maxRank:5, reqs:[{id:'root',rank:1}],
+   vals:[0.10,0.20,0.30,0.40,0.50], desc:(r,v)=>'強化のたび '+Math.round(v*100)+'% の確率で耐久+'+kakeraHeal()},
+ {id:'shokunin', branch:'耐久回復系', name:'職人の記憶', cost:10, maxRank:1, reqs:[{id:'kakera',rank:3}],
+   desc:()=>'記憶の欠片の回復量 ×5（+1 → +5）'},
+ {id:'toranan', branch:'耐久回復系', name:'トラナンの秘訣', cost:15, maxRank:1, reqs:[{id:'shokunin',rank:1}],
+   desc:()=>'2連続以上失敗した時は記憶の欠片が確率無視で必ず発動（確定回復）'},
+ // 失敗系
+ {id:'stack', branch:'失敗系', name:'スタック', cost:2, maxRank:10, reqs:[{id:'root',rank:1}],
+   vals:[1,2,3,4,5,6,7,8,9,10], desc:(r,v)=>'失敗のたび失敗スタック+'+Math.round(v)+'。1スタックにつき成功率+'+Math.round(perStackBonus()*100)+'%（上限+'+Math.round(STACK_RATE_CAP*100)+'%）'},
+ {id:'stack_mult', branch:'失敗系', name:'失敗は成功のもと', cost:5, maxRank:3, reqs:[{id:'stack',rank:5}],
+   vals:[0.03,0.04,0.05], desc:(r,v)=>'1スタックあたりの成功率を +'+Math.round(v*100)+'% に'},
+ {id:'orenai', branch:'失敗系', name:'折れない心', cost:10, maxRank:1, reqs:[{id:'stack_mult',rank:3}],
+   desc:()=>'成功してもスタックが50%残る（端数切り上げ）'},
  // 減衰対抗系
- {id:'buki_know', branch:'減衰対抗系', name:'武器知識', maxRank:5, cost:3, reqs:[{id:'root',rank:1}], start:0.05, end:0.25,
-   desc:(r,v)=>'武器の抵抗（減衰）を '+Math.round(v*100)+'% 抑える'},
- {id:'buki_love', branch:'減衰対抗系', name:'武器への愛着', maxRank:5, cost:3, reqs:[{id:'buki_know',rank:2}], start:0.02, end:0.10,
-   desc:(r,v)=>'成功率の上限（天井）を +'+Math.round(v*100)+'% 押し上げる'},
- // 条件系（スノーボール）
- {id:'urami', branch:'条件系', name:'連続成功は恨まれる', maxRank:5, cost:3, reqs:[{id:'root',rank:1}], start:2.0, end:3.0,
-   desc:(r,v)=>'連続成功で爆発値がスノーボール（連続'+uramiCap()+'回でMAX ×'+v.toFixed(2)+'）'},
- {id:'nido', branch:'条件系', name:'二度あることは三度ある', maxRank:3, cost:3, reqs:[{id:'urami',rank:2}], start:2, end:4,
-   desc:(r,v)=>'連続成功は恨まれるのMAX到達コンボ数 ×'+v.toFixed(1)},
+ {id:'waru', branch:'減衰対抗系', name:'わるあがき', cost:2, maxRank:5, reqs:[{id:'root',rank:1}],
+   vals:[0.05,0.10,0.15,0.20,0.25], desc:(r,v)=>'武器の抵抗（減衰）を '+Math.round(v*100)+'% 抑える'},
+ {id:'madaikeru', branch:'減衰対抗系', name:'まだいける', cost:15, maxRank:1, reqs:[{id:'waru',rank:3}],
+   desc:()=>'わるあがきの抑制 ×1.5'},
+ {id:'kiai', branch:'減衰対抗系', name:'ＫＩＡＩ', cost:15, maxRank:1, reqs:[{id:'madaikeru',rank:1}],
+   desc:()=>'わるあがきがもう一度発動（合成 r→1-(1-r)²・例 50%→75%）'},
+ // 保護系
+ {id:'wabi', branch:'保護系', name:'詫びクロン', cost:2, maxRank:5, reqs:[{id:'root',rank:1}],
+   vals:[100,200,300,400,500], desc:(r,v)=>'強化成功時クロン+'+Math.round(v)+'。クロンが閾値（今 '+wabiThreshold().toLocaleString()+'）以上なら失敗の段戻りを-1'},
+ {id:'heidel', branch:'保護系', name:'ハイデル宴会', cost:10, maxRank:1, reqs:[{id:'wabi',rank:5}],
+   desc:()=>HEIDEL_INTERVAL+'回の強化に1回、クロン+'+HEIDEL_AMOUNT.toLocaleString()},
+ {id:'jhan', branch:'保護系', name:'Ｊハン', cost:10, maxRank:1, reqs:[{id:'heidel',rank:1}],
+   desc:()=>'クロンが閾値以上で保護が効くとき、段が全く下がらない（段戻り完全無効）'},
 ];
 const TREE_MAP={}; TREE.forEach(n=>TREE_MAP[n.id]=n);
-// 表示は根の下にこの順で6系統を並べる（全表示・折りたたみなし）
-const BRANCHES=['強化系','クロン系','耐久保護系','失敗系','減衰対抗系','条件系'];
+// 根っこ系(root/root2/root3)は上部にチェーン表示。下に5系統を並べる（全表示・折りたたみなし）
+const ROOTCHAIN=['root','root2','root3'];
+const BRANCHES=['強化系','耐久回復系','失敗系','減衰対抗系','保護系'];
 
 // ===== 状態 =====
 let g;
 function newGame(){
   g={ stage:STAGE_START, cycle:1, maxCycle:1, sp:SP_START, dur:DUR_START, clone:0, combo:0, stack:0,
       turn:0, score:0, maxStage:STAGE_START, lastFailed:false, ended:false, phase:'intro',
-      succCount:0, failCount:0, feverCount:0, fallbackCount:0, kakeraTick:0,   // v0.72 plog/機構用カウンタ
+      succCount:0, failCount:0, feverCount:0, fallbackCount:0, failStreak:0, heidelTick:0,   // v0.81 plog/機構用カウンタ
       skills:{}, _animating:false, _deferAdvance:false, _animTimers:[] };
   TREE.forEach(n=>g.skills[n.id]=0);
   if(typeof _plogSentThisRun!=='undefined') _plogSentThisRun=false;   // 送信フラグはラン単位でリセット
@@ -266,33 +267,35 @@ function skR(id){ return (g.skills && g.skills[id]) || 0; }
 // v0.75 非線形ノードは vals 明示配列を優先（例：記憶の欠片[0.30,0.40,0.50,0.60,0.75]）。
 function lerpVal(n, r){ if(r<=0) return 0; if(n.vals) return n.vals[Math.min(r, n.vals.length)-1]; if(n.maxRank<=1) return n.start; return n.start + (n.end-n.start)*(r-1)/(n.maxRank-1); }
 function nodeVal(id){ const n=TREE_MAP[id]; if(!n) return 0; return lerpVal(n, skR(id)); }
-function maxDur(){ return DUR_START; }   // v0.72 耐久最大値は固定100（頑丈な柄は廃止）
-// v0.76 失敗時の耐久減＝通算段連動（KNEE=60まで据置・以降 ×1.03^超過段＝v0.75より大幅に緩い最軽量点）
-function durLossEff(){ const over=Math.max(0, totalStageNow()-DUR_LOSS_KNEE); return Math.round(DUR_LOSS*Math.pow(DUR_LOSS_GROWTH, over)); }
-function fireMult(){ let m = skR('root')>0 ? ROOT_FIRE_BASE : 1;   // root基礎 × 叫び倍率 × 書倍率（各未取得は×1）
-  if(skR('voice')>0) m *= nodeVal('voice');
-  if(skR('book')>0) m *= nodeVal('book');
-  return m; }
-// v0.72 連続成功は恨まれる（スノーボール）：ex×倍率。cap(combo)＝5×(二度あること倍率)。
-function uramiCap(){ let cap=5; if(skR('nido')>0) cap=Math.round(5*nodeVal('nido')); return cap; }
-function uramiSnowball(){ if(skR('urami')<=0) return 1;
-  const target=nodeVal('urami'); const cap=uramiCap(); const c=Math.min(g.combo, cap);
-  return 1 + (target-1)*(cap>0?c/cap:0); }
-// v0.72 記憶の欠片の回復値＝baseHeal(1) + うろ覚え + あるべきカタチ
-function kakeraHeal(){ if(skR('kakera')<=0) return 0; return 1 + Math.round(nodeVal('urooboe')) + Math.round(nodeVal('katachi')); }
-// v0.72 失敗スタックの貯まる値：スタックのlerp × 失敗は成功のもと倍率
-function stackGain(){ if(skR('stack')<=0) return 0; let base=nodeVal('stack'); if(skR('stack_mult')>0) base*=nodeVal('stack_mult'); return Math.round(base); }
-function stackRateBonus(){ if(skR('stack')<=0) return 0; return Math.min(STACK_RATE_CAP, (g.stack||0)*STACK_RATE_COEF); }
-// v0.72 減衰対抗系：武器知識のdecayReliefを復活（合算上限KOU_TOTAL_CAP）
-function decayReliefTotal(){ let r = skR('buki_know')>0 ? nodeVal('buki_know') : 0; return Math.min(KOU_TOTAL_CAP, Math.max(0,r)); }
-function ceilBoost(){ return skR('buki_love')>0 ? nodeVal('buki_love') : 0; }   // 武器への愛着：成功率上限（天井）を押し上げ
-// v0.73 クロンの盾：段戻り防止1回のクロン消費＝通算段連動（深いほど高い）×クロン大事に%軽減
+function maxDur(){ return DUR_START; }   // 耐久最大値は固定100
 function totalStageNow(){ return ((g.cycle||1)-1)*100 + g.stage; }
-function fallbackCost(){ let c=FALLBACK_COST_BASE*Math.pow(FALLBACK_GROWTH, Math.max(0, totalStageNow()-STAGE_START));
-  if(skR('kuron_care')>0) c*=(1-nodeVal('kuron_care'));   // %軽減（10→50%）
-  return Math.max(1, Math.round(c)); }
-// v0.72 詫びクロンの毎ターン供給量（クロンはいくらあってもいい倍率込み）
-function wabiSupply(){ if(skR('wabi')<=0) return 0; let a=nodeVal('wabi'); if(skR('kuron_more')>0) a*=nodeVal('kuron_more'); return Math.round(a); }
+// v0.81 根っこ系：凝縮×2と無欠×3は積み上げ＝×6（両取得）。凝縮のみ×2。root3はroot2前提なので root3→6/root2→2/なし→1。
+function rootScale(){ return skR('root3')>0 ? 6 : (skR('root2')>0 ? 2 : 1); }
+function rootFireMult(){ if(skR('root')<=0) return 1; return TREE_MAP.root.fireVals[skR('root')-1] * rootScale(); }   // 火力倍率寄与（最大1.5×6=9）
+function rootRateBonus(){ if(skR('root')<=0) return 0; return TREE_MAP.root.rateVals[skR('root')-1] * rootScale(); }  // 成功率寄与（最大5%×6=30%）
+// v0.81 闇捕食：失敗時の耐久減の基礎が15に。以降 通算段連動（KNEE=60まで据置）
+function durLossBase(){ return skR('yami')>0 ? YAMI_DUR_LOSS : DUR_LOSS; }
+function durLossEff(){ const over=Math.max(0, totalStageNow()-DUR_LOSS_KNEE); return Math.round(durLossBase()*Math.pow(DUR_LOSS_GROWTH, over)); }
+// v0.81 火力＝root寄与 × 叫び × 助言 ×（闇捕食なら叫び・助言をもう一度＝叫び²×助言²）
+function fireMult(){ const vM=skR('voice')>0?nodeVal('voice'):1, bM=skR('book')>0?nodeVal('book'):1;
+  let m=rootFireMult()*vM*bM;
+  if(skR('yami')>0) m*=vM*bM;
+  return m; }
+// v0.81 記憶の欠片の回復量＝基礎+1（職人の記憶で×5＝+5）
+function kakeraHeal(){ if(skR('kakera')<=0) return 0; return 1 * (skR('shokunin')>0 ? 5 : 1); }
+// v0.81 失敗スタックの貯まる値＝スタックのlerp（1..10）。1スタックあたりの成功率＝基礎2%（失敗は成功のもとで上書き3/4/5%）
+function stackGain(){ return skR('stack')>0 ? Math.round(nodeVal('stack')) : 0; }
+function perStackBonus(){ return skR('stack_mult')>0 ? nodeVal('stack_mult') : PERSTACK_BASE; }
+function stackRateBonus(){ if(skR('stack')<=0) return 0; return Math.min(STACK_RATE_CAP, (g.stack||0)*perStackBonus()); }
+// v0.81 減衰対抗＝わるあがき（×まだいける1.5・KIAIで r→1-(1-r)²）。合算上限KOU_TOTAL_CAP【ガード】
+function decayReliefTotal(){ let r = skR('waru')>0 ? nodeVal('waru') : 0;
+  if(skR('madaikeru')>0) r*=1.5;
+  if(skR('kiai')>0) r = 1-(1-r)*(1-r);
+  return Math.min(KOU_TOTAL_CAP, Math.max(0,r)); }
+function ceilBoost(){ return 0; }   // v0.81 天井押し上げノードは撤去
+// v0.81 詫びクロン保護：段連動閾値（クロン保有がこれ以上なら段戻り緩和）＝収入とギリギリ競る値【ガード】
+function wabiThreshold(){ return Math.round(WABI_THRESH_BASE*Math.pow(WABI_THRESH_GROWTH, Math.max(0, totalStageNow()-STAGE_START))); }
+function wabiProtected(){ return skR('wabi')>0 && (g.clone||0) >= wabiThreshold(); }
 function reqMet(id){ const n=TREE_MAP[id]; if(!n) return false; return (n.reqs||[]).every(rq=>skR(rq.id) >= rq.rank); }   // v0.72 複数前提：全reqsを満たすか
 function canOpen(id){ const n=TREE_MAP[id]; if(!n) return false; return reqMet(id) && skR(id)<n.maxRank && g.sp>=n.cost; }
 function openNode(id){ if(!canOpen(id)) return;
@@ -314,16 +317,15 @@ function okPushPt(){ const wall=FL(g.stage,g.cycle); if(wall<=0) return 0;
   return r>1 ? Math.min(OK_CAP, OK_BETA*Math.log10(r)) : 0; }
 function computeExRaw(){
   const Kv=K(g.stage,g.cycle);
-  let ex = Kv*EX_BASE_MULT*fireMult()*uramiSnowball() + (g.stack||0);   // v0.72 comboFactor→uramiスノーボールに置換
-  return ex;
+  return Kv*EX_BASE_MULT*fireMult() + (g.stack||0);   // v0.81 火力＝K×基礎×fireMult ＋ 失敗スタック
 }
 function computeEX(){ const raw=computeExRaw(); const wall=FL(g.stage,g.cycle);
   return wall>0 ? Math.min(raw,wall) : raw; }
 function successRateEX(ex){
   let rate=decayedRateEX(ex); const cap=capEff();
   const p=okPushPt(); if(rate<cap && p>0) rate=Math.min(cap, rate+p/100);
-  if(skR('root')>0) rate=Math.min(cap, rate + ROOT_RATE_BONUS);   // root（ブラックストーン）の成功率ボーナス
-  const sb=stackRateBonus(); if(sb>0) rate=Math.min(cap, rate + sb);   // v0.72 失敗スタック→成功率
+  const rb=rootRateBonus(); if(rb>0) rate=Math.min(cap, rate + rb);   // v0.81 ブラックストーンの成功率寄与（root×凝縮/無欠）
+  const sb=stackRateBonus(); if(sb>0) rate=Math.min(cap, rate + sb);   // 失敗スタック→成功率
   return Math.max(0, rate);
 }
 
@@ -334,8 +336,13 @@ function tryEnh(){
   const ok = Math.random()<rate;
   g._lastRate=rate; g._lastEx=ex;
   if(ok) onSuccess(ex); else onFail(ex);
-  // v0.73 記憶の欠片：毎強化ごと（成否問わず）に確率P%で耐久回復（周期式→確率式・社長指示）
-  if(!g.ended && skR('kakera')>0 && Math.random()<nodeVal('kakera')){ const h=kakeraHeal(); if(h>0) g.dur=Math.min(maxDur(), g.dur+h); }
+  // v0.81 記憶の欠片：毎強化ごと確率P%で耐久回復。トラナンの秘訣＝2連続以上失敗した今回は確率無視で必ず発動
+  if(!g.ended && skR('kakera')>0){
+    const forced = skR('toranan')>0 && g.lastFailed && (g.failStreak||0)>=2;
+    if(forced || Math.random()<nodeVal('kakera')){ const h=kakeraHeal(); if(h>0) g.dur=Math.min(maxDur(), g.dur+h); }
+  }
+  // v0.81 ハイデル宴会：N回の強化に1回クロン大量獲得
+  if(!g.ended && skR('heidel')>0){ g.heidelTick=(g.heidelTick||0)+1; if(g.heidelTick>=HEIDEL_INTERVAL){ g.heidelTick=0; g.clone=(g.clone||0)+HEIDEL_AMOUNT; } }
   if(g.ended) return;
   render();
   if(checkDead()) return;
@@ -347,36 +354,43 @@ function onSuccess(ex){
   const capped = wall>0 && ex>=wall;
   const ri=(g.stage-1)%10;   // クリアした段（増加前）のローマ数字位＝SP獲得量を決める
   const spGain = ri===9 ? SP_GAIN_X : (ri===8 ? SP_GAIN_IX : SP_GAIN_NORMAL);   // Ⅹ(ri9)+3・Ⅸ(ri8)+2・他+1
-  if(skR('orenai')<=0) g.stack=0;   // v0.72 折れない心が無ければ成功でスタックリセット（あれば維持）
-  g.lastFailed=false;
+  // v0.81 折れない心：成功でスタック50%残す（端数切り上げ）。無ければ0リセット
+  g.stack = skR('orenai')>0 ? Math.ceil((g.stack||0)*0.5) : 0;
+  g.lastFailed=false; g.failStreak=0;
+  if(skR('wabi')>0) g.clone=(g.clone||0)+Math.round(nodeVal('wabi'));   // v0.81 詫びクロン：成功時クロン獲得
   g.stage++; g.combo++; g.sp+=spGain;
   g.succCount=(g.succCount||0)+1; if(capped) g.feverCount=(g.feverCount||0)+1;   // plog用カウンタ
   g.score += Math.round(ex);
   g.maxStage=Math.max(g.maxStage, g.stage+(g.cycle-1)*100);
   let extra='';
   if(g.stage>100){
-    g.cycle++; g.maxCycle=Math.max(g.maxCycle,g.cycle); g.stage=1; g.combo=0; if(skR('orenai')<=0) g.stack=0;
+    g.cycle++; g.maxCycle=Math.max(g.maxCycle,g.cycle); g.stage=1; g.combo=0;
     extra="\n🎊 "+g.cycle+"周目へ突入！（壁がさらに硬くなる）";
   }
   setMsg((capped?"⚡💥 限界突破成功ッ!! ":"✨ 成功！ ")+stageName(g.stage)+" 到達！ 爆発値+"+Math.round(ex).toLocaleString()+"　SP+"+spGain+"（残"+g.sp+"）"+extra);
 }
 function onFail(ex){
   g.stack += stackGain();
-  g.combo=0; g.lastFailed=true;
+  g.combo=0; g.lastFailed=true; g.failStreak=(g.failStreak||0)+1;
   g.failCount=(g.failCount||0)+1;   // plog用カウンタ
-  const loss=durLossEff();   // v0.75 段連動＝段戻りの前に確定（段戻り後だと段が下がり値がズレるため）
-  g.dur=Math.max(0, g.dur-loss);   // 失敗＝武器耐久-loss（v0.75 深部ほど重い）
-  // v0.72 ★段戻り（クロンの盾で防げる）
-  let rolled=false, prevented=false;
+  const loss=durLossEff();   // 段連動＝段戻りの前に確定
+  g.dur=Math.max(0, g.dur-loss);   // 失敗＝武器耐久-loss（闇捕食で基礎15・深部ほど重い）
+  // v0.81 ★段戻りルール：真グレード以上(段>=11=gi>=1)かつⅤ〜Ⅹ(ri4-9)で失敗は段-2、他は段-1。
+  // 保護系：詫びクロン閾値保有で-1緩和／Ｊハンありなら完全無効（段減少0）。
+  let drop=0, note='';
   if(g.stage>STAGE_START){
-    if(skR('kuron_shield')>0){ const P=nodeVal('kuron_shield'); const cost=fallbackCost();
-      if(Math.random()<P && g.clone>=cost){ g.clone-=cost; prevented=true; } }
-    if(!prevented){ g.stage=Math.max(STAGE_START, g.stage-1); rolled=true; g.fallbackCount=(g.fallbackCount||0)+1; }
+    const gi=Math.floor((g.stage-1)/10), ri=(g.stage-1)%10;
+    let base=(gi>=1 && ri>=4) ? 2 : 1;
+    if(wabiProtected()){
+      if(skR('jhan')>0){ base=0; note="\n🪙 Ｊハン：クロン閾値保有で段が下がらない！"; }
+      else { base=Math.max(0, base-1); note="\n🪙 詫びクロン：段戻りを-1緩和。"; }
+    }
+    drop=base;
+    if(drop>0){ g.stage=Math.max(STAGE_START, g.stage-drop); g.fallbackCount=(g.fallbackCount||0)+1; }
   }
   let m="💥 失敗…… 武器耐久-"+loss+"（"+Math.max(0,g.dur)+"/"+maxDur()+"）。";
-  if(prevented) m+="\n🪙 クロンの盾！ クロン-"+fallbackCost()+"で段戻りを防いだ（"+stageName(g.stage)+"を維持）。";
-  else if(rolled) m+="\n⬇ 段が1つ戻った → "+stageName(g.stage)+"。";
-  else m+="段は維持＝"+stageName(g.stage)+"に再挑戦。";
+  if(drop>0) m+="\n⬇ 段-"+drop+" → "+stageName(g.stage)+"。"+note;
+  else m+=(note?note.replace(/^\n/,'')+" ("+stageName(g.stage)+"を維持)":"段は維持＝"+stageName(g.stage)+"に再挑戦。");
   setMsg(m);
 }
 function checkDead(){ if(g.dur<=0){ gameOver(); return true; } return false; }
@@ -397,19 +411,17 @@ function gameOver(){
 
 // ===== 画面遷移 =====
 function startTurn(){ g.turn++;
-  if(skR('wabi')>0){ g.clone += wabiSupply(); }   // v0.72 詫びクロン：毎ターン供給（クロンはいくらあってもいい倍率込み）
-  g.phase='enhance'; render(); showEnhance(); }
+  g.phase='enhance'; render(); showEnhance(); }   // v0.81 詫びクロンは"成功時獲得"に変更＝毎ターン供給は廃止
 function showIntro(){
   g.phase='intro'; render();
-  let s='<div class="center" style="color:#ffd24a;font-size:15px;margin-bottom:8px">◆ 遊び方（v0.78）◆</div>';
+  let s='<div class="center" style="color:#ffd24a;font-size:15px;margin-bottom:8px">◆ 遊び方（v0.81）◆</div>';
   s+='<div style="font-size:13px;line-height:1.8">'
     +'・リソースは<b>武器耐久・SP・クロン</b>の3つ。準備フェーズや商店はない。<br>'
     +'・毎ターン<b>「強化する」</b>を選ぶだけ。成功すれば<b>段+1・SP+1</b>（Ⅸで+2・Ⅹで+3）。<br>'
-    +'・<b>失敗すると武器耐久が減り、段も1つ戻る</b>（下限は開始段）。<b>耐久が0でゲームオーバー</b>（到達段がそのランの成果）。<br>'
-    +'・<b>クロン</b>は「詫びクロン」を取ると毎ターン貯まる。<b>クロンの盾</b>があれば、クロンを払って失敗の段戻りを防げる。<br>'
-    +'・貯めたSPは<b>🌳スキルツリー</b>で使う。根「ブラックストーン」を取ると<b>強化・クロン・耐久保護・失敗・減衰対抗・条件</b>の6系統が開く。手前ノードを必要Lvまで育てると奥が解放（付け替えなし・ランごとにリセット）。<br>'
-    +'・<b>失敗も力になる</b>：失敗でたまる「スタック」は成功率を押し上げる。連続成功は爆発値をスノーボールさせる。<br>'
-    +'・最初の数段（Ⅴ〜Ⅶ）は壁が薄く、ほぼ確定で成功する短い助走。<b>そこから先が本番だ。</b>'
+    +'・<b>失敗すると武器耐久が減り、段も戻る</b>：通常は段-1、<b>真グレード以上のⅤ〜Ⅹで失敗すると段-2</b>（下限は開始段）。<b>耐久が0でゲームオーバー</b>。<br>'
+    +'・<b>クロン</b>は「詫びクロン」を取ると<b>強化成功時</b>に貯まる。<b>閾値以上のクロンを保有</b>していると失敗の段戻りが緩和（Ｊハンで完全無効）。<br>'
+    +'・貯めたSPは<b>🌳スキルツリー</b>で使う。根「ブラックストーン」を取ると<b>強化・耐久回復・失敗・減衰対抗・保護</b>の5系統が開く（凝縮/無欠でブラックストーンを最大×6）。手前ノードを必要Lvまで育てると奥が解放。<br>'
+    +'・<b>火力を積めば爆発値が壁を超えて限界突破が出まくる</b>のが狙い。ただし深いほど失敗は重く、いつか耐久が尽きる。<b>どこまで登れるかはビルド次第。</b>'
     +'</div>';
   s+='<div class="sub" style="opacity:.75;margin-top:8px">本作は『黒い砂漠』(Pearl Abyss)の非公式ファンメイド作品です。権利者とは一切関係ありません。非営利。</div>';
   const best=parseInt(lsGet("kyoka70_best")||"0",10);
@@ -456,10 +468,12 @@ function showTree(){
   g.phase='tree'; render();
   const rootNode=TREE_MAP['root'];
   let s='<div class="center" style="color:#ffd24a;margin-bottom:6px">🌳 スキルツリー（SP残 '+g.sp+'）</div>';
-  // 根っこ
-  s+='<div class="treeroot">'+nodeCard(rootNode, true)+'</div>';
+  // v0.81 根っこ系＝root→凝縮→無欠 のチェーンを上部に縦表示
+  s+='<div class="treeroot" style="flex-direction:column;align-items:center;gap:0">';
+  ROOTCHAIN.forEach((id,idx)=>{ if(idx>0) s+='<div class="chainarrow">↓</div>'; s+=nodeCard(TREE_MAP[id], id==='root'); });
+  s+='</div>';
   s+='<div class="rootstem">↓</div>';
-  // 6系統を3×2グリッドの縦チェーンに（rootから伸びる枝・全ノード常時表示）
+  // 5系統を3×2グリッドの縦チェーンに（rootから伸びる枝・全ノード常時表示）
   s+='<div class="branches">';
   BRANCHES.forEach(br=>{
     const chain=TREE.filter(n=>n.branch===br);   // 定義順＝手前→奥（reqのチェーン順）
@@ -471,7 +485,7 @@ function showTree(){
     s+='</div>';
   });
   s+='</div>';
-  s+='<div class="sub">手前のノードを必要Lv（多くはLv2）まで育てると、その奥（↓）が開く。根「ブラックストーン」を取るまで全系統の入口は閉じたまま。</div>';
+  s+='<div class="sub">手前のノードを必要Lvまで育てると奥（↓）が開く。根「ブラックストーン」を取るまで全系統の入口は閉じたまま。凝縮/無欠でブラックストーンを最大×6に。</div>';
   s+='<div class="menu" style="margin-top:6px">'+btnRaw("戻る","backFromTree()")+'</div>';
   scr(s);
 }
@@ -491,10 +505,11 @@ function buildRevealSteps(){
   const exChips=[];   // 爆発値の内訳チップ（ゲージは動かさない・大きい数字だけ育つ）
   if(Kv<=0){ running=0; exChips.push({kind:'ex', label:'基礎（助走・壁なし）', exVal:running}); }
   else { running=Kv*EX_BASE_MULT; exChips.push({kind:'ex', label:'基礎 爆発値 '+Math.round(running).toLocaleString(), exVal:running}); }
-  if(skR('root')>0){ running*=ROOT_FIRE_BASE; exChips.push({kind:'ex', label:'🖤 ブラックストーン ×'+ROOT_FIRE_BASE, exVal:running}); }
-  if(skR('voice')>0){ const m=nodeVal('voice'); running*=m; exChips.push({kind:'ex', label:'📣 ヴォルクスの叫び ×'+m.toFixed(2), exVal:running}); }
-  if(skR('book')>0){ const m=nodeVal('book'); running*=m; exChips.push({kind:'ex', label:'📖 ヴォルクスの書 ×'+m.toFixed(2), exVal:running}); }
-  if(skR('urami')>0 && g.combo>0){ const m=uramiSnowball(); if(m>1){ running*=m; exChips.push({kind:'ex', label:'🔥 連続成功スノーボール ×'+m.toFixed(2)+'（連撃'+Math.min(g.combo,uramiCap())+'）', exVal:running}); } }
+  if(skR('root')>0){ const m=rootFireMult(); running*=m; exChips.push({kind:'ex', label:'🖤 ブラックストーン ×'+m.toFixed(2)+(rootScale()>1?'（×'+rootScale()+'強化）':''), exVal:running}); }
+  const vM=skR('voice')>0?nodeVal('voice'):1, bM=skR('book')>0?nodeVal('book'):1;
+  if(skR('voice')>0){ running*=vM; exChips.push({kind:'ex', label:'📣 ヴォルクスの叫び ×'+vM.toFixed(2), exVal:running}); }
+  if(skR('book')>0){ running*=bM; exChips.push({kind:'ex', label:'📖 ヴォルクスの助言 ×'+bM.toFixed(0), exVal:running}); }
+  if(skR('yami')>0){ running*=vM*bM; exChips.push({kind:'ex', label:'🌑 闇捕食（叫び・助言 再発動）×'+(vM*bM).toFixed(1), exVal:running}); }
   if((g.stack||0)>0){ running+=g.stack; exChips.push({kind:'ex', label:'📚 失敗スタック +'+Math.round(g.stack).toLocaleString(), exVal:running}); }
   const exBuilt=running;
   const feverHit = wall>0 && running>=wall;
@@ -515,13 +530,14 @@ function buildRevealSteps(){
   let vis=rawRate;
   // 🗡 武器の抵抗（減衰）↓
   if(rateDecayRaw < vis-0.0005){ steps.push({kind:'gauge', label:'🗡 武器の抵抗（減衰）', rate:rateDecayRaw, cls:'resist'}); vis=rateDecayRaw; }
-  // 🧊 武器知識が押し返す↑（武器知識取得かつ上がった時のみ）
-  if(skR('buki_know')>0 && baseRate > vis+0.0005){ steps.push({kind:'gauge', label:'🧊 武器知識が押し返す', rate:baseRate, cls:'relief'}); }
+  // 🧊 わるあがき/KIAIが押し返す↑（減衰対抗取得かつ上がった時のみ）
+  if(skR('waru')>0 && baseRate > vis+0.0005){ const lbl = skR('kiai')>0?'🧊 ＫＩＡＩが押し返す':(skR('madaikeru')>0?'🧊 まだいけるが押し返す':'🧊 わるあがきが押し返す'); steps.push({kind:'gauge', label:lbl, rate:baseRate, cls:'relief'}); }
   // ここから successRateEX と同じ算術で prev を進める（最終一致を保証）
   let prev=baseRate;
   const p=okPushPt();
   if(prev<cap && p>0){ const r=Math.min(cap, prev+p/100); if(r>prev+0.0005) steps.push({kind:'gauge', label:'⚡ オーバーキルが押し返す', rate:r, cls:'fpush'}); prev=r; }
-  if(skR('root')>0){ const r=Math.min(cap, prev+ROOT_RATE_BONUS); if(r>prev+0.0005) steps.push({kind:'gauge', label:'🖤 ブラックストーン +'+Math.round(ROOT_RATE_BONUS*100)+'%', rate:r, cls:'fpush'}); prev=r; }
+  const rb=rootRateBonus();
+  if(rb>0){ const r=Math.min(cap, prev+rb); if(r>prev+0.0005) steps.push({kind:'gauge', label:'🖤 ブラックストーン +'+Math.round(rb*100)+'%', rate:r, cls:'fpush'}); prev=r; }
   const sb=stackRateBonus();
   if(sb>0){ const r=Math.min(cap, prev+sb); if(r>prev+0.0005) steps.push({kind:'gauge', label:'📚 失敗スタックの後押し +'+Math.round(sb*100)+'%', rate:r, cls:'fpush'}); prev=r; }
   const rateFinal=Math.max(0,prev);
@@ -660,13 +676,13 @@ function buildPlaylogData(reason){
     const totalStage = ((g.maxCycle||1)-1)*100 + (((g.maxStage-1)%100)+1);   // 通算到達段（周回込み）
     const skills={}; TREE.forEach(n=>{ skills[n.id]=skR(n.id); });   // v0.72 最終スキル振り（全ノードid→rank）
     return JSON.stringify({
-      ver:'v0.78', reason:(reason||'manual'), ts:new Date().toISOString(),
+      ver:'v0.81', reason:(reason||'manual'), ts:new Date().toISOString(),
       maxStage: totalStage, cycle:(g.maxCycle||1), turn:(g.turn||0), score:(g.score||0),
       clone:(g.clone||0), fallback:(g.fallbackCount||0),
       success:(g.succCount||0), fail:(g.failCount||0), fever:(g.feverCount||0),
       skills: skills
     });
-  }catch(e){ return JSON.stringify({ver:'v0.78', reason:(reason||'manual'), err:String(e)}); }
+  }catch(e){ return JSON.stringify({ver:'v0.81', reason:(reason||'manual'), err:String(e)}); }
 }
 function uploadPlaylog(reason){
   try{
