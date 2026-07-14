@@ -188,7 +188,7 @@ const CAP_RATE=0.99;
 const BASE_HI=0.95, BASE_DECAY=0.048, BASE_PROG0=5, BASE_FLOOR=0.005, BASE_CAP=0.95; // 素の成功率カーブ（段で低下）
 const FIRE_INFLUENCE=0.60;                     // 火力の影響：爆発値が壁に到達(限界突破)で +60%。爆発値の影響力＝ここで調整
 const OVERKILL_INFLUENCE=0.08, OVERKILL_CAP=0.40; // v0.90 オーバーキル：壁を超えた"倍率"の対数に比例＝積むほど効く（社長指示で拡大・頭打ちを緩く）
-const RESIST_PER=0.003, RESIST_CAP=0.25;       // 武器抵抗：段で増大・最大-25%。減衰対抗で軽減
+const RESIST_PER=0.003, RESIST_CAP=0.60, RESIST_KNEE=50, RESIST_STEEP=0.012;   // v0.90 武器抵抗：段51から急峻に強化（社長指示・火力だけでは支えきれずスタック/減衰対抗が要る）。最大-60%・減衰対抗で軽減
 
 // ---- コアリソース（武器耐久・SP・クロン） ----
 const DUR_START=100, DUR_LOSS=10;
@@ -211,8 +211,8 @@ const STACK_BASE_GAIN=1;
 const WABI_THRESH_BASE=25, WABI_THRESH_GROWTH=1.08;   // v0.90 クロン保護の閾値を1/20に（社長「多すぎて全然届かない」・旧500→25）
 // ハイデル宴会：N回の強化ごとにクロン大量獲得
 const HEIDEL_INTERVAL=12, HEIDEL_AMOUNT=10000;
-// v0.90 段階SP獲得（社長指示）：Ⅰ〜Ⅲ=+1／Ⅳ〜Ⅷ=+2／Ⅸ=+3／Ⅹ（ボス）=+5
-const SP_GAIN_NORMAL=1, SP_GAIN_MID=2, SP_GAIN_IX=3, SP_GAIN_X=5;
+// v0.90 段階SP獲得：Ⅰ〜Ⅷ=+1／Ⅸ=+2／Ⅹ（ボス）=+3（社長指示で元に戻す）
+const SP_GAIN_NORMAL=1, SP_GAIN_IX=2, SP_GAIN_X=3;   // v0.90 社長指示で元に戻す（Ⅰ〜Ⅷ+1／Ⅸ+2／Ⅹ+3）
 
 // ---- スキルツリー定義（v0.72 本格版：reqs配列[{id,rank}]＝複数前提／rank線形補間 start→end／ノード別SPコスト） ----
 // 効果値 val(r)=start+(end-start)*(r-1)/(maxRank-1)（maxRank=1なら常にstart・r=0＝未取得は効果なし）。
@@ -364,7 +364,10 @@ function baseRateStage(){ const prog=totalStageNow();
   return Math.max(BASE_FLOOR, Math.min(BASE_CAP, BASE_HI*Math.exp(-BASE_DECAY*(prog-BASE_PROG0)))); }
 function fireBonusOf(exVal){ const wall=FL(g.stage,g.cycle); if(wall<=0) return 0; return Math.min(1, exVal/wall)*FIRE_INFLUENCE; }
 function overkillBonus(exVal){ const wall=FL(g.stage,g.cycle); if(wall<=0) return 0; const ratio=exVal/wall; if(ratio<=1) return 0; return Math.min(OVERKILL_CAP, OVERKILL_INFLUENCE*Math.log10(ratio)); }   // v0.90 壁の何倍かの対数に比例（壁×2で+2.4%/×10で+8%/×100で+16%/×1000で+24%…上限+40%）
-function weaponResistRaw(){ const prog=totalStageNow(); return Math.min(RESIST_CAP, RESIST_PER*Math.max(0,prog-1)); }
+function weaponResistRaw(){ const prog=totalStageNow();
+  let r=RESIST_PER*Math.max(0,prog-1);                          // 浅い段は緩やか（従来どおり）
+  if(prog>RESIST_KNEE) r+=RESIST_STEEP*(prog-RESIST_KNEE);      // v0.90 段51超で急峻に（段60≈-30%/段70≈-45%/段80以降≈-60%）
+  return Math.min(RESIST_CAP, r); }
 function decayReliefFrac(){ let r=skR('waru')>0?nodeVal('waru'):0; if(skR('madaikeru')>0) r*=1.5; if(skR('kiai')>0) r=1-(1-r)*(1-r); return Math.max(0,Math.min(1,r)); }
 // v0.90 判定と演出の唯一の真実：素→火力(爆発値1要素ずつ)→武器抵抗→減衰対抗→オーバーキル→ブラックストーン%→スタック%→最終
 function rateBreakdown(){
@@ -423,7 +426,7 @@ function onSuccess(ex){
   const wall=FL(g.stage,g.cycle);
   const capped = wall>0 && ex>=wall;
   const ri=(g.stage-1)%10;   // クリアした段（増加前）のローマ数字位＝SP獲得量を決める
-  const spGain = ri===9 ? SP_GAIN_X : (ri===8 ? SP_GAIN_IX : (ri>=3 ? SP_GAIN_MID : SP_GAIN_NORMAL));   // Ⅹ(ri9)+5・Ⅸ(ri8)+3・Ⅳ〜Ⅷ(ri3-7)+2・Ⅰ〜Ⅲ+1
+  const spGain = ri===9 ? SP_GAIN_X : (ri===8 ? SP_GAIN_IX : SP_GAIN_NORMAL);   // Ⅹ(ri9)+3・Ⅸ(ri8)+2・他+1
   // v0.81 折れない心：成功でスタック50%残す（端数切り上げ）。無ければ0リセット
   g.stack = skR('orenai')>0 ? Math.ceil((g.stack||0)*0.5) : 0;
   g.lastFailed=false; g.failStreak=0;
@@ -485,7 +488,7 @@ function showIntro(){
   let s='<div class="center" style="color:#ffd24a;font-size:15px;margin-bottom:8px">◆ 遊び方（v0.90）◆</div>';
   s+='<div style="font-size:13px;line-height:1.8">'
     +'・リソースは<b>武器耐久・SP・クロン</b>の3つ。準備フェーズや商店はない。<br>'
-    +'・毎ターン<b>「強化する」</b>を選ぶだけ。成功すれば<b>段+1・SP獲得</b>（Ⅰ〜Ⅲ+1／Ⅳ〜Ⅷ+2／Ⅸ+3／Ⅹ+5）。<br>'
+    +'・毎ターン<b>「強化する」</b>を選ぶだけ。成功すれば<b>段+1・SP獲得</b>（Ⅰ〜Ⅷ+1／Ⅸ+2／Ⅹ+3）。<br>'
     +'・<b>失敗すると段が戻り、その幅ぶん武器耐久が減る</b>：無印は段-1。真グレード以上は<b>Ⅰ〜Ⅳ=段-1／Ⅴ〜Ⅷ=段-2／Ⅸ・Ⅹ=段-3</b>。<b>耐久ダメ＝段の下がり幅×10</b>（-1なら-10・-3なら-30）。<b>耐久が0でゲームオーバー</b>（下限は開始段）。<br>'
     +'・<b>クロン</b>は「詫びクロン」を取ると<b>強化成功時</b>に貯まる。<b>閾値以上のクロン保有</b>で段の下がり幅を緩和（Ｊハンで段は完全無効）。※<b>耐久ダメは保護でも減らない</b>＝耐久が生存タイマー。<br>'
     +'・貯めたSPは<b>🌳スキルツリー</b>で使う。根「ブラックストーン」を取ると<b>強化・耐久回復・失敗・減衰対抗・保護</b>の5系統が開く（凝縮/無欠でブラックストーンを最大×6）。手前ノードを必要Lvまで育てると奥が解放。<br>'
