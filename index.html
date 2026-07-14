@@ -211,8 +211,8 @@ const STACK_BASE_GAIN=1;
 const WABI_THRESH_BASE=500, WABI_THRESH_GROWTH=1.08;
 // ハイデル宴会：N回の強化ごとにクロン大量獲得
 const HEIDEL_INTERVAL=12, HEIDEL_AMOUNT=10000;
-// v0.71 段階SP獲得：クリアした段のローマ数字位で獲得量が変わる（Ⅹ＝ボスで+3・Ⅸで+2・他+1）
-const SP_GAIN_NORMAL=1, SP_GAIN_IX=2, SP_GAIN_X=3;
+// v0.90 段階SP獲得（社長指示）：Ⅰ〜Ⅲ=+1／Ⅳ〜Ⅷ=+2／Ⅸ=+3／Ⅹ（ボス）=+5
+const SP_GAIN_NORMAL=1, SP_GAIN_MID=2, SP_GAIN_IX=3, SP_GAIN_X=5;
 
 // ---- スキルツリー定義（v0.72 本格版：reqs配列[{id,rank}]＝複数前提／rank線形補間 start→end／ノード別SPコスト） ----
 // 効果値 val(r)=start+(end-start)*(r-1)/(maxRank-1)（maxRank=1なら常にstart・r=0＝未取得は効果なし）。
@@ -422,7 +422,7 @@ function onSuccess(ex){
   const wall=FL(g.stage,g.cycle);
   const capped = wall>0 && ex>=wall;
   const ri=(g.stage-1)%10;   // クリアした段（増加前）のローマ数字位＝SP獲得量を決める
-  const spGain = ri===9 ? SP_GAIN_X : (ri===8 ? SP_GAIN_IX : SP_GAIN_NORMAL);   // Ⅹ(ri9)+3・Ⅸ(ri8)+2・他+1
+  const spGain = ri===9 ? SP_GAIN_X : (ri===8 ? SP_GAIN_IX : (ri>=3 ? SP_GAIN_MID : SP_GAIN_NORMAL));   // Ⅹ(ri9)+5・Ⅸ(ri8)+3・Ⅳ〜Ⅷ(ri3-7)+2・Ⅰ〜Ⅲ+1
   // v0.81 折れない心：成功でスタック50%残す（端数切り上げ）。無ければ0リセット
   g.stack = skR('orenai')>0 ? Math.ceil((g.stack||0)*0.5) : 0;
   g.lastFailed=false; g.failStreak=0;
@@ -484,7 +484,7 @@ function showIntro(){
   let s='<div class="center" style="color:#ffd24a;font-size:15px;margin-bottom:8px">◆ 遊び方（v0.90）◆</div>';
   s+='<div style="font-size:13px;line-height:1.8">'
     +'・リソースは<b>武器耐久・SP・クロン</b>の3つ。準備フェーズや商店はない。<br>'
-    +'・毎ターン<b>「強化する」</b>を選ぶだけ。成功すれば<b>段+1・SP+1</b>（Ⅸで+2・Ⅹで+3）。<br>'
+    +'・毎ターン<b>「強化する」</b>を選ぶだけ。成功すれば<b>段+1・SP獲得</b>（Ⅰ〜Ⅲ+1／Ⅳ〜Ⅷ+2／Ⅸ+3／Ⅹ+5）。<br>'
     +'・<b>失敗すると段が戻り、その幅ぶん武器耐久が減る</b>：無印は段-1。真グレード以上は<b>Ⅰ〜Ⅳ=段-1／Ⅴ〜Ⅷ=段-2／Ⅸ・Ⅹ=段-3</b>。<b>耐久ダメ＝段の下がり幅×10</b>（-1なら-10・-3なら-30）。<b>耐久が0でゲームオーバー</b>（下限は開始段）。<br>'
     +'・<b>クロン</b>は「詫びクロン」を取ると<b>強化成功時</b>に貯まる。<b>閾値以上のクロン保有</b>で段の下がり幅を緩和（Ｊハンで段は完全無効）。※<b>耐久ダメは保護でも減らない</b>＝耐久が生存タイマー。<br>'
     +'・貯めたSPは<b>🌳スキルツリー</b>で使う。根「ブラックストーン」を取ると<b>強化・耐久回復・失敗・減衰対抗・保護</b>の5系統が開く（凝縮/無欠でブラックストーンを最大×6）。手前ノードを必要Lvまで育てると奥が解放。<br>'
