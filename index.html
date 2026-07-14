@@ -195,11 +195,11 @@ const DUR_START=100, DUR_LOSS=10;
 const SP_START=5, STAGE_START=5;
 const EX_BASE_MULT=2;
 // v0.82 失敗ペナルティ改定（社長指示）：段戻りをローマ帯でティア化し、耐久ダメ＝ティア(段戻り幅)×DUR_PER_STEP。
-//   無印(gi0)=-1／真以上(gi≥1)のⅠ〜Ⅳ=-1・Ⅴ〜Ⅷ=-2・Ⅸ・Ⅹ=-3。耐久=段-1→-10/-2→-20/-3→-30。闇捕食で耐久+YAMI_DUR_ADD。
+//   無印(gi0)=-1／真以上(gi≥1)のⅠ〜Ⅳ=-1・Ⅴ〜Ⅷ=-2・Ⅸ・Ⅹ=-3。耐久=段-1→-10/-2→-20/-3→-30。闇捕食で耐久ダメ×YAMI_DUR_MULT(2倍)。
 //   ★保護系は「段の下がり幅」だけ軽減し、耐久ダメは軽減しない（軽減前ティアで耐久計算）＝耐久が純粋な生存タイマー。
 const DUR_PER_STEP=10;        // 段戻り1段あたりの耐久ダメ【ガード・調整可】
 const DUR_FAIL_ESCALATE=0.006;   // v0.90 無敵化防止：失敗を重ねるほど失敗時の耐久ダメが増える（回復均衡での永久ループを防ぐ・全数値仮）
-const YAMI_DUR_ADD=5;         // 闇捕食：失敗時の耐久ダメ+5（旧「15固定」を撤去しこの加算方式に）
+const YAMI_DUR_MULT=2;        // v0.90 闇捕食：失敗時の耐久ダメを×2（社長指示・強い分リスク大・旧+5固定を撤去）
 // v0.82 旧DUR_LOSSの指数段連動ガード(KNEE/GROWTH)はティア方式が深部の重さを内包するため撤去（下記durLossEffは廃止）。
 // ② 減衰軽減(わるあがき/まだいける/KIAI)の合算上限＝これが高いと減衰天井が上がり成功率が下がらず無限化する主因。【ガード・最重要】
 const KOU_TOTAL_CAP=0.40;
@@ -234,7 +234,7 @@ const TREE=[
  {id:'book', branch:'強化系', name:'ヴォルクスの助言', cost:5, maxRank:5, reqs:[{id:'voice',rank:5}],
    vals:[5,10,15,20,25], desc:(r,v)=>'爆発値倍率 ×'+v.toFixed(0)+'（叫びに乗算）'},   // v0.90 社長指示で強化（書 ×5〜×25）
  {id:'yami', branch:'強化系', name:'闇捕食', cost:15, maxRank:1, reqs:[{id:'book',rank:3}],
-   desc:()=>'叫び・助言の倍率がもう一度かかる（叫び²×助言²）。代わりに失敗時の耐久減が15に'},
+   desc:()=>'叫び・助言の倍率がもう一度かかる（叫び²×助言²）。代わりに失敗時の耐久ダメが2倍'},
  // 耐久回復系
  {id:'kakera', branch:'耐久回復系', name:'記憶の欠片', cost:3, maxRank:5, reqs:[{id:'root',rank:1}],
    vals:[0.10,0.20,0.30,0.40,0.50], desc:(r,v)=>'強化のたび '+Math.round(v*100)+'% の確率で耐久+'+kakeraHeal()},
@@ -299,7 +299,8 @@ function failTier(){ const gi=Math.floor((g.stage-1)/10), ri=(g.stage-1)%10;
   if(gi<=0) return 1;
   return ri<=3 ? 1 : (ri<=7 ? 2 : 3); }
 // 失敗時の耐久ダメ＝ティア×DUR_PER_STEP（＋闇捕食）。保護では軽減しない（軽減前ティアで計算）
-function failDurDamage(){ const raw=failTier()*DUR_PER_STEP + (skR('yami')>0 ? YAMI_DUR_ADD : 0);
+function failDurDamage(){ let raw=failTier()*DUR_PER_STEP;
+  if(skR('yami')>0) raw*=YAMI_DUR_MULT;   // v0.90 闇捕食：失敗時の耐久ダメ2倍（強い分リスク大）
   return Math.round(raw*(1+DUR_FAIL_ESCALATE*(g.failCount||0))); }
 // v0.81 火力＝root寄与 × 叫び × 助言 ×（闇捕食なら叫び・助言をもう一度＝叫び²×助言²）
 function fireMult(){ const vM=skR('voice')>0?nodeVal('voice'):1, bM=skR('book')>0?nodeVal('book'):1;
