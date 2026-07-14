@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>強化脳汁ゲー（仮）— ブラウザ試作 v0.82（失敗ティア・耐久=段戻り×10）</title>
+<title>強化脳汁ゲー（仮）— ブラウザ試作 v0.83（減衰が味方になる不具合を修正）</title>
 <style>
   :root{ --navy:#000a5a; --navy2:#001080; --gold:#ffd24a; --edge:#6b7bd6; --panel:#00104a; --track:#00003a; }
   *{ box-sizing:border-box; }
@@ -109,7 +109,7 @@
 </head>
 <body>
 <div id="app">
-  <h1>◆ 強化脳汁ゲー（仮）◆ ブラウザ試作 v0.82 — 失敗ティア・耐久=段戻り×10</h1>
+  <h1>◆ 強化脳汁ゲー（仮）◆ ブラウザ試作 v0.83 — 減衰が味方になる不具合を修正</h1>
 
   <div class="win">
     <div class="row" style="align-items:center; margin-bottom:6px;">
@@ -321,7 +321,7 @@ function capEff(){ const maxCap=CAP_RATE+ceilBoost();
   const d=decayD(); const c=maxCap - CEIL_SLOPE*(1-d) + okPushPt()/100;   // ★relief抜きの生の減衰dで天井を計算
   return Math.max(CEIL_MIN, Math.min(maxCap, c)); }
 function decayedRateEX(ex){ const d=decayEffD(); const Kv=K(g.stage,g.cycle);
-  const exd=100*Math.pow(Math.max(1,ex/100), d);
+  const exd=Math.min(ex, 100*Math.pow(Math.max(1,ex/100), d));   // v0.83 減衰は素の率を超えて上げない（爆発値<100で減衰が"有利"になり素より上がる不具合を修正）
   return Math.min(capEff(), exd/(exd+Kv)); }
 function okPushPt(){ const wall=FL(g.stage,g.cycle); if(wall<=0) return 0;
   const raw=computeExRaw(); const r=raw/wall/OK_TH;
@@ -531,7 +531,7 @@ function buildRevealSteps(){
 
   // ---- ③ 成功率の上下ドラマ（実ソースごと・最終は successRateEX(exForRate) に一致）----
   const dRaw=decayD();
-  const exdRaw=100*Math.pow(Math.max(1,exForRate/100), dRaw);
+  const exdRaw=Math.min(exForRate, 100*Math.pow(Math.max(1,exForRate/100), dRaw));   // v0.83 減衰は素を超えて上げない
   const capRaw=CEIL_ON? Math.max(CEIL_MIN, (CAP_RATE+ceilBoost())-CEIL_SLOPE*(1-dRaw)) : (CAP_RATE+ceilBoost());
   const rateDecayRaw = Kv<=0 ? rawRate : Math.min(capRaw, exdRaw/(exdRaw+Kv));   // 減衰のみ（軽減なし）
   const baseRate=decayedRateEX(exForRate);                            // 武器知識込みの減衰後率＝successRateEXの出発点
