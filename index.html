@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>強化脳汁ゲー（仮）— ブラウザ試作 v0.92（SP配分で難易度緩和）</title>
+<title>強化脳汁ゲー（仮）— ブラウザ試作 v0.93（保護系を確率式に一新）</title>
 <style>
   :root{ --navy:#000a5a; --navy2:#001080; --gold:#ffd24a; --edge:#6b7bd6; --panel:#00104a; --track:#00003a; }
   *{ box-sizing:border-box; }
@@ -113,7 +113,7 @@
 </head>
 <body>
 <div id="app">
-  <h1>◆ 強化脳汁ゲー（仮）◆ ブラウザ試作 v0.92 — SP配分で難易度緩和</h1>
+  <h1>◆ 強化脳汁ゲー（仮）◆ ブラウザ試作 v0.93 — 保護系を確率式に一新</h1>
   <div id="heatbar"></div><!-- v0.85 段のテーマ色アクセント帯 -->
 
   <div class="win">
@@ -129,17 +129,17 @@
     <div class="row">
       <span class="stat">🌳SP残<b id="sp">5</b></span>
       <span class="stat">📚スタック<b id="stack">0</b></span>
-      <span class="stat">🪙クロン<b id="clone">0</b></span>
     </div>
   </div>
 
   <!-- v0.78 msgログ窓を廃止＝強化パネル(#screen)内のメッセージ行に合流。強化フェーズはこの1箱が常設パネル。 -->
   <div class="win"><div id="screen"></div></div>
 
-  <div class="sub">名称・数値は仮の手触り確認用（v0.92＝SP配分で難易度緩和）。</div>
+  <div class="sub">名称・数値は仮の手触り確認用（v0.93＝保護系を確率式に一新）。</div>
   <div class="sub" style="opacity:.7;margin-top:2px">本作は『黒い砂漠』(Pearl Abyss)の非公式ファンメイド作品です。権利者とは一切関係ありません。非営利。</div>
   <details style="margin-top:4px"><summary class="sub" style="cursor:pointer;list-style-position:inside;opacity:.55">開発メモ（版ごとの実装履歴・クリックで開く）</summary>
   <div class="sub" style="text-align:left">
+  ※v0.93【保護系を確率式に一新（社長FB「保護系は弱い」・通貨クロン廃止）】：保護系の下落防止を<b>通貨クロン(閾値/供給)ベースから確率ベースに</b>作り替え。<b>クロン石</b>(SP2・5rank)＝強化失敗時 10/20/30/40/50% で段の下落を1防ぐ→<b>詫びクロン</b>(SP10・前提クロン石Lv3)＝発動確率×2(20〜100%)→<b>Ｊハン</b>(SP15・前提詫びクロン)＝下落保護が2に。<b>ハイデル宴会・クロン通貨(HUD🪙/閾値wabiThreshold/成功時供給)は全廃</b>＝供給と必要数の調整が不要に。段の下落だけ防ぎ耐久ダメは軽減しない(生存タイマーは維持)。判定/火力/他系統は不変。<br>
   ※v0.92【SP配分で難易度緩和（社長FB「難易度高い」＋v0.91プレイログ解析）】：段クリアのSP獲得量を <b>Ⅰ〜Ⅹ＝1,1,1,1,1,2,2,2,3,5</b> に（旧＝Ⅰ〜Ⅷ+1/Ⅸ+2/Ⅹ+3）＝深い段ほどSPが増えて育成が加速。定数`SP_GAIN_BY_RI[ri]`。v0.91実プレイ＝15〜18段・限界突破0回・root/voice低くkakera5偏重で火力不足＝SPが足りず火力を積めていなかった→SP増で火力ビルドに届きやすく。判定式・スキル効果は不変。<br>
   ※v0.91【ヴォルクス加算化・トラナン役割変更（社長FB「助言x10で跳ね上がりすぎ」）】：<b>ヴォルクスの叫び×助言を乗算→加算に</b>（叫び×2＋助言×10＝12倍・跳ね上がりを緩やか化）。<b>闇捕食</b>は「二乗(叫び²×助言²)」を撤去し<b>「加算を乗算に戻す」解放スキル</b>に（叫び×2×助言×10＝20倍・SP15→20）。<b>耐久回復ツリーを一本道に再編</b>＝記憶の欠片(10〜50%で耐久+5)→<b>トラナンの秘訣（役割全面変更：旧確定回復→失敗時の耐久減を-10〜-50%軽減・SP5・前提=欠片Lv5）</b>→職人の記憶(回復×2・SP15・前提=トラナンLv3)。fireMult()と演出rateBreakdown()の両方を加算/乗算に統一（判定と演出の一致を維持）。ボット検証9ビルド×150ラン＝例外0・無限0・NaN0・成功率[0.09,0.99]。<b>無敵化なし</b>（回復+保護+減衰=中央30段・回復単=21段＝トラナン軽減を入れても不死身化せず）。火力全振り(加算)=53段・フル装備=中央89/最大120段（「がんばったら100段」成立）。全数値【仮】。<br>
   ※v0.90【成功率ベースへ全面作り替え（社長方針・コア判定式の刷新・数値は全て仮）】：判定の根っこを<b>「爆発値÷壁」の減衰カーブ</b>から<b>「素の成功率」を土台に±%を積む方式</b>に変更。素の成功率（段ごと・真71%→神1%目安のカーブ）＋<b>火力</b>(爆発値/壁×FIRE_INFLUENCE=0.6の押し上げ)−<b>武器抵抗</b>(段で最大-25%)＋<b>減衰対抗</b>(わるあがき等で抵抗を打ち消す)＋<b>オーバーキル</b>(限界突破の超過分・上限+15%)＋<b>ブラックストーン成功率%</b>＋<b>失敗スタック%</b>＝最終（上限99%）。判定(tryEnh)と演出(showEnhance/playEnhance/buildRevealSteps)は<b>rateBreakdown()一本</b>に一致させ、旧経路(computeEX/successRateEX/decayedRateEX等)からは呼ばない（関数自体は他参照に備えて残置）。旧・6小修正（記憶の欠片回復+5/職人×2/スタックHUD/トラナン確定発動等）は維持。ボット検証（スキルなし/火力全振り/耐久回復/スタック/混合の5ビルド×150ラン以上）で例外0・無限0・rate範囲内・限界突破発生を確認。<b>無敵化防止＝失敗の耐久ダメが失敗回数で逓増（DUR_FAIL_ESCALATE）。回復均衡の永久ループを有限化。</b><br>
@@ -212,10 +212,7 @@ const KOU_TOTAL_CAP=0.40;
 const PERSTACK_BASE=0.01, STACK_RATE_CAP=0.40;   // v0.90 スタック1つの成功率寄与を2%→1%に下げる（社長指示・減衰の打ち消しを弱める）
 // v0.87 スタックの基本蓄積＝失敗ごと+1（スタックスキル無しでも付き、HUDに表示）。スタックスキルの値はこの上に加算される。
 const STACK_BASE_GAIN=1;
-// ④ 詫びクロン保護の閾値（段連動）：クロン収入(+100〜500/成功)が辛うじて追いつくか際どい値に【ガード・調整可】
-const WABI_THRESH_BASE=25, WABI_THRESH_GROWTH=1.08;   // v0.90 クロン保護の閾値を1/20に（社長「多すぎて全然届かない」・旧500→25）
-// ハイデル宴会：N回の強化ごとにクロン大量獲得
-const HEIDEL_INTERVAL=12, HEIDEL_AMOUNT=10000;
+// v0.93 保護系を確率式に一新（社長指示）：通貨クロン(閾値/供給)を廃止＝クロン石の確率で段の下落を防ぐ。閾値/宴会の定数は撤去。
 // v0.92 段階SP獲得（社長指示・難易度緩和）：Ⅰ〜Ⅹ＝1,1,1,1,1,2,2,2,3,5（深い段ほど増えて育成が加速）
 const SP_GAIN_BY_RI=[1,1,1,1,1,2,2,2,3,5];   // index=ri（段のローマ位0-9）
 
@@ -262,12 +259,12 @@ const TREE=[
  {id:'kiai', branch:'減衰対抗系', name:'ＫＩＡＩ', cost:15, maxRank:1, reqs:[{id:'madaikeru',rank:1}],
    desc:()=>'わるあがきがもう一度発動（合成 r→1-(1-r)²・例 50%→75%）'},
  // 保護系
- {id:'wabi', branch:'保護系', name:'詫びクロン', cost:2, maxRank:5, reqs:[{id:'root',rank:1}],
-   vals:[100,200,300,400,500], desc:(r,v)=>'強化成功時クロン+'+Math.round(v)+'。クロンが閾値（今 '+wabiThreshold().toLocaleString()+'）以上なら失敗の段戻りを-1'},
- {id:'heidel', branch:'保護系', name:'ハイデル宴会', cost:10, maxRank:1, reqs:[{id:'wabi',rank:5}],
-   desc:()=>HEIDEL_INTERVAL+'回の強化に1回、クロン+'+HEIDEL_AMOUNT.toLocaleString()},
- {id:'jhan', branch:'保護系', name:'Ｊハン', cost:10, maxRank:1, reqs:[{id:'heidel',rank:1}],
-   desc:()=>'クロンが閾値以上で保護が効くとき、段が全く下がらない（段戻り完全無効）'},
+ {id:'kuronishi', branch:'保護系', name:'クロン石', cost:2, maxRank:5, reqs:[{id:'root',rank:1}],
+   vals:[0.10,0.20,0.30,0.40,0.50], desc:(r,v)=>'強化失敗時 '+Math.round(protRate()*100)+'% の確率で段の下落を'+protGuard()+'防ぐ（クロン石単体の確率＝'+Math.round(v*100)+'%）'},   // v0.93 通貨廃止・確率式
+ {id:'wabi', branch:'保護系', name:'詫びクロン', cost:10, maxRank:1, reqs:[{id:'kuronishi',rank:3}],
+   desc:()=>'クロン石の発動確率が×2になる（10〜50%→20〜100%）'},   // v0.93 役割変更：クロン供給→確率2倍
+ {id:'jhan', branch:'保護系', name:'Ｊハン', cost:15, maxRank:1, reqs:[{id:'wabi',rank:1}],
+   desc:()=>'クロン石の下落保護が2になる（発動時に段の下落を2防ぐ）'},   // v0.93 完全無効→保護量2
 ];
 const TREE_MAP={}; TREE.forEach(n=>TREE_MAP[n.id]=n);
 // 根っこ系(root/root2/root3)は上部にチェーン表示。下に5系統を並べる（全表示・折りたたみなし）
@@ -329,9 +326,9 @@ function decayReliefTotal(){ let r = skR('waru')>0 ? nodeVal('waru') : 0;
   if(skR('kiai')>0) r = 1-(1-r)*(1-r);
   return Math.min(KOU_TOTAL_CAP, Math.max(0,r)); }
 function ceilBoost(){ return 0; }   // v0.81 天井押し上げノードは撤去
-// v0.81 詫びクロン保護：段連動閾値（クロン保有がこれ以上なら段戻り緩和）＝収入とギリギリ競る値【ガード】
-function wabiThreshold(){ return Math.round(WABI_THRESH_BASE*Math.pow(WABI_THRESH_GROWTH, Math.max(0, totalStageNow()-STAGE_START))); }
-function wabiProtected(){ return skR('wabi')>0 && (g.clone||0) >= wabiThreshold(); }
+// v0.93 保護系（確率式）：クロン石の発動確率＝lerp(10〜50%)×(詫びクロンで×2)。上限100%。Ｊハンで保護量2。
+function protRate(){ if(skR('kuronishi')<=0) return 0; return Math.min(1, nodeVal('kuronishi')*(skR('wabi')>0?2:1)); }
+function protGuard(){ return skR('jhan')>0 ? 2 : 1; }
 function reqMet(id){ const n=TREE_MAP[id]; if(!n) return false; return (n.reqs||[]).every(rq=>skR(rq.id) >= rq.rank); }   // v0.72 複数前提：全reqsを満たすか
 function canOpen(id){ const n=TREE_MAP[id]; if(!n) return false; return reqMet(id) && skR(id)<n.maxRank && g.sp>=n.cost; }
 function openNode(id){ if(!canOpen(id)) return;
@@ -424,8 +421,6 @@ function tryEnh(){
   if(!g.ended && skR('kakera')>0){
     if(Math.random()<nodeVal('kakera')){ const h=kakeraHeal(); if(h>0) g.dur=Math.min(maxDur(), g.dur+h); }
   }
-  // v0.81 ハイデル宴会：N回の強化に1回クロン大量獲得
-  if(!g.ended && skR('heidel')>0){ g.heidelTick=(g.heidelTick||0)+1; if(g.heidelTick>=HEIDEL_INTERVAL){ g.heidelTick=0; g.clone=(g.clone||0)+HEIDEL_AMOUNT; } }
   if(g.ended) return;
   render();
   if(checkDead()) return;
@@ -440,7 +435,6 @@ function onSuccess(ex){
   // v0.81 折れない心：成功でスタック50%残す（端数切り上げ）。無ければ0リセット
   g.stack = skR('orenai')>0 ? Math.ceil((g.stack||0)*0.5) : 0;
   g.lastFailed=false; g.failStreak=0;
-  if(skR('wabi')>0) g.clone=(g.clone||0)+Math.round(nodeVal('wabi'));   // v0.81 詫びクロン：成功時クロン獲得
   g.stage++; g.combo++; g.sp+=spGain;
   g.succCount=(g.succCount||0)+1; if(capped) g.feverCount=(g.feverCount||0)+1;   // plog用カウンタ
   g.score += Math.round(wall>0?Math.min(ex,wall):ex);
@@ -461,11 +455,11 @@ function onFail(ex){
   const tier=failTier();
   const dmg=failDurDamage();       // 軽減前ティア基準（保護は段のみ軽減・耐久は常にこの量）
   g.dur=Math.max(0, g.dur-dmg);
-  // 段戻りはティアぶん。保護系で「段の下がり幅だけ」軽減（-1／Ｊハンで0）。
+  // v0.93 段戻りはティアぶん。保護系（クロン石）は確率で段の下がり幅だけ軽減（耐久は軽減しない＝生存タイマー）。
   let drop=tier, note='';
-  if(wabiProtected()){
-    if(skR('jhan')>0){ drop=0; note="\n🪙 Ｊハン：クロン閾値保有で段が下がらない！（耐久は食らう）"; }
-    else { drop=Math.max(0, tier-1); note="\n🪙 詫びクロン：段戻りを-1緩和（耐久は食らう）。"; }
+  if(skR('kuronishi')>0 && Math.random()<protRate()){
+    const guard=protGuard(); drop=Math.max(0, tier-guard);
+    note="\n🪙 クロン石：段の下落を"+guard+"防いだ！（耐久は食らう）";
   }
   if(g.stage<=STAGE_START) drop=0;   // 開始段では段は下がらない（耐久は上のとおり食らう）
   if(drop>0){ g.stage=Math.max(STAGE_START, g.stage-drop); g.fallbackCount=(g.fallbackCount||0)+1; }
@@ -495,12 +489,12 @@ function startTurn(){ g.turn++;
   g.phase='enhance'; render(); showEnhance(); }   // v0.81 詫びクロンは"成功時獲得"に変更＝毎ターン供給は廃止
 function showIntro(){
   g.phase='intro'; render();
-  let s='<div class="center" style="color:#ffd24a;font-size:15px;margin-bottom:8px">◆ 遊び方（v0.92）◆</div>';
+  let s='<div class="center" style="color:#ffd24a;font-size:15px;margin-bottom:8px">◆ 遊び方（v0.93）◆</div>';
   s+='<div style="font-size:13px;line-height:1.8">'
-    +'・リソースは<b>武器耐久・SP・クロン</b>の3つ。準備フェーズや商店はない。<br>'
+    +'・リソースは<b>武器耐久・SP</b>の2つ。準備フェーズや商店はない。<br>'
     +'・毎ターン<b>「強化する」</b>を選ぶだけ。成功すれば<b>段+1・SP獲得</b>（Ⅰ〜Ⅷ+1／Ⅸ+2／Ⅹ+3）。<br>'
     +'・<b>失敗すると段が戻り、その幅ぶん武器耐久が減る</b>：無印は段-1。真グレード以上は<b>Ⅰ〜Ⅳ=段-1／Ⅴ〜Ⅷ=段-2／Ⅸ・Ⅹ=段-3</b>。<b>耐久ダメ＝段の下がり幅×10</b>（-1なら-10・-3なら-30）。<b>耐久が0でゲームオーバー</b>（下限は開始段）。<br>'
-    +'・<b>クロン</b>は「詫びクロン」を取ると<b>強化成功時</b>に貯まる。<b>閾値以上のクロン保有</b>で段の下がり幅を緩和（Ｊハンで段は完全無効）。※<b>耐久ダメは保護でも減らない</b>＝耐久が生存タイマー。<br>'
+    +'・<b>保護系「クロン石」</b>は<b>確率で失敗時の段の下がり幅を防ぐ</b>（詫びクロンで確率×2・Ｊハンで防ぐ量が2に）。※<b>耐久ダメは保護でも減らない</b>＝耐久が生存タイマー。<br>'
     +'・貯めたSPは<b>🌳スキルツリー</b>で使う。根「ブラックストーン」を取ると<b>強化・耐久回復・失敗・減衰対抗・保護</b>の5系統が開く（凝縮/無欠でブラックストーンを最大×6）。手前ノードを必要Lvまで育てると奥が解放。<br>'
     +'・成功率は<b>「素の成功率」を土台に、火力（爆発値）で上げ、武器の抵抗で下げ、限界突破のオーバーキルでさらに上げる</b>積み上げ式。<b>深い段ほど素の成功率が低い</b>ので、火力と抵抗対策のビルドが鍵。<br>'
     +'・<b>火力を積めば爆発値が壁を超えて限界突破が出まくる</b>のが狙い。ただし深いほど失敗は重く、いつか耐久が尽きる。<b>どこまで登れるかはビルド次第。</b>'
@@ -674,7 +668,6 @@ function render(){ if(!g) return;
   if(el('score')) el('score').textContent=g.score.toLocaleString();
   if(el('sp')) el('sp').textContent=g.sp;
   if(el('stack')) el('stack').textContent=(g.stack||0);   // v0.87 SP残の隣に失敗スタックを表示
-  if(el('clone')) el('clone').textContent=(g.clone||0).toLocaleString();
   if(el('wdur')) el('wdur').textContent=Math.max(0,Math.round(g.dur));
   if(el('wdurmax')) el('wdurmax').textContent=maxDur();
   const wb=el('wbar'); if(wb){ const pct=Math.max(0,Math.min(100,g.dur/maxDur()*100));
@@ -740,13 +733,13 @@ function buildPlaylogData(reason){
     const totalStage = ((g.maxCycle||1)-1)*100 + (((g.maxStage-1)%100)+1);   // 通算到達段（周回込み）
     const skills={}; TREE.forEach(n=>{ skills[n.id]=skR(n.id); });   // v0.72 最終スキル振り（全ノードid→rank）
     return JSON.stringify({
-      ver:'v0.92', reason:(reason||'manual'), ts:new Date().toISOString(),
+      ver:'v0.93', reason:(reason||'manual'), ts:new Date().toISOString(),
       maxStage: totalStage, cycle:(g.maxCycle||1), turn:(g.turn||0), score:(g.score||0),
       clone:(g.clone||0), fallback:(g.fallbackCount||0),
       success:(g.succCount||0), fail:(g.failCount||0), fever:(g.feverCount||0),
       skills: skills
     });
-  }catch(e){ return JSON.stringify({ver:'v0.92', reason:(reason||'manual'), err:String(e)}); }
+  }catch(e){ return JSON.stringify({ver:'v0.93', reason:(reason||'manual'), err:String(e)}); }
 }
 function uploadPlaylog(reason){
   try{
