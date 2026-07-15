@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>強化脳汁ゲー（仮）— ブラウザ試作 v0.93（保護系を確率式に一新）</title>
+<title>強化脳汁ゲー（仮）— ブラウザ試作 v0.94（段の色演出をパネル全体に・見えるよう強化）</title>
 <style>
   :root{ --navy:#000a5a; --navy2:#001080; --gold:#ffd24a; --edge:#6b7bd6; --panel:#00104a; --track:#00003a; }
   *{ box-sizing:border-box; }
@@ -12,8 +12,8 @@
   body{ display:flex; justify-content:center; padding:12px; }
   #app{ width:100%; max-width:720px; }
   h1{ font-size:15px; color:var(--gold); text-align:center; letter-spacing:1px; margin:4px 0 10px; }
-  .win{ background:var(--navy); border:3px solid #fff; border-radius:8px; padding:10px 12px;
-    box-shadow:0 0 0 3px #000, inset 0 0 0 1px var(--edge); margin-bottom:10px; }
+  .win{ background:var(--winbg, var(--navy)); border:3px solid var(--winborder,#fff); border-radius:8px; padding:10px 12px;
+    box-shadow:0 0 0 3px #000, inset 0 0 0 1px var(--edge); margin-bottom:10px; transition:background .5s ease, border-color .5s ease; }
   .row{ display:flex; flex-wrap:wrap; gap:6px 14px; }
   .stat{ font-size:13px; white-space:nowrap; }
   .stat b{ color:var(--gold); }
@@ -83,7 +83,7 @@
   .gaugefill{ height:100%; width:0%; background:#ffd24a; transition:width .4s ease, background .3s; border-radius:11px 0 0 11px; }
   /* v0.85 段のテーマ色：body背景＋パネル内枠(--edge)＋アクセント帯を updateTheme が段(ri)に応じて着色（不透明パネルでも見えるようパネル側に効かせる） */
   body{ transition:background .6s ease; }
-  #heatbar{ height:4px; border-radius:3px; margin:0 0 8px; background:transparent; transition:background .5s ease, box-shadow .5s ease; }
+  #heatbar{ height:8px; border-radius:4px; margin:0 0 8px; background:transparent; transition:background .5s ease, box-shadow .5s ease; }
   .win{ transition:box-shadow .5s ease; }
   /* v0.85 プレイログ保存など操作の手応えトースト（全画面共通・#msg有無に依らず出る） */
   #toast{ position:fixed; left:50%; top:12%; transform:translateX(-50%); background:#183418; color:#8dff9a;
@@ -113,7 +113,7 @@
 </head>
 <body>
 <div id="app">
-  <h1>◆ 強化脳汁ゲー（仮）◆ ブラウザ試作 v0.93 — 保護系を確率式に一新</h1>
+  <h1>◆ 強化脳汁ゲー（仮）◆ ブラウザ試作 v0.94 — 段の色演出を強化</h1>
   <div id="heatbar"></div><!-- v0.85 段のテーマ色アクセント帯 -->
 
   <div class="win">
@@ -135,10 +135,11 @@
   <!-- v0.78 msgログ窓を廃止＝強化パネル(#screen)内のメッセージ行に合流。強化フェーズはこの1箱が常設パネル。 -->
   <div class="win"><div id="screen"></div></div>
 
-  <div class="sub">名称・数値は仮の手触り確認用（v0.93＝保護系を確率式に一新）。</div>
+  <div class="sub">名称・数値は仮の手触り確認用（v0.94＝段の色演出を強化）。</div>
   <div class="sub" style="opacity:.7;margin-top:2px">本作は『黒い砂漠』(Pearl Abyss)の非公式ファンメイド作品です。権利者とは一切関係ありません。非営利。</div>
   <details style="margin-top:4px"><summary class="sub" style="cursor:pointer;list-style-position:inside;opacity:.55">開発メモ（版ごとの実装履歴・クリックで開く）</summary>
   <div class="sub" style="text-align:left">
+  ※v0.94【段の色演出を強化（社長FB「段の色が変わる効果がまた消えてる」・表示のみ）】：色演出のコード自体は生きていたが、出方が地味すぎた（パネル枠は白3pxで--edgeは内側1pxだけ＝白枠に埋没／body背景色はパネル外の余白だけ＝スマホでほぼ不可視／実質4pxの帯のみ）。→<b>パネル本体(.win)の背景と縁取りを段の色で染める</b>ように変更（`--winbg`/`--winborder`をupdateThemeが設定・Ⅰ〜Ⅲ通常/Ⅳ〜Ⅷ琥珀→赤/Ⅸ・Ⅹ深紅）＋上部帯#heatbarを4px→8pxに。判定/数値/演出シーケンスは不変（表示のみ）。<br>
   ※v0.93【保護系を確率式に一新（社長FB「保護系は弱い」・通貨クロン廃止）】：保護系の下落防止を<b>通貨クロン(閾値/供給)ベースから確率ベースに</b>作り替え。<b>クロン石</b>(SP2・5rank)＝強化失敗時 10/20/30/40/50% で段の下落を1防ぐ→<b>詫びクロン</b>(SP10・前提クロン石Lv3)＝発動確率×2(20〜100%)→<b>Ｊハン</b>(SP15・前提詫びクロン)＝下落保護が2に。<b>ハイデル宴会・クロン通貨(HUD🪙/閾値wabiThreshold/成功時供給)は全廃</b>＝供給と必要数の調整が不要に。段の下落だけ防ぎ耐久ダメは軽減しない(生存タイマーは維持)。判定/火力/他系統は不変。<br>
   ※v0.92【SP配分で難易度緩和（社長FB「難易度高い」＋v0.91プレイログ解析）】：段クリアのSP獲得量を <b>Ⅰ〜Ⅹ＝1,1,1,1,1,2,2,2,3,5</b> に（旧＝Ⅰ〜Ⅷ+1/Ⅸ+2/Ⅹ+3）＝深い段ほどSPが増えて育成が加速。定数`SP_GAIN_BY_RI[ri]`。v0.91実プレイ＝15〜18段・限界突破0回・root/voice低くkakera5偏重で火力不足＝SPが足りず火力を積めていなかった→SP増で火力ビルドに届きやすく。判定式・スキル効果は不変。<br>
   ※v0.91【ヴォルクス加算化・トラナン役割変更（社長FB「助言x10で跳ね上がりすぎ」）】：<b>ヴォルクスの叫び×助言を乗算→加算に</b>（叫び×2＋助言×10＝12倍・跳ね上がりを緩やか化）。<b>闇捕食</b>は「二乗(叫び²×助言²)」を撤去し<b>「加算を乗算に戻す」解放スキル</b>に（叫び×2×助言×10＝20倍・SP15→20）。<b>耐久回復ツリーを一本道に再編</b>＝記憶の欠片(10〜50%で耐久+5)→<b>トラナンの秘訣（役割全面変更：旧確定回復→失敗時の耐久減を-10〜-50%軽減・SP5・前提=欠片Lv5）</b>→職人の記憶(回復×2・SP15・前提=トラナンLv3)。fireMult()と演出rateBreakdown()の両方を加算/乗算に統一（判定と演出の一致を維持）。ボット検証9ビルド×150ラン＝例外0・無限0・NaN0・成功率[0.09,0.99]。<b>無敵化なし</b>（回復+保護+減衰=中央30段・回復単=21段＝トラナン軽減を入れても不死身化せず）。火力全振り(加算)=53段・フル装備=中央89/最大120段（「がんばったら100段」成立）。全数値【仮】。<br>
@@ -489,7 +490,7 @@ function startTurn(){ g.turn++;
   g.phase='enhance'; render(); showEnhance(); }   // v0.81 詫びクロンは"成功時獲得"に変更＝毎ターン供給は廃止
 function showIntro(){
   g.phase='intro'; render();
-  let s='<div class="center" style="color:#ffd24a;font-size:15px;margin-bottom:8px">◆ 遊び方（v0.93）◆</div>';
+  let s='<div class="center" style="color:#ffd24a;font-size:15px;margin-bottom:8px">◆ 遊び方（v0.94）◆</div>';
   s+='<div style="font-size:13px;line-height:1.8">'
     +'・リソースは<b>武器耐久・SP</b>の2つ。準備フェーズや商店はない。<br>'
     +'・毎ターン<b>「強化する」</b>を選ぶだけ。成功すれば<b>段+1・SP獲得</b>（Ⅰ〜Ⅷ+1／Ⅸ+2／Ⅹ+3）。<br>'
@@ -677,23 +678,26 @@ function render(){ if(!g) return;
 // v0.85 段のテーマ色（社長FB「色演出が見えない・帯を拡張」）：Ⅰ〜Ⅲ=通常／Ⅳ〜Ⅷ=温色→赤の5段グラデ／Ⅸ・Ⅹ=最も濃い赤。
 // ri=(段-1)%10。不透明パネルに覆われても見えるよう、body背景＋パネル内枠(--edge)＋上部アクセント帯(#heatbar)の3箇所に着色。
 function heatTheme(ri){   // ri<0 or 0-2 → 通常(null)。3-7 → amber→red。8-9 → crimson。
+  // v0.94 パネル本体(win)も段の色で染めて確実に見えるように（win＝濃いめの地色・winborder＝縁取り）。
   if(ri<0 || ri<=2) return null;
-  if(ri>=8){ return { edge:'#ff2f4f', bar:'#e4002b', bg:'#3c0512' }; }   // Ⅸ・Ⅹ 深紅
+  if(ri>=8){ return { edge:'#ff2f4f', bar:'#e4002b', bg:'#3c0512', win:'#2a0510', winborder:'#ff3a56' }; }   // Ⅸ・Ⅹ 深紅
   const t=(ri-3)/4;   // 0(Ⅳ)〜1(Ⅷ)
   const L=(a,b)=>Math.round(a+(b-a)*t);
   const col='rgb('+L(255,255)+','+L(186,64)+','+L(80,36)+')';   // amber #ffba50 → red #ff4024
-  return { edge:col, bar:col, bg:'rgb('+L(34,64)+','+L(16,10)+','+L(6,8)+')' };
+  const win='rgb('+L(40,42)+','+L(24,12)+','+L(4,14)+')';       // 琥珀寄りの濃紺 → 赤寄りの濃色（パネル地色）
+  return { edge:col, bar:col, bg:'rgb('+L(34,64)+','+L(16,10)+','+L(6,8)+')', win:win, winborder:col };
 }
 function updateTheme(){ if(typeof document==='undefined'||!document.body) return;
   const home=(g.phase==='intro'||g.phase==='gameover'||g.ended);
   const ri= home ? -1 : (g.stage-1)%10;
   const h=heatTheme(ri);
   const doc=document.documentElement, bar=document.getElementById('heatbar');
-  if(!h){ if(doc&&doc.style) doc.style.setProperty('--edge','#6b7bd6'); document.body.style.background='';
+  const setP=(k,v)=>{ if(doc&&doc.style){ if(v==null) doc.style.removeProperty(k); else doc.style.setProperty(k,v); } };
+  if(!h){ setP('--edge','#6b7bd6'); setP('--winbg',null); setP('--winborder',null); document.body.style.background='';
     if(bar){ bar.style.background='transparent'; bar.style.boxShadow='none'; } }
-  else { if(doc&&doc.style) doc.style.setProperty('--edge', h.edge);
+  else { setP('--edge', h.edge); setP('--winbg', h.win); setP('--winborder', h.winborder);   // v0.94 パネル本体も着色
     document.body.style.background='radial-gradient(ellipse at 50% 16%, '+h.bg+' 0%, #0a0206 55%, #000 100%)';
-    if(bar){ bar.style.background='linear-gradient(90deg, rgba(0,0,0,0), '+h.bar+', rgba(0,0,0,0))'; bar.style.boxShadow='0 0 10px '+h.bar; } }
+    if(bar){ bar.style.background='linear-gradient(90deg, rgba(0,0,0,0), '+h.bar+', rgba(0,0,0,0))'; bar.style.boxShadow='0 0 12px '+h.bar; } }
 }
 let _lastScrPhase=null;
 function scr(html){ document.getElementById("screen").innerHTML=html;
@@ -733,13 +737,13 @@ function buildPlaylogData(reason){
     const totalStage = ((g.maxCycle||1)-1)*100 + (((g.maxStage-1)%100)+1);   // 通算到達段（周回込み）
     const skills={}; TREE.forEach(n=>{ skills[n.id]=skR(n.id); });   // v0.72 最終スキル振り（全ノードid→rank）
     return JSON.stringify({
-      ver:'v0.93', reason:(reason||'manual'), ts:new Date().toISOString(),
+      ver:'v0.94', reason:(reason||'manual'), ts:new Date().toISOString(),
       maxStage: totalStage, cycle:(g.maxCycle||1), turn:(g.turn||0), score:(g.score||0),
       clone:(g.clone||0), fallback:(g.fallbackCount||0),
       success:(g.succCount||0), fail:(g.failCount||0), fever:(g.feverCount||0),
       skills: skills
     });
-  }catch(e){ return JSON.stringify({ver:'v0.93', reason:(reason||'manual'), err:String(e)}); }
+  }catch(e){ return JSON.stringify({ver:'v0.94', reason:(reason||'manual'), err:String(e)}); }
 }
 function uploadPlaylog(reason){
   try{
