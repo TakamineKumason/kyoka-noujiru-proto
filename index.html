@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>強化脳汁ゲー（仮）— ブラウザ試作 v0.91（ヴォルクス加算化・トラナン役割変更）</title>
+<title>強化脳汁ゲー（仮）— ブラウザ試作 v0.92（SP配分で難易度緩和）</title>
 <style>
   :root{ --navy:#000a5a; --navy2:#001080; --gold:#ffd24a; --edge:#6b7bd6; --panel:#00104a; --track:#00003a; }
   *{ box-sizing:border-box; }
@@ -113,7 +113,7 @@
 </head>
 <body>
 <div id="app">
-  <h1>◆ 強化脳汁ゲー（仮）◆ ブラウザ試作 v0.91 — ヴォルクス加算化・トラナン役割変更</h1>
+  <h1>◆ 強化脳汁ゲー（仮）◆ ブラウザ試作 v0.92 — SP配分で難易度緩和</h1>
   <div id="heatbar"></div><!-- v0.85 段のテーマ色アクセント帯 -->
 
   <div class="win">
@@ -136,10 +136,11 @@
   <!-- v0.78 msgログ窓を廃止＝強化パネル(#screen)内のメッセージ行に合流。強化フェーズはこの1箱が常設パネル。 -->
   <div class="win"><div id="screen"></div></div>
 
-  <div class="sub">名称・数値は仮の手触り確認用（v0.91＝ヴォルクス加算化・トラナン役割変更）。</div>
+  <div class="sub">名称・数値は仮の手触り確認用（v0.92＝SP配分で難易度緩和）。</div>
   <div class="sub" style="opacity:.7;margin-top:2px">本作は『黒い砂漠』(Pearl Abyss)の非公式ファンメイド作品です。権利者とは一切関係ありません。非営利。</div>
   <details style="margin-top:4px"><summary class="sub" style="cursor:pointer;list-style-position:inside;opacity:.55">開発メモ（版ごとの実装履歴・クリックで開く）</summary>
   <div class="sub" style="text-align:left">
+  ※v0.92【SP配分で難易度緩和（社長FB「難易度高い」＋v0.91プレイログ解析）】：段クリアのSP獲得量を <b>Ⅰ〜Ⅹ＝1,1,1,1,1,2,2,2,3,5</b> に（旧＝Ⅰ〜Ⅷ+1/Ⅸ+2/Ⅹ+3）＝深い段ほどSPが増えて育成が加速。定数`SP_GAIN_BY_RI[ri]`。v0.91実プレイ＝15〜18段・限界突破0回・root/voice低くkakera5偏重で火力不足＝SPが足りず火力を積めていなかった→SP増で火力ビルドに届きやすく。判定式・スキル効果は不変。<br>
   ※v0.91【ヴォルクス加算化・トラナン役割変更（社長FB「助言x10で跳ね上がりすぎ」）】：<b>ヴォルクスの叫び×助言を乗算→加算に</b>（叫び×2＋助言×10＝12倍・跳ね上がりを緩やか化）。<b>闇捕食</b>は「二乗(叫び²×助言²)」を撤去し<b>「加算を乗算に戻す」解放スキル</b>に（叫び×2×助言×10＝20倍・SP15→20）。<b>耐久回復ツリーを一本道に再編</b>＝記憶の欠片(10〜50%で耐久+5)→<b>トラナンの秘訣（役割全面変更：旧確定回復→失敗時の耐久減を-10〜-50%軽減・SP5・前提=欠片Lv5）</b>→職人の記憶(回復×2・SP15・前提=トラナンLv3)。fireMult()と演出rateBreakdown()の両方を加算/乗算に統一（判定と演出の一致を維持）。ボット検証9ビルド×150ラン＝例外0・無限0・NaN0・成功率[0.09,0.99]。<b>無敵化なし</b>（回復+保護+減衰=中央30段・回復単=21段＝トラナン軽減を入れても不死身化せず）。火力全振り(加算)=53段・フル装備=中央89/最大120段（「がんばったら100段」成立）。全数値【仮】。<br>
   ※v0.90【成功率ベースへ全面作り替え（社長方針・コア判定式の刷新・数値は全て仮）】：判定の根っこを<b>「爆発値÷壁」の減衰カーブ</b>から<b>「素の成功率」を土台に±%を積む方式</b>に変更。素の成功率（段ごと・真71%→神1%目安のカーブ）＋<b>火力</b>(爆発値/壁×FIRE_INFLUENCE=0.6の押し上げ)−<b>武器抵抗</b>(段で最大-25%)＋<b>減衰対抗</b>(わるあがき等で抵抗を打ち消す)＋<b>オーバーキル</b>(限界突破の超過分・上限+15%)＋<b>ブラックストーン成功率%</b>＋<b>失敗スタック%</b>＝最終（上限99%）。判定(tryEnh)と演出(showEnhance/playEnhance/buildRevealSteps)は<b>rateBreakdown()一本</b>に一致させ、旧経路(computeEX/successRateEX/decayedRateEX等)からは呼ばない（関数自体は他参照に備えて残置）。旧・6小修正（記憶の欠片回復+5/職人×2/スタックHUD/トラナン確定発動等）は維持。ボット検証（スキルなし/火力全振り/耐久回復/スタック/混合の5ビルド×150ラン以上）で例外0・無限0・rate範囲内・限界突破発生を確認。<b>無敵化防止＝失敗の耐久ダメが失敗回数で逓増（DUR_FAIL_ESCALATE）。回復均衡の永久ループを有限化。</b><br>
   ※v0.85【UI3点・社長FB（表示/レイアウトのみ・判定/数値/演出シーケンス不変）】：<b>A. プレイログ保存の手応え</b>＝押下時に全画面共通の<b>トースト「📋 プレイログを保存しました」</b>を表示（#msgの有無に依らず必ず見える・数秒でフェード）＋メッセージ行も更新。原因＝v0.78のUI統合でゲームオーバー画面等に#msgが無く setMsg が no-op になっていたため（トーストで解決）。<b>B. 段の色演出＋帯拡張</b>＝不透明パネルがbody背景グラデを覆って見えなかったのを、<b>パネル内枠(--edge)＋上部アクセント帯(#heatbar)＋body背景</b>の3箇所に着色して可視化。帯を社長指定に拡張＝Ⅰ〜Ⅲ通常／Ⅳ〜Ⅷ温色→赤の5段グラデ(ri3→7)／Ⅸ・Ⅹ最も濃い深紅。ri=(段-1)%10・グレードが上がってⅠに戻れば通常。演出中も背景/枠のみで破綻なし。<b>C. 演出ボタンの位置</b>＝爆発値/壁の直下に<b>#animctl（強化する/一気に判定/次へ 等）を上固定</b>し、演出チップ(#animchips)はその下に積む＝チップが増えてもボタン位置が動かない（スマホで押しやすい）。メッセージ行もボタン下・チップ上に。判定/buildRevealSteps/ex-率一致/失敗ペナルティ(v0.82)/減衰(v0.83-84)は不変。<br>
@@ -215,8 +216,8 @@ const STACK_BASE_GAIN=1;
 const WABI_THRESH_BASE=25, WABI_THRESH_GROWTH=1.08;   // v0.90 クロン保護の閾値を1/20に（社長「多すぎて全然届かない」・旧500→25）
 // ハイデル宴会：N回の強化ごとにクロン大量獲得
 const HEIDEL_INTERVAL=12, HEIDEL_AMOUNT=10000;
-// v0.90 段階SP獲得：Ⅰ〜Ⅷ=+1／Ⅸ=+2／Ⅹ（ボス）=+3（社長指示で元に戻す）
-const SP_GAIN_NORMAL=1, SP_GAIN_IX=2, SP_GAIN_X=3;   // v0.90 社長指示で元に戻す（Ⅰ〜Ⅷ+1／Ⅸ+2／Ⅹ+3）
+// v0.92 段階SP獲得（社長指示・難易度緩和）：Ⅰ〜Ⅹ＝1,1,1,1,1,2,2,2,3,5（深い段ほど増えて育成が加速）
+const SP_GAIN_BY_RI=[1,1,1,1,1,2,2,2,3,5];   // index=ri（段のローマ位0-9）
 
 // ---- スキルツリー定義（v0.72 本格版：reqs配列[{id,rank}]＝複数前提／rank線形補間 start→end／ノード別SPコスト） ----
 // 効果値 val(r)=start+(end-start)*(r-1)/(maxRank-1)（maxRank=1なら常にstart・r=0＝未取得は効果なし）。
@@ -435,7 +436,7 @@ function onSuccess(ex){
   const wall=FL(g.stage,g.cycle);
   const capped = wall>0 && ex>=wall;
   const ri=(g.stage-1)%10;   // クリアした段（増加前）のローマ数字位＝SP獲得量を決める
-  const spGain = ri===9 ? SP_GAIN_X : (ri===8 ? SP_GAIN_IX : SP_GAIN_NORMAL);   // Ⅹ(ri9)+3・Ⅸ(ri8)+2・他+1
+  const spGain = SP_GAIN_BY_RI[ri];   // v0.92 Ⅰ〜Ⅹ＝1,1,1,1,1,2,2,2,3,5（社長指示・難易度緩和）
   // v0.81 折れない心：成功でスタック50%残す（端数切り上げ）。無ければ0リセット
   g.stack = skR('orenai')>0 ? Math.ceil((g.stack||0)*0.5) : 0;
   g.lastFailed=false; g.failStreak=0;
@@ -494,7 +495,7 @@ function startTurn(){ g.turn++;
   g.phase='enhance'; render(); showEnhance(); }   // v0.81 詫びクロンは"成功時獲得"に変更＝毎ターン供給は廃止
 function showIntro(){
   g.phase='intro'; render();
-  let s='<div class="center" style="color:#ffd24a;font-size:15px;margin-bottom:8px">◆ 遊び方（v0.91）◆</div>';
+  let s='<div class="center" style="color:#ffd24a;font-size:15px;margin-bottom:8px">◆ 遊び方（v0.92）◆</div>';
   s+='<div style="font-size:13px;line-height:1.8">'
     +'・リソースは<b>武器耐久・SP・クロン</b>の3つ。準備フェーズや商店はない。<br>'
     +'・毎ターン<b>「強化する」</b>を選ぶだけ。成功すれば<b>段+1・SP獲得</b>（Ⅰ〜Ⅷ+1／Ⅸ+2／Ⅹ+3）。<br>'
@@ -739,13 +740,13 @@ function buildPlaylogData(reason){
     const totalStage = ((g.maxCycle||1)-1)*100 + (((g.maxStage-1)%100)+1);   // 通算到達段（周回込み）
     const skills={}; TREE.forEach(n=>{ skills[n.id]=skR(n.id); });   // v0.72 最終スキル振り（全ノードid→rank）
     return JSON.stringify({
-      ver:'v0.91', reason:(reason||'manual'), ts:new Date().toISOString(),
+      ver:'v0.92', reason:(reason||'manual'), ts:new Date().toISOString(),
       maxStage: totalStage, cycle:(g.maxCycle||1), turn:(g.turn||0), score:(g.score||0),
       clone:(g.clone||0), fallback:(g.fallbackCount||0),
       success:(g.succCount||0), fail:(g.failCount||0), fever:(g.feverCount||0),
       skills: skills
     });
-  }catch(e){ return JSON.stringify({ver:'v0.91', reason:(reason||'manual'), err:String(e)}); }
+  }catch(e){ return JSON.stringify({ver:'v0.92', reason:(reason||'manual'), err:String(e)}); }
 }
 function uploadPlaylog(reason){
   try{
