@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>強化脳汁ゲー（仮）— ブラウザ試作 v0.90（成功率ベース・モデルに全面作り替え）</title>
+<title>強化脳汁ゲー（仮）— ブラウザ試作 v0.91（ヴォルクス加算化・トラナン役割変更）</title>
 <style>
   :root{ --navy:#000a5a; --navy2:#001080; --gold:#ffd24a; --edge:#6b7bd6; --panel:#00104a; --track:#00003a; }
   *{ box-sizing:border-box; }
@@ -113,7 +113,7 @@
 </head>
 <body>
 <div id="app">
-  <h1>◆ 強化脳汁ゲー（仮）◆ ブラウザ試作 v0.90 — 成功率ベース・モデルに全面作り替え</h1>
+  <h1>◆ 強化脳汁ゲー（仮）◆ ブラウザ試作 v0.91 — ヴォルクス加算化・トラナン役割変更</h1>
   <div id="heatbar"></div><!-- v0.85 段のテーマ色アクセント帯 -->
 
   <div class="win">
@@ -136,10 +136,11 @@
   <!-- v0.78 msgログ窓を廃止＝強化パネル(#screen)内のメッセージ行に合流。強化フェーズはこの1箱が常設パネル。 -->
   <div class="win"><div id="screen"></div></div>
 
-  <div class="sub">名称・数値は仮の手触り確認用（v0.90＝成功率ベース・モデルに全面作り替え）。</div>
+  <div class="sub">名称・数値は仮の手触り確認用（v0.91＝ヴォルクス加算化・トラナン役割変更）。</div>
   <div class="sub" style="opacity:.7;margin-top:2px">本作は『黒い砂漠』(Pearl Abyss)の非公式ファンメイド作品です。権利者とは一切関係ありません。非営利。</div>
   <details style="margin-top:4px"><summary class="sub" style="cursor:pointer;list-style-position:inside;opacity:.55">開発メモ（版ごとの実装履歴・クリックで開く）</summary>
   <div class="sub" style="text-align:left">
+  ※v0.91【ヴォルクス加算化・トラナン役割変更（社長FB「助言x10で跳ね上がりすぎ」）】：<b>ヴォルクスの叫び×助言を乗算→加算に</b>（叫び×2＋助言×10＝12倍・跳ね上がりを緩やか化）。<b>闇捕食</b>は「二乗(叫び²×助言²)」を撤去し<b>「加算を乗算に戻す」解放スキル</b>に（叫び×2×助言×10＝20倍・SP15→20）。<b>耐久回復ツリーを一本道に再編</b>＝記憶の欠片(10〜50%で耐久+5)→<b>トラナンの秘訣（役割全面変更：旧確定回復→失敗時の耐久減を-10〜-50%軽減・SP5・前提=欠片Lv5）</b>→職人の記憶(回復×2・SP15・前提=トラナンLv3)。fireMult()と演出rateBreakdown()の両方を加算/乗算に統一（判定と演出の一致を維持）。ボット検証9ビルド×150ラン＝例外0・無限0・NaN0・成功率[0.09,0.99]。<b>無敵化なし</b>（回復+保護+減衰=中央30段・回復単=21段＝トラナン軽減を入れても不死身化せず）。火力全振り(加算)=53段・フル装備=中央89/最大120段（「がんばったら100段」成立）。全数値【仮】。<br>
   ※v0.90【成功率ベースへ全面作り替え（社長方針・コア判定式の刷新・数値は全て仮）】：判定の根っこを<b>「爆発値÷壁」の減衰カーブ</b>から<b>「素の成功率」を土台に±%を積む方式</b>に変更。素の成功率（段ごと・真71%→神1%目安のカーブ）＋<b>火力</b>(爆発値/壁×FIRE_INFLUENCE=0.6の押し上げ)−<b>武器抵抗</b>(段で最大-25%)＋<b>減衰対抗</b>(わるあがき等で抵抗を打ち消す)＋<b>オーバーキル</b>(限界突破の超過分・上限+15%)＋<b>ブラックストーン成功率%</b>＋<b>失敗スタック%</b>＝最終（上限99%）。判定(tryEnh)と演出(showEnhance/playEnhance/buildRevealSteps)は<b>rateBreakdown()一本</b>に一致させ、旧経路(computeEX/successRateEX/decayedRateEX等)からは呼ばない（関数自体は他参照に備えて残置）。旧・6小修正（記憶の欠片回復+5/職人×2/スタックHUD/トラナン確定発動等）は維持。ボット検証（スキルなし/火力全振り/耐久回復/スタック/混合の5ビルド×150ラン以上）で例外0・無限0・rate範囲内・限界突破発生を確認。<b>無敵化防止＝失敗の耐久ダメが失敗回数で逓増（DUR_FAIL_ESCALATE）。回復均衡の永久ループを有限化。</b><br>
   ※v0.85【UI3点・社長FB（表示/レイアウトのみ・判定/数値/演出シーケンス不変）】：<b>A. プレイログ保存の手応え</b>＝押下時に全画面共通の<b>トースト「📋 プレイログを保存しました」</b>を表示（#msgの有無に依らず必ず見える・数秒でフェード）＋メッセージ行も更新。原因＝v0.78のUI統合でゲームオーバー画面等に#msgが無く setMsg が no-op になっていたため（トーストで解決）。<b>B. 段の色演出＋帯拡張</b>＝不透明パネルがbody背景グラデを覆って見えなかったのを、<b>パネル内枠(--edge)＋上部アクセント帯(#heatbar)＋body背景</b>の3箇所に着色して可視化。帯を社長指定に拡張＝Ⅰ〜Ⅲ通常／Ⅳ〜Ⅷ温色→赤の5段グラデ(ri3→7)／Ⅸ・Ⅹ最も濃い深紅。ri=(段-1)%10・グレードが上がってⅠに戻れば通常。演出中も背景/枠のみで破綻なし。<b>C. 演出ボタンの位置</b>＝爆発値/壁の直下に<b>#animctl（強化する/一気に判定/次へ 等）を上固定</b>し、演出チップ(#animchips)はその下に積む＝チップが増えてもボタン位置が動かない（スマホで押しやすい）。メッセージ行もボタン下・チップ上に。判定/buildRevealSteps/ex-率一致/失敗ペナルティ(v0.82)/減衰(v0.83-84)は不変。<br>
   ※v0.82【失敗ペナルティ改定（社長指示・onFailのみ改定・ツリーは維持）】：<b>失敗ティア＋耐久=段戻り×10</b>。現在段のグレードgi・ローマ位riでティア決定＝無印(gi0)段-1／真以上(gi≥1)Ⅰ〜Ⅳ段-1・Ⅴ〜Ⅷ段-2・Ⅸ・Ⅹ段-3。<b>耐久ダメ＝ティア(段戻り幅)×DUR_PER_STEP(=10)</b>（-1→-10/-2→-20/-3→-30）。<b>闇捕食は耐久ダメ+5</b>（旧「15固定」を撤去しこの加算に）。<b>★保護系は段の下がり幅だけ軽減し耐久ダメは軽減しない</b>（軽減前ティアで耐久計算）＝Ｊハンで段を守っても耐久は食らう＝耐久が純粋な生存タイマー。下限段=開始段。<b>★旧DUR_LOSSの指数段連動ガード(KNEE60/GROWTH1.03)を撤去</b>＝ティア方式が深部の重さ(Ⅸ/Ⅹで-30)を内包するため。撤去後も複合ビルドは有限（検証で無敵化なしを確認・締めたガードはゼロ）。火力・ツリー値は据え置き。UI(v0.78)/要素分解演出(v0.74)/スクロール(v0.80)は維持。<br>
@@ -235,16 +236,16 @@ const TREE=[
  {id:'voice', branch:'強化系', name:'ヴォルクスの叫び', cost:2, maxRank:10, reqs:[{id:'root',rank:1}],
    vals:[2,4,6,8,10,12,14,16,18,20], desc:(r,v)=>'爆発値倍率 ×'+v.toFixed(0)},   // v0.90 社長指示でヴォルクス系強化（叫び ×2〜×20）
  {id:'book', branch:'強化系', name:'ヴォルクスの助言', cost:5, maxRank:5, reqs:[{id:'voice',rank:5}],
-   vals:[5,10,15,20,25], desc:(r,v)=>'爆発値倍率 ×'+v.toFixed(0)+'（叫びに乗算）'},   // v0.90 社長指示で強化（書 ×5〜×25）
- {id:'yami', branch:'強化系', name:'闇捕食', cost:15, maxRank:1, reqs:[{id:'book',rank:3}],
-   desc:()=>'叫び・助言の倍率がもう一度かかる（叫び²×助言²）。代わりに失敗時の耐久ダメが2倍'},
+   vals:[5,10,15,20,25], desc:(r,v)=>'爆発値倍率 ×'+v.toFixed(0)+'（叫びと加算：叫び×2＋助言×10＝12倍）'},   // v0.91 社長指示：乗算→加算に変更（跳ね上がりすぎ対策）
+ {id:'yami', branch:'強化系', name:'闇捕食', cost:20, maxRank:1, reqs:[{id:'book',rank:3}],
+   desc:()=>'叫びと助言が加算ではなく乗算になる（叫び×2×助言×10＝20倍）。代わりに失敗時の耐久ダメが2倍'},   // v0.91 社長指示：二乗→「加算を乗算に戻す」に変更・SP15→20
  // 耐久回復系
  {id:'kakera', branch:'耐久回復系', name:'記憶の欠片', cost:3, maxRank:5, reqs:[{id:'root',rank:1}],
    vals:[0.10,0.20,0.30,0.40,0.50], desc:(r,v)=>'強化のたび '+Math.round(v*100)+'% の確率で耐久+'+kakeraHeal()},
- {id:'shokunin', branch:'耐久回復系', name:'職人の記憶', cost:10, maxRank:1, reqs:[{id:'kakera',rank:3}],
-   desc:()=>'記憶の欠片の回復量 ×2（+5 → +10）'},
- {id:'toranan', branch:'耐久回復系', name:'トラナンの秘訣', cost:15, maxRank:1, reqs:[{id:'shokunin',rank:1}],
-   desc:()=>'失敗した次のターンは記憶の欠片が確率無視で必ず発動（確定回復）'},
+ {id:'toranan', branch:'耐久回復系', name:'トラナンの秘訣', cost:5, maxRank:5, reqs:[{id:'kakera',rank:5}],
+   vals:[0.10,0.20,0.30,0.40,0.50], desc:(r,v)=>'失敗時の耐久減を '+Math.round(v*100)+'% 軽減'},   // v0.91 社長指示：役割を全面変更（旧＝確定回復→失敗ダメ軽減）
+ {id:'shokunin', branch:'耐久回復系', name:'職人の記憶', cost:15, maxRank:1, reqs:[{id:'toranan',rank:3}],
+   desc:()=>'記憶の欠片の回復量 ×2（+5 → +10）'},   // v0.91 前提をトラナンLv3に・SP10→15
  // 失敗系
  {id:'stack', branch:'失敗系', name:'スタック', cost:2, maxRank:10, reqs:[{id:'root',rank:1}],
    vals:[1,2,3,4,5,6,7,8,9,10], desc:(r,v)=>'失敗のたびスタック+'+(STACK_BASE_GAIN+Math.round(v))+'（基本+'+STACK_BASE_GAIN+'＋この技+'+Math.round(v)+'）。スタック1につき成功率+'+Math.round(perStackBonus()*100)+'%（上限+'+Math.round(STACK_RATE_CAP*100)+'%・%はこの技を取ると有効）'},
@@ -305,12 +306,16 @@ function failTier(){ const gi=Math.floor((g.stage-1)/10), ri=(g.stage-1)%10;
 function failDurDamage(){ let raw=failTier()*DUR_PER_STEP;
   if(skR('yami')>0) raw*=YAMI_DUR_MULT;   // v0.90 闇捕食：失敗時の耐久ダメ2倍（強い分リスク大）
   const depthMult=Math.pow(DUR_DEPTH_GROWTH, Math.max(0, totalStageNow()-DUR_DEPTH_KNEE));   // v0.90 深さ連動：段60超で失敗の耐久ダメが跳ね上がる（最強ビルドに段100前後の天井）
-  return Math.round(raw*depthMult*(1+DUR_FAIL_ESCALATE*(g.failCount||0))); }
-// v0.81 火力＝root寄与 × 叫び × 助言 ×（闇捕食なら叫び・助言をもう一度＝叫び²×助言²）
-function fireMult(){ const vM=skR('voice')>0?nodeVal('voice'):1, bM=skR('book')>0?nodeVal('book'):1;
-  let m=rootFireMult()*vM*bM;
-  if(skR('yami')>0) m*=vM*bM;
-  return m; }
+  let dmg=raw*depthMult*(1+DUR_FAIL_ESCALATE*(g.failCount||0));
+  if(skR('toranan')>0) dmg*=(1-nodeVal('toranan'));   // v0.91 トラナンの秘訣：失敗時の耐久減を軽減（-10〜-50%）
+  return Math.round(dmg); }
+// v0.91 火力＝root寄与 × ヴォルクス合成。叫びのみ＝×叫び／叫び＋助言＝加算(叫び+助言)／闇捕食で乗算(叫び×助言)
+function volkMult(){ const hasV=skR('voice')>0, hasB=skR('book')>0;
+  if(!hasV) return 1;
+  const vM=nodeVal('voice'); if(!hasB) return vM;
+  const bM=nodeVal('book');
+  return skR('yami')>0 ? vM*bM : vM+bM; }
+function fireMult(){ return rootFireMult()*volkMult(); }
 // v0.81 記憶の欠片の回復量＝基礎+1（職人の記憶で×5＝+5）
 function kakeraHeal(){ if(skR('kakera')<=0) return 0; return 5 * (skR('shokunin')>0 ? 2 : 1); }   // v0.87 基礎回復 +1→+5・職人の記憶 ×5→×2（＝+5、職人ありで+10）
 // v0.81 失敗スタックの貯まる値＝スタックのlerp（1..10）。1スタックあたりの成功率＝基礎2%（失敗は成功のもとで上書き3/4/5%）
@@ -383,10 +388,12 @@ function rateBreakdown(){
   const pushFire=(exVal,label)=>{ const nr=up(baseRateStage()+fireBonusOf(exVal)); const d=nr-r; steps.push({kind:'fire',label:label,exVal:exVal,delta:d,rate:nr}); r=nr; };
   pushFire(ex,'基礎火力');
   if(skR('root')>0){ const m=rootFireMult(); ex*=m; pushFire(ex,'🖤 ブラックストーン ×'+m.toFixed(2)+(rootScale()>1?'（×'+rootScale()+'）':'')); }
-  const vM=skR('voice')>0?nodeVal('voice'):1, bM=skR('book')>0?nodeVal('book'):1;
-  if(skR('voice')>0){ ex*=vM; pushFire(ex,'📣 ヴォルクスの叫び ×'+vM.toFixed(0)); }
-  if(skR('book')>0){ ex*=bM; pushFire(ex,'📖 ヴォルクスの助言 ×'+bM.toFixed(0)); }
-  if(skR('yami')>0){ ex*=vM*bM; pushFire(ex,'🌑 闇捕食（再発動）×'+(vM*bM).toFixed(1)); }
+  const exBaseFire=ex;   // v0.91 root反映後の基礎＝ヴォルクス合成の土台（加算/乗算をこの上に効かせる）
+  const hasV=skR('voice')>0, hasB=skR('book')>0, hasY=skR('yami')>0;
+  const vM=hasV?nodeVal('voice'):1, bM=hasB?nodeVal('book'):1;
+  if(hasV){ ex=exBaseFire*vM; pushFire(ex,'📣 ヴォルクスの叫び ×'+vM.toFixed(0)); }
+  if(hasB && !hasY){ ex=exBaseFire*(vM+bM); pushFire(ex,'📖 ヴォルクスの助言 +'+bM.toFixed(0)+'（叫びと加算＝×'+(vM+bM).toFixed(0)+'）'); }
+  if(hasB && hasY){ ex=exBaseFire*vM*bM; pushFire(ex,'🌑 闇捕食：叫び×助言＝×'+(vM*bM).toFixed(0)); }
   if((g.stack||0)>0){ ex+=g.stack; pushFire(ex,'📚 失敗スタック +'+Math.round(g.stack)); }
   const exFinal=ex; const fever = wall>0 && exFinal>=wall;
   if(fever) steps.push({kind:'feverhit', label:'⭐ 限界突破 到達！（壁 '+Math.round(wall).toLocaleString()+' 超え）'});
@@ -407,16 +414,14 @@ function rateBreakdown(){
 
 // ===== 強化本体（sim/botはtryEnhを直接呼ぶ。UIはplayEnhance経由の演出→doRevealでtryEnh） =====
 function tryEnh(){
-  const prevFailed=g.lastFailed;   // v0.87 トラナン用：この強化を始める前（＝前ターン）の失敗フラグ
   const bd=rateBreakdown();
   const ex=bd.exFinal; const rate=bd.finalRate;
   const ok = Math.random()<rate;
   g._lastRate=rate; g._lastEx=ex;
   if(ok) onSuccess(ex); else onFail(ex);
-  // v0.81 記憶の欠片：毎強化ごと確率P%で耐久回復。トラナンの秘訣＝2連続以上失敗した今回は確率無視で必ず発動
+  // v0.91 記憶の欠片：毎強化ごと確率P%で耐久回復（トラナンは失敗ダメ軽減へ役割変更＝ここの確定発動は撤去）
   if(!g.ended && skR('kakera')>0){
-    const forced = skR('toranan')>0 && prevFailed;   // v0.87 「失敗した次のターン」は確定発動（旧＝2連続以上失敗）
-    if(forced || Math.random()<nodeVal('kakera')){ const h=kakeraHeal(); if(h>0) g.dur=Math.min(maxDur(), g.dur+h); }
+    if(Math.random()<nodeVal('kakera')){ const h=kakeraHeal(); if(h>0) g.dur=Math.min(maxDur(), g.dur+h); }
   }
   // v0.81 ハイデル宴会：N回の強化に1回クロン大量獲得
   if(!g.ended && skR('heidel')>0){ g.heidelTick=(g.heidelTick||0)+1; if(g.heidelTick>=HEIDEL_INTERVAL){ g.heidelTick=0; g.clone=(g.clone||0)+HEIDEL_AMOUNT; } }
@@ -489,7 +494,7 @@ function startTurn(){ g.turn++;
   g.phase='enhance'; render(); showEnhance(); }   // v0.81 詫びクロンは"成功時獲得"に変更＝毎ターン供給は廃止
 function showIntro(){
   g.phase='intro'; render();
-  let s='<div class="center" style="color:#ffd24a;font-size:15px;margin-bottom:8px">◆ 遊び方（v0.90）◆</div>';
+  let s='<div class="center" style="color:#ffd24a;font-size:15px;margin-bottom:8px">◆ 遊び方（v0.91）◆</div>';
   s+='<div style="font-size:13px;line-height:1.8">'
     +'・リソースは<b>武器耐久・SP・クロン</b>の3つ。準備フェーズや商店はない。<br>'
     +'・毎ターン<b>「強化する」</b>を選ぶだけ。成功すれば<b>段+1・SP獲得</b>（Ⅰ〜Ⅷ+1／Ⅸ+2／Ⅹ+3）。<br>'
@@ -734,13 +739,13 @@ function buildPlaylogData(reason){
     const totalStage = ((g.maxCycle||1)-1)*100 + (((g.maxStage-1)%100)+1);   // 通算到達段（周回込み）
     const skills={}; TREE.forEach(n=>{ skills[n.id]=skR(n.id); });   // v0.72 最終スキル振り（全ノードid→rank）
     return JSON.stringify({
-      ver:'v0.90', reason:(reason||'manual'), ts:new Date().toISOString(),
+      ver:'v0.91', reason:(reason||'manual'), ts:new Date().toISOString(),
       maxStage: totalStage, cycle:(g.maxCycle||1), turn:(g.turn||0), score:(g.score||0),
       clone:(g.clone||0), fallback:(g.fallbackCount||0),
       success:(g.succCount||0), fail:(g.failCount||0), fever:(g.feverCount||0),
       skills: skills
     });
-  }catch(e){ return JSON.stringify({ver:'v0.90', reason:(reason||'manual'), err:String(e)}); }
+  }catch(e){ return JSON.stringify({ver:'v0.91', reason:(reason||'manual'), err:String(e)}); }
 }
 function uploadPlaylog(reason){
   try{
