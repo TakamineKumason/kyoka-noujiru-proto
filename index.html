@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>強化脳汁ゲー（仮）— ブラウザ試作 v0.98（演出強化・効果音刷新・武器ドット絵）</title>
+<title>強化脳汁ゲー（仮）— ブラウザ試作 v0.99（エリアンの涙＝1度だけ全回復蘇生）</title>
 <style>
   :root{ --navy:#000a5a; --navy2:#001080; --gold:#ffd24a; --edge:#6b7bd6; --panel:#00104a; --track:#00003a; }
   *{ box-sizing:border-box; }
@@ -123,7 +123,7 @@
 <canvas id="fxcanvas"></canvas>
 <div id="fxflash"></div>
 <div id="app">
-  <h1>◆ 強化脳汁ゲー（仮）◆ ブラウザ試作 v0.98 — 演出強化・効果音・武器ドット絵</h1>
+  <h1>◆ 強化脳汁ゲー（仮）◆ ブラウザ試作 v0.99 — エリアンの涙</h1>
   <div id="heatbar"></div><!-- v0.85 段のテーマ色アクセント帯 -->
 
   <div class="win">
@@ -135,6 +135,7 @@
       <span class="stat">🔧耐久</span>
       <div class="barwrap"><div class="bar" id="wbar" style="width:100%"></div></div>
       <span class="stat"><b id="wdur">100</b>/<span id="wdurmax">100</span></span>
+      <span class="stat" id="elian" style="display:none">💧涙</span>
     </div>
     <div class="row">
       <span class="stat">🌳SP残<b id="sp">5</b></span>
@@ -225,8 +226,8 @@ const TREE=[
    vals:[0.10,0.20,0.30,0.40,0.50], desc:(r,v)=>'強化のたび '+Math.round(v*100)+'% の確率で耐久+'+kakeraHeal()},
  {id:'toranan', branch:'耐久回復系', name:'トラナンの秘訣', cost:5, maxRank:5, reqs:[{id:'kakera',rank:5}],
    vals:[0.10,0.20,0.30,0.40,0.50], desc:(r,v)=>'失敗時の耐久減を '+Math.round(v*100)+'% 軽減'},   // v0.91 社長指示：役割を全面変更（旧＝確定回復→失敗ダメ軽減）
- {id:'shokunin', branch:'耐久回復系', name:'職人の記憶', cost:15, maxRank:1, reqs:[{id:'toranan',rank:3}],
-   desc:()=>'記憶の欠片の回復量 ×2（+5 → +10）'},   // v0.91 前提をトラナンLv3に・SP10→15
+ {id:'shokunin', branch:'耐久回復系', name:'エリアンの涙', cost:15, maxRank:1, reqs:[{id:'toranan',rank:3}],
+   desc:()=>'耐久が0になった時、1度だけ耐久フルで蘇る'},   // v0.99 効果を全面変更（旧＝記憶の欠片×2）→耐久0の1回限りフル回復蘇生。idは互換のためshokuninのまま
  // 失敗系
  {id:'stack', branch:'失敗系', name:'スタック', cost:2, maxRank:10, reqs:[{id:'root',rank:1}],
    vals:[1,2,3,4,5,6,7,8,9,10], desc:(r,v)=>'失敗のたびスタック+'+(STACK_BASE_GAIN+Math.round(v))+'（基本+'+STACK_BASE_GAIN+'＋この技+'+Math.round(v)+'）。スタック1につき成功率+'+Math.round(perStackBonus()*100)+'%（上限+'+Math.round(STACK_RATE_CAP*100)+'%・%はこの技を取ると有効）'},
@@ -259,7 +260,8 @@ let g;
 function newGame(){
   g={ stage:STAGE_START, cycle:1, maxCycle:1, sp:SP_START, dur:DUR_START, stack:0,   // v0.96 未使用のclone/comboを撤去
       turn:0, score:0, maxStage:STAGE_START, lastFailed:false, ended:false, phase:'intro',
-      succCount:0, failCount:0, feverCount:0, fallbackCount:0, failStreak:0,   // v0.81 plog/機構用カウンタ（v0.96 未使用heidelTick撤去）
+      succCount:0, failCount:0, feverCount:0, fallbackCount:0, failStreak:0, elianUsed:false,   // v0.99 elianUsed＝エリアンの涙の蘇生をこのランで使ったか（ラン1回限り）
+
       skills:{}, _animating:false, _deferAdvance:false, _animTimers:[] };
   TREE.forEach(n=>g.skills[n.id]=0);
   if(typeof _plogSentThisRun!=='undefined') _plogSentThisRun=false;   // 送信フラグはラン単位でリセット
@@ -291,8 +293,8 @@ function failDurDamage(){ let raw=failTier()*DUR_PER_STEP;
   if(skR('toranan')>0) dmg*=(1-nodeVal('toranan'));   // v0.91 トラナンの秘訣：失敗時の耐久減を軽減（-10〜-50%）
   return Math.round(dmg); }
 // v0.96 fireMult/volkMult(旧・爆発値モデル用)はデッドコードとして撤去。ヴォルクス合成の生きた実装はrateBreakdown内にある。
-// v0.81 記憶の欠片の回復量＝基礎+1（職人の記憶で×5＝+5）
-function kakeraHeal(){ if(skR('kakera')<=0) return 0; return 5 * (skR('shokunin')>0 ? 2 : 1); }   // v0.87 基礎回復 +1→+5・職人の記憶 ×5→×2（＝+5、職人ありで+10）
+// v0.99 記憶の欠片の回復量＝+5固定（旧・職人の記憶の×2は撤去→エリアンの涙＝耐久0で1度だけ蘇生へ役割変更）
+function kakeraHeal(){ if(skR('kakera')<=0) return 0; return 5; }   // v0.99 エリアンの涙は記憶の欠片を強化しなくなった（効果を蘇生に変更）→回復量は+5固定
 // v0.81 失敗スタックの貯まる値＝スタックのlerp（1..10）。1スタックあたりの成功率＝基礎2%（まだ舞えるで上書き3/4/5%）
 function stackGain(){ return skR('stack')>0 ? Math.round(nodeVal('stack')) : 0; }
 function perStackBonus(){ return skR('stack_mult')>0 ? nodeVal('stack_mult') : PERSTACK_BASE; }
@@ -413,7 +415,20 @@ function onFail(ex){
   else m+=(note?note:" 段は維持＝"+stageName(g.stage)+"。");
   setMsg(m);
 }
-function checkDead(){ if(g.dur<=0){ gameOver(); return true; } return false; }
+function checkDead(){
+  if(g.dur<=0){
+    // v0.99 エリアンの涙：耐久0で1度だけ耐久フル蘇生（ラン1回限り）。死亡ゲートの手前で発動。
+    if(skR('shokunin')>0 && !g.elianUsed){
+      g.elianUsed=true; g.dur=maxDur();
+      setMsg("💧 エリアンの涙 ─ 砕けかけた武器が耐久フルで蘇った！（このランで1度きり）");
+      try{ sfx('fever'); fx('fever'); }catch(e){}
+      render();
+      return false;
+    }
+    gameOver(); return true;
+  }
+  return false;
+}
 function gameOver(){
   g.ended=true; render(); sfx('break'); fx('break');   // v0.98 武器が砕ける音＋赤フラッシュ＋震え
   if(typeof _plogSentThisRun!=='undefined' && !_plogSentThisRun){ uploadPlaylog('gameover'); _plogSentThisRun=true; }   // v0.71 ゲームオーバーで自動送信（ラン1回1度・URL/fetch無しはno-op）
@@ -644,6 +659,8 @@ function render(){ if(!g) return;
   if(el('stack')) el('stack').textContent=(g.stack||0);   // v0.87 SP残の隣に失敗スタックを表示
   if(el('wdur')) el('wdur').textContent=Math.max(0,Math.round(g.dur));
   if(el('wdurmax')) el('wdurmax').textContent=maxDur();
+  const es=el('elian'); if(es){ const has=skR('shokunin')>0; es.style.display=has?'':'none';   // v0.99 エリアンの涙の蘇生ストック表示
+    es.textContent=g.elianUsed?'💧使用済':'💧涙'; es.style.opacity=g.elianUsed?'0.4':'1'; }
   const wb=el('wbar'); if(wb){ const pct=Math.max(0,Math.min(100,g.dur/maxDur()*100));
     wb.style.width=pct+'%'; wb.className='bar'+(pct<=20?' dang':pct<=45?' warn':''); }
   updateTheme();
@@ -766,14 +783,14 @@ function buildPlaylogData(reason){
     const totalStage = ((g.maxCycle||1)-1)*100 + (((g.maxStage-1)%100)+1);   // 通算到達段（周回込み）
     const skills={}; TREE.forEach(n=>{ skills[n.id]=skR(n.id); });   // v0.72 最終スキル振り（全ノードid→rank）
     return JSON.stringify({
-      ver:'v0.98', reason:(reason||'manual'), ts:new Date().toISOString(),
+      ver:'v0.99', reason:(reason||'manual'), ts:new Date().toISOString(),
       house:(lsGet('kyoka_house')||'noname'),   // v0.97 家名（プレイヤー識別・解析のグループ化用）
       maxStage: totalStage, cycle:(g.maxCycle||1), turn:(g.turn||0), score:(g.score||0),
       fallback:(g.fallbackCount||0),   // v0.96 未使用のcloneフィールドをplogから撤去
       success:(g.succCount||0), fail:(g.failCount||0), fever:(g.feverCount||0),
       skills: skills
     });
-  }catch(e){ return JSON.stringify({ver:'v0.98', reason:(reason||'manual'), err:String(e)}); }
+  }catch(e){ return JSON.stringify({ver:'v0.99', reason:(reason||'manual'), err:String(e)}); }
 }
 function uploadPlaylog(reason){
   try{
