@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>強化脳汁ゲー（仮）— ブラウザ試作 v1.01（傘型スキルツリー・アイコン拡大）</title>
+<title>強化脳汁ゲー（仮）— ブラウザ試作 v1.02（武器ドット絵をCraftPix素材に差し替え・段で背面発熱）</title>
 <style>
   :root{ --navy:#000a5a; --navy2:#001080; --gold:#ffd24a; --edge:#6b7bd6; --panel:#00104a; --track:#00003a; }
   *{ box-sizing:border-box; }
@@ -173,14 +173,16 @@
   @keyframes shk-md{ 10%,90%{transform:translate(-2px,1px)} 30%,70%{transform:translate(4px,-2px)} 50%{transform:translate(-5px,2px)} }
   @keyframes shk-lg{ 10%,90%{transform:translate(-4px,2px) rotate(-.3deg)} 30%,70%{transform:translate(8px,-3px) rotate(.4deg)} 50%{transform:translate(-10px,4px) rotate(-.5deg)} }
   .shk-sm{ animation:shk-sm .4s ease; } .shk-md{ animation:shk-md .45s ease; } .shk-lg{ animation:shk-lg .5s ease; }
-  #wpn{ display:block; margin:2px auto 6px; image-rendering:pixelated; image-rendering:crisp-edges; }
+  #wpn{ display:block; image-rendering:pixelated; image-rendering:crisp-edges; }
+  /* v1.02 武器の背後を黒い帯にして白→金→赤のグローを見やすく（社長指示）。剣の高さ＋αの全幅バンド。 */
+  .wpnband{ background:#000; width:100%; padding:10px 0; margin:2px 0 6px; display:flex; justify-content:center; border-radius:5px; }
 </style>
 </head>
 <body>
 <canvas id="fxcanvas"></canvas>
 <div id="fxflash"></div>
 <div id="app">
-  <h1>◆ 強化脳汁ゲー（仮）◆ ブラウザ試作 v1.01 — 傘型スキルツリー</h1>
+  <h1>◆ 強化脳汁ゲー（仮）◆ ブラウザ試作 v1.02 — 武器ドット絵差し替え</h1>
   <div id="heatbar"></div><!-- v0.85 段のテーマ色アクセント帯 -->
 
   <div class="win">
@@ -281,7 +283,7 @@ const TREE=[
  // 耐久回復系
  {id:'kakera', branch:'耐久回復系', name:'記憶の欠片', cost:3, maxRank:5, reqs:[{id:'root',rank:1}],
    vals:[0.10,0.20,0.30,0.40,0.50], desc:(r,v)=>'強化のたび '+Math.round(v*100)+'% の確率で耐久+'+kakeraHeal()},
- {id:'toranan', branch:'耐久回復系', name:'トラナンの秘訣', cost:5, maxRank:5, reqs:[{id:'kakera',rank:5}],
+ {id:'toranan', branch:'耐久回復系', name:'トラナンの秘訣', cost:3, maxRank:5, reqs:[{id:'kakera',rank:5}],
    vals:[0.10,0.20,0.30,0.40,0.50], desc:(r,v)=>'失敗時の耐久減を '+Math.round(v*100)+'% 軽減'},   // v0.91 社長指示：役割を全面変更（旧＝確定回復→失敗ダメ軽減）
  {id:'shokunin', branch:'耐久回復系', name:'エリアンの涙', cost:15, maxRank:1, reqs:[{id:'toranan',rank:3}],
    desc:()=>'耐久が0になった時、1度だけ耐久フルで蘇る'},   // v0.99 効果を全面変更（旧＝記憶の欠片×2）→耐久0の1回限りフル回復蘇生。idは互換のためshokuninのまま
@@ -586,7 +588,7 @@ function showEnhance(){
   const bd=rateBreakdown(); const wall=bd.wall; const baseRate=bd.steps[0].rate;
   let s='<div id="animstage">';   // 演出と同じ器＝押した瞬間その場でアニメに切り替わる（ページ切替なし）
   s+='<div class="sub" style="color:#ffd24a">'+stageLabel()+' に挑む</div>';
-  s+='<canvas id="wpn"></canvas>';   // v0.98 強化対象の武器（ドット絵・段グレードで発熱）
+  s+='<div class="wpnband"><canvas id="wpn"></canvas></div>';   // v1.02 武器（ドット絵）＋黒帯背景。段のローマ数字で背面グロー（白→金→赤）
   s+=failPreviewHtml();   // v0.94 ゲージ上に失敗時の耐久-○/段-○を先出し（理不尽感対策・社長案）
   s+='<div class="animpct" id="animpct" style="color:#ffd24a;font-size:22px">素の成功率 '+pct1(baseRate)+'</div>';
   s+='<div class="gaugewrap"><div class="gaugescale"><span>0</span><span>50</span><span>100</span></div><div class="gaugetrack"><div class="gaugefill" id="gaugefill" style="width:'+(baseRate*100).toFixed(1)+'%;background:#ffd24a"></div></div></div>';
@@ -737,6 +739,7 @@ function doReveal(){
   g._deferAdvance=true; tryEnh();
   const wasFever=(g.feverCount||0)>fvBefore;   // v0.98 このターン限界突破したか（演出用・状態は不変）
   if(g.ended){ g._animating=false; return; }   // 死亡時はgameOver側で break 演出
+  drawWeapon();   // v1.02 成功/失敗が確定した瞬間に武器のグローを新しい段で更新（社長指示：切替は強化画面の成功時）
   const success=!g.lastFailed;
   setBig(success?(wasFever?'⚡ 限界突破!!':'✨ 成功!!'):'💥 失敗…', success?'win':'lose');
   setGauge((g._finalRatePreview!=null?g._finalRatePreview:0), success?'win':'lose');
@@ -902,20 +905,35 @@ function fx(kind){ try{ const lv=fxLevel();
 }catch(e){} }
 function setFx(n){ lsSet('kyoka_fx', String(n)); showIntro(); try{ sfx(n>=2?'fever':'success'); fx(n>=2?'fever':(n>=1?'success':'success')); }catch(e){} }
 
-// ===== v0.98 武器のドット絵（社長「強化対象の武器の絵が欲しい・ドット絵で」）＝コードで描画（外部素材不要・段グレードで刀身が発熱）=====
-function weaponBladeColor(){ const ri=(g.stage-1)%10, h=heatTheme(ri); if(!h) return {blade:'#cfd8ea',edge:'#ffffff',glow:'#8fa0c8'}; return {blade:h.edge,edge:'#fff2c0',glow:h.bar}; }
-function drawWeapon(){ try{ const cv=document.getElementById('wpn'); if(!cv)return; const cx=cv.getContext('2d'); const U=6,W=14,H=22; cv.width=W*U; cv.height=H*U; cv.style.width=(W*U)+'px'; cv.style.height=(H*U)+'px';
-  cx.clearRect(0,0,cv.width,cv.height); cx.imageSmoothingEnabled=false;
-  const col=weaponBladeColor(); const hot=((g.stage-1)%10)>=3;
-  const px=function(x,y,w,h,c){ cx.fillStyle=c; cx.fillRect(x*U,y*U,w*U,h*U); };
-  cx.shadowColor=col.glow; cx.shadowBlur=hot?16:6;
-  px(6,0,2,1,col.edge);            // 切先
-  px(6,1,2,11,col.blade);          // 刀身
-  px(6,1,1,11,col.edge);           // 刃の光
-  cx.shadowBlur=0;
-  px(2,12,10,1,'#e0a020'); px(3,12,8,1,'#ffd24a');   // 鍔
-  px(6,13,2,6,'#7a4a22'); px(6,13,1,6,'#93602f');    // 柄
-  px(6,19,2,1,'#ffd24a');          // 柄頭
+// ===== v1.02 武器のドット絵：CraftPix 32x32 ドット絵素材を土台に、段グレードで発熱（背面グロー＋ティント）＝ハイブリッド（社長指示）=====
+// 素材：CraftPix.net「32x32 Pixel Art Weapons Free Collection」より1点（Iicon_32_34）。無料ライセンス＝ゲームへの組み込み公開可・商用可・クレジット不要。
+//  ※パック素材そのものの再配布/再販売とAI学習利用は禁止。単一HTMLへ焼き込む本用途は該当せず。
+const WPN_IMG=new Image();
+WPN_IMG.src='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAMAAABEpIrGAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAA2ZpVFh0WE1MOmNvbS5hZG9iZS54bXAAAAAAADw/eHBhY2tldCBiZWdpbj0i77u/IiBpZD0iVzVNME1wQ2VoaUh6cmVTek5UY3prYzlkIj8+IDx4OnhtcG1ldGEgeG1sbnM6eD0iYWRvYmU6bnM6bWV0YS8iIHg6eG1wdGs9IkFkb2JlIFhNUCBDb3JlIDUuMy1jMDExIDY2LjE0NTY2MSwgMjAxMi8wMi8wNi0xNDo1NjoyNyAgICAgICAgIj4gPHJkZjpSREYgeG1sbnM6cmRmPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5LzAyLzIyLXJkZi1zeW50YXgtbnMjIj4gPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9IiIgeG1sbnM6eG1wTU09Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC9tbS8iIHhtbG5zOnN0UmVmPSJodHRwOi8vbnMuYWRvYmUuY29tL3hhcC8xLjAvc1R5cGUvUmVzb3VyY2VSZWYjIiB4bWxuczp4bXA9Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC8iIHhtcE1NOk9yaWdpbmFsRG9jdW1lbnRJRD0ieG1wLmRpZDpENTQ4RTc4MUVCNTFFQjExODA4RkZEREM2Njk5MDk0RSIgeG1wTU06RG9jdW1lbnRJRD0ieG1wLmRpZDo2RUU2Mzc5RjE5OEIxMUVFODFBMUI0QjI0Q0MxRjcyNSIgeG1wTU06SW5zdGFuY2VJRD0ieG1wLmlpZDo2RUU2Mzc5RTE5OEIxMUVFODFBMUI0QjI0Q0MxRjcyNSIgeG1wOkNyZWF0b3JUb29sPSJBZG9iZSBQaG90b3Nob3AgQ1M2IChXaW5kb3dzKSI+IDx4bXBNTTpEZXJpdmVkRnJvbSBzdFJlZjppbnN0YW5jZUlEPSJ4bXAuaWlkOjZGREU4N0I4ODgxOUVFMTFCRDNEQUY3NTJCRjkwRDEzIiBzdFJlZjpkb2N1bWVudElEPSJ4bXAuZGlkOkQ1NDhFNzgxRUI1MUVCMTE4MDhGRkREQzY2OTkwOTRFIi8+IDwvcmRmOkRlc2NyaXB0aW9uPiA8L3JkZjpSREY+IDwveDp4bXBtZXRhPiA8P3hwYWNrZXQgZW5kPSJyIj8+lIelTwAAABtQTFRFOSockn5qmxoKVQ8K77d1aEw879ihKh0NAAAAz4+NuAAAAAl0Uk5T//////////8AU094EgAAAMFJREFUeNqEk1kWxCAIBNE09Nz/xIMxiRqV+Fsl2wP5fTyJIMlIIM0igWqhcPGtcPK9QCoqXwtMCq18KVAbXwlMqfGFULjAsBNKfDHcASbBeRJ7/t9CGXpf3/P/EVJil7/jo3DmB3o+CDU/wMU+OONU30tQ8Tfm79tkEUzx5m0OdO4CtzvJw9tXbpeWR54aGIqUnEm4wWWRPDSXQQD2bkOu+DV72fRZ4Bm/3cosqGUGp+ccjG6TzmMhwh/XXd5fgAEAJ/cdDPTWs2AAAAAASUVORK5CYII=';
+// v1.02 武器の色：段（ローマ数字Ⅰ〜Ⅹ）で変化・ステージ（グレード無印/真…神）では色は不変。ただし無印のみ一切発光なし（社長指示）。※パネル帯heatTheme(ri)とは別軸。
+//  無印(gi0)＝ローマ数字に関係なく素／真以上(gi>=1)：Ⅰ〜Ⅲ(ri<=2)＝光らない／Ⅳ〜Ⅹ(ri3-9)＝黒→金色にグラデーション変化（Ⅳ暗い→Ⅹ金・グレード非依存で同色）。
+const WPN_DARK={ blade:'#cfd8ea', glow:'#8fa0c8' };   // 素の武器（光らない・ティントなし）
+function weaponHeat(){ const S=Math.max(1,Math.min(g.stage,100)); const gi=Math.floor((S-1)/10), ri=(S-1)%10;
+  if(gi<=0) return null;   // 無印は一切発光しない（社長指示）
+  if(ri<=2) return null;   // Ⅰ〜Ⅲは光らない
+  const t=(ri-3)/6;   // t：Ⅳ(0)〜Ⅹ(1)
+  // v1.02 白→金→赤（社長指示）：Ⅳ白→Ⅶ金→Ⅹ赤
+  const W=[255,255,255], G=[255,202,40], R=[230,40,40]; let a,b,tt;
+  if(t<0.5){ a=W; b=G; tt=t/0.5; } else { a=G; b=R; tt=(t-0.5)/0.5; }
+  const L=(i)=>Math.round(a[i]+(b[i]-a[i])*tt); const c='rgb('+L(0)+','+L(1)+','+L(2)+')';
+  return { blade:c, glow:c, t:t }; }
+function weaponBladeColor(){ return weaponHeat()||WPN_DARK; }
+function drawWeapon(){ try{ const cv=document.getElementById('wpn'); if(!cv)return; const cx=cv.getContext('2d');
+  const S=3, IMG=32*S, PAD=18, DIM=IMG+PAD*2;   // PAD＝グローが端で四角く切れないための余白
+  cv.width=DIM; cv.height=DIM; cv.style.width=DIM+'px'; cv.style.height=DIM+'px';
+  if(!WPN_IMG.complete||!WPN_IMG.naturalWidth){ WPN_IMG.onload=drawWeapon; return; }   // 画像未読込なら読み込み後に再描画
+  cx.clearRect(0,0,DIM,DIM); cx.imageSmoothingEnabled=false;
+  const h=weaponHeat(); const col=weaponBladeColor();   // h＝Ⅳ〜Ⅹのみ非null。無印/Ⅰ〜Ⅲはグロー無し（社長指示）
+  cx.drawImage(WPN_IMG,PAD,PAD,IMG,IMG);   // ① 武器をくっきり前面に（面には手を加えない＝そのままの絵）
+  if(h){   // ② Ⅳ〜Ⅹのみ、武器の【背面】にグロー。色は黒→金で変化（Ⅳ黒＝ほぼ不可視→Ⅹ金）。destination-over＝既存の武器の後ろへ回すので前面はくっきり・光は背面のみ
+    cx.globalCompositeOperation='destination-over'; cx.shadowColor=col.glow; cx.shadowBlur=8+Math.round(10*h.t); cx.shadowOffsetX=0; cx.shadowOffsetY=0;
+    cx.drawImage(WPN_IMG,PAD,PAD,IMG,IMG); cx.shadowBlur=0; cx.globalCompositeOperation='source-over';
+  }
 }catch(e){} }
 
 // =====================================================================
@@ -929,14 +947,14 @@ function buildPlaylogData(reason){
     const totalStage = ((g.maxCycle||1)-1)*100 + (((g.maxStage-1)%100)+1);   // 通算到達段（周回込み）
     const skills={}; TREE.forEach(n=>{ skills[n.id]=skR(n.id); });   // v0.72 最終スキル振り（全ノードid→rank）
     return JSON.stringify({
-      ver:'v1.01', reason:(reason||'manual'), ts:new Date().toISOString(),
+      ver:'v1.02', reason:(reason||'manual'), ts:new Date().toISOString(),
       house:(lsGet('kyoka_house')||'noname'),   // v0.97 家名（プレイヤー識別・解析のグループ化用）
       maxStage: totalStage, cycle:(g.maxCycle||1), turn:(g.turn||0), score:(g.score||0),
       fallback:(g.fallbackCount||0),   // v0.96 未使用のcloneフィールドをplogから撤去
       success:(g.succCount||0), fail:(g.failCount||0), fever:(g.feverCount||0),
       skills: skills
     });
-  }catch(e){ return JSON.stringify({ver:'v1.01', reason:(reason||'manual'), err:String(e)}); }
+  }catch(e){ return JSON.stringify({ver:'v1.02', reason:(reason||'manual'), err:String(e)}); }
 }
 function uploadPlaylog(reason){
   try{
