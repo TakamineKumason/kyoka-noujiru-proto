@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>強化脳汁ゲー（仮）— ブラウザ試作 v1.08（スキルコストの累進化）</title>
+<title>強化脳汁ゲー（仮）— ブラウザ試作 v1.09（特殊系スキル追加＋記憶の欠片改修）</title>
 <style>
   :root{ --navy:#000a5a; --navy2:#001080; --gold:#ffd24a; --edge:#6b7bd6; --panel:#00104a; --track:#00003a; }
   *{ box-sizing:border-box; }
@@ -76,9 +76,16 @@
     border-radius:12px; color:#fff; font:inherit; cursor:pointer; box-shadow:0 2px 6px rgba(0,0,0,.5); transition:transform .1s, box-shadow .2s; }
   .inode img{ width:68px; height:68px; object-fit:contain; display:block; pointer-events:none; filter:drop-shadow(0 1px 2px rgba(0,0,0,.6)); }
   .inode .noimg{ width:68px; height:68px; display:flex; align-items:center; justify-content:center; font-size:30px; color:#889; }
+  /* v1.09 専用アイコン未作成のノード（吸血/助手テクトン/天元突破）用・丸の仮アイコン */
+  .inode .dotIcon{ width:48px; height:48px; margin:10px auto; border-radius:50%; box-shadow:0 1px 4px rgba(0,0,0,.6), inset 0 0 0 2px rgba(255,255,255,.25); }
   .inode .inm{ font-size:10.5px; line-height:1.15; text-align:center; color:#dfe6ff; max-width:98px;
     display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
   .inode .ilv{ font-size:10.5px; color:#9fb0ff; }
+  /* v1.09 Lvのドット表示（●取得／○未取得）。5段以下は1行・6段以上(voice/stack)は5個ずつ2行 */
+  .lvdots{ font-size:10.5px; letter-spacing:1px; color:#ffd24a; line-height:1.25; text-align:center; }
+  .lvdots.lvdots-multi{ display:flex; flex-direction:column; }
+  .lvdotrow{ display:block; }
+  #nodedetail .nd-dotIcon{ width:56px; height:56px; border-radius:50%; box-shadow:inset 0 0 0 2px rgba(255,255,255,.25); }
   .inode .idot{ position:absolute; top:-8px; right:-8px; width:22px; height:22px; border-radius:50%; font-size:14px;
     line-height:22px; text-align:center; background:#0a7d2c; color:#fff; box-shadow:0 0 6px rgba(0,0,0,.5); }
   .inode .idot.mx{ background:transparent; box-shadow:none; color:#ffd24a; font-size:18px; }
@@ -182,7 +189,7 @@
 <canvas id="fxcanvas"></canvas>
 <div id="fxflash"></div>
 <div id="app">
-  <h1>◆ 強化脳汁ゲー（仮）◆ ブラウザ試作 v1.08 — スキルコストの累進化</h1>
+  <h1>◆ 強化脳汁ゲー（仮）◆ ブラウザ試作 v1.09 — 特殊系スキル追加＋記憶の欠片改修</h1>
   <div id="heatbar"></div><!-- v0.85 段のテーマ色アクセント帯 -->
 
   <div class="win">
@@ -212,7 +219,7 @@
   <div class="win"><div id="screen"></div></div>
 
   <div class="sub" style="opacity:.7;margin-top:2px">本作は『黒い砂漠』(Pearl Abyss)の非公式ファンメイド作品です。権利者とは一切関係ありません。非営利。</div>
-  <details style="margin-top:6px;font-size:11px;opacity:.6"><summary>開発メモ</summary>v1.08：スキルの強化コストを固定制→累進制に変更（同じスキルでもレベルが上がるほど1回あたりの必要SPが上昇＝1つを極める一極集中が割高になり、複数スキルへ浅く広く投資する方が相対的に有利になる）。判定式(rateBreakdown/baseRateStage/weaponResistRaw等)・武器抵抗の立ち上がり(RESIST_KNEE)・深さ連動の耐久ダメ(DUR_DEPTH)・各スキルの効果値(vals/rateVals)は無変更＝コストのみの調整。</details>
+  <details style="margin-top:6px;font-size:11px;opacity:.6"><summary>開発メモ</summary>v1.09：中盤の生存をスキル側で補強。(1)記憶の欠片＝確率発動(10〜50%)→確定発動に変更、回復量はrank連動+1〜+5（「理不尽に上がらない時がある」対応）。(2)ブラックストーンのSP累進コストを個別カーブ[1,1,2,2,3]に軽量化。(3)新系統「特殊系」を追加＝吸血(強化成功時 確率で耐久+5)／助手テクトン(強化失敗時 確率で耐久減半減)／天元突破(限界突破時のオーバーキル効果を×2〜4)。3ノードは専用アイコン未作成のため丸の仮アイコンで表示。(4)スキルLv表示に●○のドットを追加（テキスト併記）。判定式(rateBreakdown/baseRateStage/weaponResistRaw)・武器抵抗の立ち上がり(RESIST_KNEE)・深さ連動の耐久ダメ(DUR_DEPTH)・successCap・既存スキルの効果値は上記(1)(2)以外無変更。v1.08：スキルの強化コストを固定制→累進制に変更（1つを極める一極集中が割高になり、複数スキルへ浅く広く投資する方が相対的に有利になる）。</details>
 </div>
 
 <script>
@@ -281,7 +288,7 @@ const SP_GAIN_BY_RI=[1,1,1,1,1,2,2,2,3,5];   // index=ri（段のローマ位0-9
 // ---- スキルツリー（v0.81 全面リニューアル：root＋5系統・多効果/修飾ノード対応・数値は全て社長指定【仮】）----
 const TREE=[
  // 根っこ系（root chain）
- {id:'root', branch:'根', name:'ブラックストーン', cost:1, maxRank:5, reqs:[],
+ {id:'root', branch:'根', name:'ブラックストーン', cost:1, maxRank:5, reqs:[], costTable:[1,1,2,2,3],   // v1.09 社長指示：rootだけ個別の累進コスト([1,3,4,5,5]→[1,1,2,2,3])。costTableはnextCost()でmaxRank別テーブルより優先参照
    rateVals:[0.005,0.01,0.015,0.02,0.025],   // v1.07 社長指示：火力(爆発値)寄与を撤去し成功率のみに。rateVals自体・rootScaleによるスケールは不変（v0.86の値のまま）
    desc:(r)=>{ const L=Math.max(1,r); const sc=rootScale(); return '成功率+'+Math.round(TREE_MAP.root.rateVals[L-1]*sc*100)+'%'+(sc>1?'（凝縮/無欠 ×'+sc+'反映）':'')+'（火力寄与なし・全系統の入口）'; }},   // v1.07 desc更新：火力倍率の表記を撤去
  {id:'root2', branch:'根', name:'凝縮された魔力のブラックストーン', cost:5, maxRank:5, reqs:[{id:'root',rank:5}],
@@ -299,7 +306,7 @@ const TREE=[
  {id:'toranan', branch:'耐久回復系', name:'トラナンの秘訣', cost:3, maxRank:5, reqs:[{id:'root',rank:1}],
    vals:[0.10,0.20,0.30,0.40,0.50], desc:(r,v)=>'失敗時の耐久減を '+Math.round(v*100)+'% 軽減'},   // v1.03 系統の入口に（旧＝記憶の欠片の後）
  {id:'kakera', branch:'耐久回復系', name:'記憶の欠片', cost:4, maxRank:5, reqs:[{id:'toranan',rank:5}],
-   vals:[0.10,0.20,0.30,0.40,0.50], desc:(r,v)=>'強化のたび '+Math.round(v*100)+'% の確率で耐久+'+kakeraHeal()},   // v1.07 社長指示：vals[0.10,0.25,0.40,0.55,0.70]→[0.10,0.20,0.30,0.40,0.50]に戻す（cost等不変）
+   vals:[1,2,3,4,5], desc:(r,v)=>'強化のたび 確定で耐久+'+Math.round(v)},   // v1.09 社長指示：確率発動(10〜50%)→確定発動に変更（「理不尽に上がらない時がある」対応）。回復量はrank連動+1〜+5。cost/前提は不変
  {id:'shokunin', branch:'耐久回復系', name:'エリアンの涙', cost:15, maxRank:1, reqs:[{id:'kakera',rank:3}],
    desc:()=>'耐久が0になった時、1度だけ耐久フルで蘇る'},   // v0.99 効果＝耐久0の1回限りフル回復蘇生。v1.03 前提を記憶の欠片rank3へ（順序入れ替えに追従）
  // 失敗系
@@ -323,13 +330,23 @@ const TREE=[
    desc:()=>'クロン石の発動確率が×2になる（10〜50%→20〜100%）'},   // v0.93 役割変更：クロン供給→確率2倍
  {id:'jhan', branch:'保護系', name:'Ｊハン', cost:20, maxRank:1, reqs:[{id:'wabi',rank:1}],
    desc:()=>'発動時 段の下落を完全に防ぐ（保護の発動確率＝クロン石／詫びクロン依存は不変）'},   // v1.07 社長指示：cost15→20・効果を「保護量2」→「発動時は段の下落を完全に防ぐ（drop=0）」に変更
+ // 特殊系（v1.09 新設・社長指示：中盤の生存をスキルで補強。専用アイコンは未作成＝ツリー表示は丸(●)の仮アイコンで代用）
+ {id:'kyuketsu', branch:'特殊系', name:'吸血', cost:1, maxRank:5, costTable:[1,3,3,4,5], iconColor:'#ff6b6b',
+   reqs:[{id:'root',rank:1},{id:'toranan',rank:3},{id:'kakera',rank:2}],
+   vals:[0.10,0.20,0.30,0.40,0.50], desc:(r,v)=>'強化成功時 '+Math.round(v*100)+'% で耐久+5'},
+ {id:'tekton', branch:'特殊系', name:'助手テクトン', cost:1, maxRank:5, costTable:[1,3,3,4,5], iconColor:'#6bc7ff',
+   reqs:[{id:'toranan',rank:5}],
+   vals:[0.10,0.20,0.30,0.40,0.50], desc:(r,v)=>'強化失敗時 '+Math.round(v*100)+'% で耐久減を半減'},
+ {id:'tengen', branch:'特殊系', name:'天元突破', cost:2, maxRank:5, costTable:[2,2,3,4,5], iconColor:'#ffb347',
+   reqs:[{id:'root3',rank:1}],
+   vals:[2,2.5,3,3.5,4], desc:(r,v)=>'限界突破時のオーバーキル効果を ×'+v.toFixed(1)},
 ];
 const TREE_MAP={}; TREE.forEach(n=>TREE_MAP[n.id]=n);
 // 根っこ系(root/root2/root3)は上部にチェーン表示。下に5系統を並べる（全表示・折りたたみなし）
 const ROOTCHAIN=['root','root2','root3'];
-const BRANCHES=['強化系','耐久回復系','失敗系','減衰対抗系','保護系'];
-// v1.01 スキルツリー＝傘型：ブラックストーン(root)が頂点、そこから6系統が枝分かれ。
-//   系統の並び（左→右／PC縦・スマホ横）＝[根チェーン(凝縮/無欠), 強化, 耐久回復, 失敗, 減衰対抗, 保護]。各系統は手前→奥の順。
+const BRANCHES=['強化系','耐久回復系','失敗系','減衰対抗系','保護系','特殊系'];   // v1.09 社長指示：特殊系(吸血/助手テクトン/天元突破)を追加
+// v1.01 スキルツリー＝傘型：ブラックストーン(root)が頂点、そこから7系統が枝分かれ。   // v1.09：6系統→7系統（特殊系を追加）
+//   系統の並び（左→右／PC縦・スマホ横）＝[根チェーン(凝縮/無欠), 強化, 耐久回復, 失敗, 減衰対抗, 保護, 特殊]。各系統は手前→奥の順。
 const TCHAINS=[
   ['root2','root3'],
   ['voice','book','yami'],
@@ -337,6 +354,7 @@ const TCHAINS=[
   ['stack','stack_mult','orenai'],
   ['waru','madaikeru','kiai'],
   ['kuronishi','wabi','jhan'],
+  ['kyuketsu','tekton','tengen'],   // v1.09 新設・特殊系
 ];
 const CELLW=116, CELLH=128, NODEW=104, NODEH=116;   // v1.01 アイコン1.5倍に伴いノード/セルを拡大
 // v1.00 スキルアイコン（透過PNG・data URI埋め込み）。id→dataURL。ビルドスクリプトが下行を実データに差し替える。
@@ -397,10 +415,11 @@ function failDurDamage(){ let raw=failTier()*DUR_PER_STEP;
   const depthMult=Math.pow(DUR_DEPTH_GROWTH, Math.max(0, totalStageNow()-DUR_DEPTH_KNEE));   // v0.90 深さ連動：段60超で失敗の耐久ダメが跳ね上がる（最強ビルドに段100前後の天井）
   let dmg=raw*depthMult*(1+DUR_FAIL_ESCALATE*(g.failCount||0));
   if(skR('toranan')>0) dmg*=(1-nodeVal('toranan'));   // v0.91 トラナンの秘訣：失敗時の耐久減を軽減（-10〜-50%）
+  if(skR('tekton')>0 && Math.random()<nodeVal('tekton')) dmg*=0.5;   // v1.09 社長追加：助手テクトン＝強化失敗時、確率で耐久減を半減（トラナン軽減の後に適用）
   return Math.round(dmg); }
 // v0.96 fireMult/volkMult(旧・爆発値モデル用)はデッドコードとして撤去。ヴォルクス合成の生きた実装はrateBreakdown内にある。
-// v0.99 記憶の欠片の回復量＝+5固定（旧・職人の記憶の×2は撤去→エリアンの涙＝耐久0で1度だけ蘇生へ役割変更）
-function kakeraHeal(){ if(skR('kakera')<=0) return 0; return 5; }   // v0.99 エリアンの涙は記憶の欠片を強化しなくなった（効果を蘇生に変更）→回復量は+5固定
+// v1.09 社長指示：記憶の欠片＝確率発動(10〜50%)→確定発動に変更（「理不尽に上がらない時がある」対応）。回復量はrank連動+1〜+5（旧・+5固定から変更）
+function kakeraHeal(){ if(skR('kakera')<=0) return 0; return nodeVal('kakera'); }
 // v0.81 失敗スタックの貯まる値＝スタックのlerp（1..10）。1スタックあたりの成功率＝基礎2%（まだ舞えるで上書き3/4/5%）
 function stackGain(){ return skR('stack')>0 ? Math.round(nodeVal('stack')) : 0; }
 function perStackBonus(){ return skR('stack_mult')>0 ? nodeVal('stack_mult') : PERSTACK_BASE; }
@@ -414,9 +433,10 @@ function protGuardText(){ return skR('jhan')>0 ? '完全に' : (protGuard()+'');
 function reqMet(id){ const n=TREE_MAP[id]; if(!n) return false; return (n.reqs||[]).every(rq=>skR(rq.id) >= rq.rank); }   // v0.72 複数前提：全reqsを満たすか
 // v1.08 社長指示：SPコストを累進化（Lvが上がるほど高くなる）。単発スキル(maxRank1＝yami/root3/shokunin/kiai/wabi/jhan)は据え置きでnode.costを使用。
 // 段階数(maxRank)ごとにテーブルを引く：10段=[1,2,2,3,3,3,4,4,4,5]／5段=[1,3,4,5,5]／4段=[1,3,4,5]。テーブル無し(maxRank1)はnode.cost。
+// v1.09 社長指示：ノード個別のコストテーブル(node.costTable)があればmaxRank別テーブルより優先（root/吸血/助手テクトン/天元突破が使用）。
 const COST_TABLE_BY_MAXRANK = { 10:[1,2,2,3,3,3,4,4,4,5], 5:[1,3,4,5,5], 4:[1,3,4,5] };
 function nextCost(id){ const n=TREE_MAP[id]; if(!n) return 0;
-  const tbl=COST_TABLE_BY_MAXRANK[n.maxRank]; if(!tbl) return n.cost;   // maxRank1は従来どおりnode.cost
+  const tbl=n.costTable || COST_TABLE_BY_MAXRANK[n.maxRank]; if(!tbl) return n.cost;   // maxRank1（テーブル無し）は従来どおりnode.cost
   const r=skR(id); return tbl[Math.min(r, tbl.length-1)]; }
 function canOpen(id){ const n=TREE_MAP[id]; if(!n) return false; return reqMet(id) && skR(id)<n.maxRank && g.sp>=nextCost(id); }
 function openNode(id){ if(!canOpen(id)) return;
@@ -431,7 +451,10 @@ function openNode(id){ if(!canOpen(id)) return;
 function baseRateStage(){ const prog=totalStageNow();
   return Math.max(BASE_FLOOR, Math.min(BASE_CAP, BASE_HI*Math.exp(-BASE_DECAY*(prog-BASE_PROG0)))); }
 function fireBonusOf(exVal){ const wall=FL(g.stage,g.cycle); if(wall<=0) return 0; return Math.min(1, exVal/wall)*FIRE_INFLUENCE; }
-function overkillBonus(exVal){ const wall=FL(g.stage,g.cycle); if(wall<=0) return 0; const ratio=exVal/wall; if(ratio<=1) return 0; return Math.min(OVERKILL_CAP, OVERKILL_INFLUENCE*Math.log10(ratio)); }   // v0.90 壁の何倍かの対数に比例（壁×2で+2.4%/×10で+8%/×100で+16%/×1000で+24%…上限+40%）
+function overkillBonus(exVal){ const wall=FL(g.stage,g.cycle); if(wall<=0) return 0; const ratio=exVal/wall; if(ratio<=1) return 0;
+  const base=Math.min(OVERKILL_CAP, OVERKILL_INFLUENCE*Math.log10(ratio));   // v0.90 壁の何倍かの対数に比例（壁×2で+2.4%/×10で+8%/×100で+16%/×1000で+24%…上限+40%）
+  const mult=skR('tengen')>0 ? nodeVal('tengen') : 1;   // v1.09 社長追加：天元突破＝限界突破時のオーバーキル効果を×N（計算値・上限CAPともにN倍＝丸ごとスケール）
+  return base*mult; }
 function weaponResistRaw(){ const prog=totalStageNow();
   let r=RESIST_PER*Math.max(0,prog-1);                          // 浅い段は緩やか（従来どおり）
   if(prog>RESIST_KNEE) r+=RESIST_STEEP*(prog-RESIST_KNEE);      // v0.90 段51超で急峻に（段60≈-30%/段70≈-45%/段80以降≈-60%）
@@ -479,9 +502,9 @@ function tryEnh(){
   const ok = Math.random()<rate;
   g._lastRate=rate; g._lastEx=ex;
   if(ok) onSuccess(ex); else onFail(ex);
-  // v0.91 記憶の欠片：毎強化ごと確率P%で耐久回復（トラナンは失敗ダメ軽減へ役割変更＝ここの確定発動は撤去）
+  // v1.09 社長指示：記憶の欠片＝確率発動→確定発動に変更（毎強化ごと必ず回復・回復量はrank連動+1〜+5）
   if(!g.ended && skR('kakera')>0){
-    if(Math.random()<nodeVal('kakera')){ const h=kakeraHeal(); if(h>0) g.dur=Math.min(maxDur(), g.dur+h); }
+    const h=kakeraHeal(); if(h>0) g.dur=Math.min(maxDur(), g.dur+h);
   }
   if(g.ended) return;
   render();
@@ -498,6 +521,7 @@ function onSuccess(ex){
   g.stack = skR('orenai')>0 ? Math.floor((g.stack||0)*nodeVal('orenai')) : 0;
   g.lastFailed=false; g.failStreak=0;
   g.stage++; g.sp+=spGain;
+  if(skR('kyuketsu')>0 && Math.random()<nodeVal('kyuketsu')){ g.dur=Math.min(maxDur(), g.dur+5); }   // v1.09 社長追加：吸血＝強化成功時、確率で耐久+5（固定）
   g.succCount=(g.succCount||0)+1; if(capped) g.feverCount=(g.feverCount||0)+1;   // plog用カウンタ
   g.score += Math.round(wall>0?Math.min(ex,wall):ex);
   g.maxStage=Math.max(g.maxStage, g.stage+(g.cycle-1)*100);
@@ -647,7 +671,7 @@ function showEnhance(){
 // レイアウト計算：各ノードの中心座標(cx,cy)とキャンバスサイズ(W,H)、縦/横フラグを返す。
 function treeLayout(){
   const vertical = (typeof window!=='undefined' && window.innerWidth) ? (window.innerWidth>560) : true;
-  const NB=TCHAINS.length, DEPTH=3;   // 6系統・最大深さ3
+  const NB=TCHAINS.length, DEPTH=3;   // v1.09：7系統（特殊系追加）・最大深さ3。NBはTCHAINS.length依存のため自動追随
   const pos={}; let W,H;
   if(vertical){   // rootが中央上、系統は左→右に並び下へ伸びる
     W=NB*CELLW; H=(DEPTH+1)*CELLH;
@@ -676,17 +700,28 @@ function treeSVG(L){
   });
   return '<svg class="tsvg" width="'+L.W+'" height="'+L.H+'" viewBox="0 0 '+L.W+' '+L.H+'">'+lines+'</svg>';
 }
+// v1.09 社長指示：Lv表示を●(取得)○(未取得)のドットに（テキスト「Lv x/y」は併記のまま残す）。
+//   5段以下＝1行、6段以上(voice/stack maxRank10)＝5個ずつ2行に折り返す。
+function lvDotsHtml(r, maxRank){
+  const dots=[]; for(let i=1;i<=maxRank;i++) dots.push(i<=r?'●':'○');
+  if(maxRank<=5) return '<span class="lvdots">'+dots.join('')+'</span>';
+  let rows=[]; for(let i=0;i<dots.length;i+=5) rows.push(dots.slice(i,i+5).join(''));
+  return '<span class="lvdots lvdots-multi">'+rows.map(row=>'<span class="lvdotrow">'+row+'</span>').join('')+'</span>';
+}
 function iconNode(n,L){
   const r=skR(n.id), can=canOpen(n.id), maxed=r>=n.maxRank, locked=!reqMet(n.id);
   const c=L.pos[n.id]; if(!c) return '';
   const left=c.cx-NODEW/2, top=c.cy-NODEH/2;
   let cls='inode'; if(locked) cls+=' locked'; else if(maxed) cls+=' maxed'; else if(can) cls+=' can';
   const src=ICON[n.id]||'';
+  // v1.09 専用PNGが無いノード（吸血/助手テクトン/天元突破）は丸(●)の仮アイコンで代用。n.iconColorで系統ごとに色分け。
+  const fallback = n.iconColor ? '<span class="dotIcon" style="background:'+n.iconColor+'"></span>' : '<span class="noimg">?</span>';
   return '<button class="'+cls+'" style="left:'+left+'px;top:'+top+'px" '
     +'onclick="openDetail(\''+n.id+'\')" onmouseenter="hoverTip(\''+n.id+'\',event)" onmousemove="moveTip(event)" onmouseleave="hideTip()">'
-    +(src?'<img src="'+src+'" alt="" draggable="false">':'<span class="noimg">?</span>')
+    +(src?'<img src="'+src+'" alt="" draggable="false">':fallback)
     +'<span class="inm">'+n.name+'</span>'
     +'<span class="ilv">Lv'+r+'/'+n.maxRank+'</span>'
+    +lvDotsHtml(r, n.maxRank)
     +(can?'<span class="idot" title="強化できます">＋</span>':(maxed?'<span class="idot mx">★</span>':(locked?'<span class="idot lk">🔒</span>':'')))
     +'</button>';
 }
@@ -709,7 +744,7 @@ function onTreeResize(){ try{ if(typeof g!=='undefined' && g && g.phase==='tree'
 // --- ノード効果ツールチップ（PC：マウスオーバー） ---
 function tipEl(){ let t=document.getElementById('nodetip'); if(!t){ t=document.createElement('div'); t.id='nodetip'; document.body.appendChild(t); } return t; }
 function hoverTip(id,ev){ try{ const n=TREE_MAP[id]; if(!n) return; const r=skR(id); const shownR=(r>0?r:1); const shownVal=lerpVal(n,shownR);
-  const t=tipEl(); t.innerHTML='<b>'+n.name+'</b> <span class="tl">Lv'+r+'/'+n.maxRank+'</span><br>'+n.desc(shownR,shownVal);
+  const t=tipEl(); t.innerHTML='<b>'+n.name+'</b> <span class="tl">Lv'+r+'/'+n.maxRank+'</span> '+lvDotsHtml(r,n.maxRank)+'<br>'+n.desc(shownR,shownVal);
   t.classList.add('show'); moveTip(ev); }catch(e){} }
 function moveTip(ev){ const t=document.getElementById('nodetip'); if(!t||!t.classList.contains('show')) return;
   const pad=14; let x=ev.clientX+pad, y=ev.clientY+pad; const w=t.offsetWidth||200, h=t.offsetHeight||60;
@@ -725,7 +760,8 @@ function renderDetail(id){
   const shownR=(r>0?r:1), shownVal=lerpVal(n,shownR);
   const box=document.getElementById('nd-box'); if(!box) return;
   let h='<button class="nd-x" onclick="closeDetail()">×</button>';
-  h+='<div class="nd-hd"><img src="'+(ICON[id]||'')+'" alt=""><div><div class="nd-nm">'+n.name+'</div><div class="nd-lv">Lv '+r+' / '+n.maxRank+'　<span class="nd-br">'+n.branch+'</span></div></div></div>';
+  const ndImg = ICON[id] ? '<img src="'+ICON[id]+'" alt="">' : (n.iconColor ? '<span class="dotIcon nd-dotIcon" style="background:'+n.iconColor+'"></span>' : '<span class="noimg">?</span>');   // v1.09 アイコン未作成ノードは丸で代用
+  h+='<div class="nd-hd">'+ndImg+'<div><div class="nd-nm">'+n.name+'</div><div class="nd-lv">Lv '+r+' / '+n.maxRank+' '+lvDotsHtml(r,n.maxRank)+'　<span class="nd-br">'+n.branch+'</span></div></div></div>';
   h+='<div class="nd-desc">'+n.desc(shownR,shownVal)+'</div>';
   if(locked){ const parts=(n.reqs||[]).map(rq=>(TREE_MAP[rq.id]?TREE_MAP[rq.id].name:rq.id)+' Lv'+rq.rank); h+='<div class="nd-req">🔒 前提：'+parts.join(' ＋ ')+'</div>'; }
   h+='<div class="nd-act">';
@@ -993,14 +1029,14 @@ function buildPlaylogData(reason){
     const totalStage = ((g.maxCycle||1)-1)*100 + (((g.maxStage-1)%100)+1);   // 通算到達段（周回込み）
     const skills={}; TREE.forEach(n=>{ skills[n.id]=skR(n.id); });   // v0.72 最終スキル振り（全ノードid→rank）
     return JSON.stringify({
-      ver:'v1.08', reason:(reason||'manual'), ts:new Date().toISOString(),
+      ver:'v1.09', reason:(reason||'manual'), ts:new Date().toISOString(),
       house:(lsGet('kyoka_house')||'noname'),   // v0.97 家名（プレイヤー識別・解析のグループ化用）
       maxStage: totalStage, cycle:(g.maxCycle||1), turn:(g.turn||0), score:(g.score||0),
       fallback:(g.fallbackCount||0),   // v0.96 未使用のcloneフィールドをplogから撤去
       success:(g.succCount||0), fail:(g.failCount||0), fever:(g.feverCount||0),
       skills: skills
     });
-  }catch(e){ return JSON.stringify({ver:'v1.08', reason:(reason||'manual'), err:String(e)}); }
+  }catch(e){ return JSON.stringify({ver:'v1.09', reason:(reason||'manual'), err:String(e)}); }
 }
 function uploadPlaylog(reason){
   try{
