@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>強化脳汁ゲー（仮）— ブラウザ試作 v1.05（中盤の減衰前倒し＋減衰対抗を強化・演出スキップのトグル追加）</title>
+<title>強化脳汁ゲー（仮）— ブラウザ試作 v1.06（深さ連動の成功率上限＝壁越え後の無敵化を是正）</title>
 <style>
   :root{ --navy:#000a5a; --navy2:#001080; --gold:#ffd24a; --edge:#6b7bd6; --panel:#00104a; --track:#00003a; }
   *{ box-sizing:border-box; }
@@ -182,7 +182,7 @@
 <canvas id="fxcanvas"></canvas>
 <div id="fxflash"></div>
 <div id="app">
-  <h1>◆ 強化脳汁ゲー（仮）◆ ブラウザ試作 v1.05 — 中盤の緊張感アップ・減衰対抗の強化</h1>
+  <h1>◆ 強化脳汁ゲー（仮）◆ ブラウザ試作 v1.06 — 深さ連動の成功率上限（壁越え後の無敵化を是正）</h1>
   <div id="heatbar"></div><!-- v0.85 段のテーマ色アクセント帯 -->
 
   <div class="win">
@@ -230,6 +230,11 @@ function stageLabel(){ return (g.cycle>1?g.cycle+"周 ":"")+stageName(g.stage); 
 
 // v0.96 旧・爆発値モデルの減衰/天井/オーバーキル定数（DECAY_*/CEIL_*/OK_*/decayD）はデッドコードとして撤去。
 const CAP_RATE=0.99;   // 成功率の上限（rateBreakdownで使用）
+// v1.06 社長FB「壁越え後に無敵化＝深部で死なない」への対応＝最終成功率の上限を深さ(通算段)で下げる。
+// 段CAP_KNEE以下は上限0.99のまま＝中盤の手応え（v1.05までの体感）は完全不変。KNEE超から1段ごとにCAP_SLOPEずつ上限低下、下限CAP_FLOORで止まる。
+// 掃引で決定（フル装備＝凝縮5・煽り5含む全maxの死亡段中央を633→90〜120へ是正・無限0を確認）：KNEE=75, SLOPE=0.015, FLOOR=0.20（中央約100・最大約120・p90約108）。
+const CAP_KNEE=75, CAP_SLOPE=0.015, CAP_FLOOR=0.20;
+function successCap(total){ return Math.max(CAP_FLOOR, Math.min(CAP_RATE, CAP_RATE - CAP_SLOPE*Math.max(0, total-CAP_KNEE))); }
 // ===== v0.90 成功率ベース・モデル（社長方針：素の成功率を土台に±%で積む）。全数値【仮】=あとで調整 =====
 const BASE_HI=0.95, BASE_DECAY=0.048, BASE_PROG0=5, BASE_FLOOR=0.005, BASE_CAP=0.95; // 素の成功率カーブ（段で低下）
 const FIRE_INFLUENCE=0.60;                     // 火力の影響：爆発値が壁に到達(限界突破)で +60%。爆発値の影響力＝ここで調整
@@ -446,7 +451,7 @@ function rateBreakdown(){
   if(rb>0){ const nr=up(r+rb); steps.push({kind:'black',label:'🖤 ブラックストーン成功率 +'+Math.round(rb*100)+'%',delta:nr-r,rate:nr}); r=nr; }
   const sb=stackRateBonus();
   if(sb>0){ const nr=up(r+sb); steps.push({kind:'stack',label:'📚 失敗スタックの後押し +'+Math.round(sb*100)+'%',delta:nr-r,rate:nr}); r=nr; }
-  const finalRate=Math.max(0,Math.min(CAP_RATE,r));
+  const finalRate=Math.max(0,Math.min(successCap(totalStageNow()),r));   // v1.06 最終成功率の上限のみ深さ連動successCap()に置き換え（判定tryEnhと表示buildRevealStepsは共にこのrateBreakdown()の戻り値を使うため両者一致）
   steps.push({kind:'final', rate:finalRate});
   return {steps, finalRate, exFinal, wall, fever};
 }
@@ -965,14 +970,14 @@ function buildPlaylogData(reason){
     const totalStage = ((g.maxCycle||1)-1)*100 + (((g.maxStage-1)%100)+1);   // 通算到達段（周回込み）
     const skills={}; TREE.forEach(n=>{ skills[n.id]=skR(n.id); });   // v0.72 最終スキル振り（全ノードid→rank）
     return JSON.stringify({
-      ver:'v1.05', reason:(reason||'manual'), ts:new Date().toISOString(),
+      ver:'v1.06', reason:(reason||'manual'), ts:new Date().toISOString(),
       house:(lsGet('kyoka_house')||'noname'),   // v0.97 家名（プレイヤー識別・解析のグループ化用）
       maxStage: totalStage, cycle:(g.maxCycle||1), turn:(g.turn||0), score:(g.score||0),
       fallback:(g.fallbackCount||0),   // v0.96 未使用のcloneフィールドをplogから撤去
       success:(g.succCount||0), fail:(g.failCount||0), fever:(g.feverCount||0),
       skills: skills
     });
-  }catch(e){ return JSON.stringify({ver:'v1.05', reason:(reason||'manual'), err:String(e)}); }
+  }catch(e){ return JSON.stringify({ver:'v1.06', reason:(reason||'manual'), err:String(e)}); }
 }
 function uploadPlaylog(reason){
   try{
