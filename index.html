@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>強化脳汁ゲー（仮）— ブラウザ試作 v1.06（深さ連動の成功率上限＝壁越え後の無敵化を是正）</title>
+<title>強化脳汁ゲー（仮）— ブラウザ試作 v1.07（スキル調整＋演出スキップの常設化）</title>
 <style>
   :root{ --navy:#000a5a; --navy2:#001080; --gold:#ffd24a; --edge:#6b7bd6; --panel:#00104a; --track:#00003a; }
   *{ box-sizing:border-box; }
@@ -182,7 +182,7 @@
 <canvas id="fxcanvas"></canvas>
 <div id="fxflash"></div>
 <div id="app">
-  <h1>◆ 強化脳汁ゲー（仮）◆ ブラウザ試作 v1.06 — 深さ連動の成功率上限（壁越え後の無敵化を是正）</h1>
+  <h1>◆ 強化脳汁ゲー（仮）◆ ブラウザ試作 v1.07 — スキル調整＋演出スキップの常設化</h1>
   <div id="heatbar"></div><!-- v0.85 段のテーマ色アクセント帯 -->
 
   <div class="win">
@@ -199,6 +199,12 @@
     <div class="row">
       <span class="stat">🌳SP残<b id="sp">5</b></span>
       <span class="stat">📚スタック<b id="stack">0</b></span>
+      <!-- v1.07 社長指示：演出スキップの切替をスタート画面(showIntro)だけでなく常時（通常メニュー＝ツリー画面／強化画面を含む全画面）で操作できるように。
+           この行は#screenの外＝静的HTMLなので画面遷移(intro/enhance/tree/gameover)に関わらず常に表示される。checked状態はrender()でfxSkipOn()から毎回同期。
+           判定/乱数には一切関与しない表示専用フラグ（tryEnh/rateBreakdownの経路は不変）。 -->
+      <label style="display:flex;align-items:center;gap:4px;font-size:11.5px;margin-left:auto;cursor:pointer;color:#9fb0e8;opacity:.9" title="演出をスキップ（強化のたび即判定・結果はそのまま表示）">
+        <input type="checkbox" id="skipFxChkHdr" onchange="toggleSkipFx(this)"> 演出スキップ
+      </label>
     </div>
   </div>
 
@@ -275,12 +281,12 @@ const SP_GAIN_BY_RI=[1,1,1,1,1,2,2,2,3,5];   // index=ri（段のローマ位0-9
 const TREE=[
  // 根っこ系（root chain）
  {id:'root', branch:'根', name:'ブラックストーン', cost:1, maxRank:5, reqs:[],
-   fireVals:[1.1,1.2,1.3,1.4,1.5], rateVals:[0.005,0.01,0.015,0.02,0.025],   // v0.86 成功率寄与を半減（最大30%→15%・社長指示。爆発値寄与fireValsは据え置き）
-   desc:(r)=>{ const L=Math.max(1,r); const sc=rootScale(); return '火力倍率 ×'+(TREE_MAP.root.fireVals[L-1]*sc).toFixed(2)+' かつ 成功率+'+Math.round(TREE_MAP.root.rateVals[L-1]*sc*100)+'%'+(sc>1?'（凝縮/無欠 ×'+sc+'反映）':'')+'（全系統の入口）'; }},
+   rateVals:[0.005,0.01,0.015,0.02,0.025],   // v1.07 社長指示：火力(爆発値)寄与を撤去し成功率のみに。rateVals自体・rootScaleによるスケールは不変（v0.86の値のまま）
+   desc:(r)=>{ const L=Math.max(1,r); const sc=rootScale(); return '成功率+'+Math.round(TREE_MAP.root.rateVals[L-1]*sc*100)+'%'+(sc>1?'（凝縮/無欠 ×'+sc+'反映）':'')+'（火力寄与なし・全系統の入口）'; }},   // v1.07 desc更新：火力倍率の表記を撤去
  {id:'root2', branch:'根', name:'凝縮された魔力のブラックストーン', cost:5, maxRank:5, reqs:[{id:'root',rank:5}],
-   vals:[2,3,4,5,6], desc:(r,v)=>'ブラックストーンの効果（火力・成功率）を ×'+v.toFixed(0)+'（Lv1〜5で×2/3/4/5/6・rank連動）'},   // v1.05 社長指示：maxRank1→5・rank連動化（cost5/rankのまま）
+   vals:[1.5,2,2.5,3,3.5], desc:(r,v)=>'ブラックストーンの成功率効果を ×'+v.toFixed(1)+'（Lv1〜5で×1.5/2/2.5/3/3.5・rank連動）'},   // v1.07 社長指示：vals[2,3,4,5,6]→[1.5,2,2.5,3,3.5]。rootの火力撤去に伴いdescも「成功率効果」表記に統一
  {id:'root3', branch:'根', name:'無欠な魔力のブラックストーン', cost:20, maxRank:1, reqs:[{id:'root2',rank:3}],
-   desc:()=>'ブラックストーンの効果をさらに ×3（凝縮×2〜6の上に積み上げ）'},   // v1.05 社長指示：cost15→20・前提をroot2 rank3に（効果×3は据え置き）
+   desc:()=>'ブラックストーンの成功率効果をさらに ×3（凝縮×1.5〜3.5の上に積み上げ）'},   // v1.05 社長指示：cost15→20・前提をroot2 rank3に（効果×3は据え置き）。v1.07 desc数値を凝縮の新値に追随
  // 強化系
  {id:'voice', branch:'強化系', name:'ヴォルクスの叫び', cost:2, maxRank:10, reqs:[{id:'root',rank:1}],
    vals:[2,4,6,8,10,12,14,16,18,20], desc:(r,v)=>'爆発値倍率 ×'+v.toFixed(0)},   // v0.90 社長指示でヴォルクス系強化（叫び ×2〜×20）
@@ -292,30 +298,30 @@ const TREE=[
  {id:'toranan', branch:'耐久回復系', name:'トラナンの秘訣', cost:3, maxRank:5, reqs:[{id:'root',rank:1}],
    vals:[0.10,0.20,0.30,0.40,0.50], desc:(r,v)=>'失敗時の耐久減を '+Math.round(v*100)+'% 軽減'},   // v1.03 系統の入口に（旧＝記憶の欠片の後）
  {id:'kakera', branch:'耐久回復系', name:'記憶の欠片', cost:4, maxRank:5, reqs:[{id:'toranan',rank:5}],
-   vals:[0.10,0.25,0.40,0.55,0.70], desc:(r,v)=>'強化のたび '+Math.round(v*100)+'% の確率で耐久+'+kakeraHeal()},   // v1.03 社長指示：SP4・効果10/25/40/55/70%・トラナンの後に
+   vals:[0.10,0.20,0.30,0.40,0.50], desc:(r,v)=>'強化のたび '+Math.round(v*100)+'% の確率で耐久+'+kakeraHeal()},   // v1.07 社長指示：vals[0.10,0.25,0.40,0.55,0.70]→[0.10,0.20,0.30,0.40,0.50]に戻す（cost等不変）
  {id:'shokunin', branch:'耐久回復系', name:'エリアンの涙', cost:15, maxRank:1, reqs:[{id:'kakera',rank:3}],
    desc:()=>'耐久が0になった時、1度だけ耐久フルで蘇る'},   // v0.99 効果＝耐久0の1回限りフル回復蘇生。v1.03 前提を記憶の欠片rank3へ（順序入れ替えに追従）
  // 失敗系
  {id:'stack', branch:'失敗系', name:'スタック', cost:2, maxRank:10, reqs:[{id:'root',rank:1}],
    vals:[1,2,3,4,5,6,7,8,9,10], desc:(r,v)=>'失敗のたびスタック+'+(STACK_BASE_GAIN+Math.round(v))+'（基本+'+STACK_BASE_GAIN+'＋この技+'+Math.round(v)+'）。スタック1につき成功率+'+Math.round(perStackBonus()*100)+'%（上限+'+Math.round(STACK_RATE_CAP*100)+'%・%はこの技を取ると有効）'},
- {id:'stack_mult', branch:'失敗系', name:'まだ舞える', cost:5, maxRank:3, reqs:[{id:'stack',rank:5}],
-   vals:[0.02,0.03,0.04], desc:(r,v)=>'1スタックあたりの成功率を +'+Math.round(v*100)+'% に'},   // v0.90 3/4/5%→2/3/4%（社長指示）
- {id:'orenai', branch:'失敗系', name:'折れない心', cost:10, maxRank:1, reqs:[{id:'stack_mult',rank:3}],
-   desc:()=>'成功してもスタックが50%残る（端数切り上げ）'},
+ {id:'stack_mult', branch:'失敗系', name:'まだ舞える', cost:5, maxRank:5, reqs:[{id:'stack',rank:5}],
+   vals:[0.014,0.018,0.022,0.026,0.03], desc:(r,v)=>'1スタックあたりの成功率を +'+(v*100).toFixed(1)+'% に'},   // v1.07 社長指示：maxRank3→5・vals[0.02,0.03,0.04]→[0.014,0.018,0.022,0.026,0.03]（1.4/1.8/2.2/2.6/3%）。cost5・reqs(stack rank5)は不変
+ {id:'orenai', branch:'失敗系', name:'折れない心', cost:10, maxRank:4, reqs:[{id:'stack_mult',rank:3}],
+   vals:[0.25,1/3,0.5,2/3], desc:(r,v)=>'成功してもスタックが '+Math.round(v*100)+'% 残る（端数切り捨て）'},   // v1.07 社長指示：maxRank1→4（cost10維持）・保持率を1/4,1/3,1/2,2/3の段階に（floor、旧50%固定ceilから変更）。reqs(stack_mult rank3)は不変
  // 減衰対抗系
  {id:'waru', branch:'減衰対抗系', name:'ヤミヤミの声援', cost:2, maxRank:5, reqs:[{id:'root',rank:1}],
    vals:[0.05,0.10,0.15,0.20,0.25], desc:(r,v)=>'武器の抵抗（減衰）を '+Math.round(v*100)+'% 抑える'},
  {id:'madaikeru', branch:'減衰対抗系', name:'ヤミヤミの煽り', cost:5, maxRank:5, reqs:[{id:'waru',rank:3}],
-   vals:[1.5,2,2.5,3,3.5], desc:(r,v)=>'ヤミヤミの声援の抑制 ×'+v.toFixed(1)+'（Lv1〜5で×1.5/2/2.5/3/3.5・rank連動）'},   // v1.05 社長指示：maxRank1→5・cost15→5・rank連動化
+   vals:[1.4,1.8,2.2,2.6,3], desc:(r,v)=>'ヤミヤミの声援の抑制 ×'+v.toFixed(1)+'（Lv1〜5で×1.4/1.8/2.2/2.6/3・rank連動）'},   // v1.07 社長指示：vals[1.5,2,2.5,3,3.5]→[1.4,1.8,2.2,2.6,3]（decayReliefFracが参照。maxRank/cost/reqsは不変）
  {id:'kiai', branch:'減衰対抗系', name:'ＫＩＡＩ', cost:15, maxRank:1, reqs:[{id:'madaikeru',rank:1}],
    desc:()=>'ヤミヤミの声援がもう一度発動（合成 r→1-(1-r)²・例 50%→75%）'},
  // 保護系
  {id:'kuronishi', branch:'保護系', name:'クロン石', cost:2, maxRank:5, reqs:[{id:'root',rank:1}],
-   vals:[0.10,0.20,0.30,0.40,0.50], desc:(r,v)=>'強化失敗時 '+Math.round(protRate()*100)+'% の確率で段の下落を'+protGuard()+'防ぐ（クロン石単体の確率＝'+Math.round(v*100)+'%）'},   // v0.93 通貨廃止・確率式
+   vals:[0.10,0.20,0.30,0.40,0.50], desc:(r,v)=>'強化失敗時 '+Math.round(protRate()*100)+'% の確率で段の下落を'+protGuardText()+'防ぐ（クロン石単体の確率＝'+Math.round(v*100)+'%）'},   // v0.93 通貨廃止・確率式。v1.07 Ｊハン変更に伴いprotGuardText()を使用
  {id:'wabi', branch:'保護系', name:'詫びクロン', cost:10, maxRank:1, reqs:[{id:'kuronishi',rank:3}],
    desc:()=>'クロン石の発動確率が×2になる（10〜50%→20〜100%）'},   // v0.93 役割変更：クロン供給→確率2倍
- {id:'jhan', branch:'保護系', name:'Ｊハン', cost:15, maxRank:1, reqs:[{id:'wabi',rank:1}],
-   desc:()=>'クロン石の下落保護が2になる（発動時に段の下落を2防ぐ）'},   // v0.93 完全無効→保護量2
+ {id:'jhan', branch:'保護系', name:'Ｊハン', cost:20, maxRank:1, reqs:[{id:'wabi',rank:1}],
+   desc:()=>'発動時 段の下落を完全に防ぐ（保護の発動確率＝クロン石／詫びクロン依存は不変）'},   // v1.07 社長指示：cost15→20・効果を「保護量2」→「発動時は段の下落を完全に防ぐ（drop=0）」に変更
 ];
 const TREE_MAP={}; TREE.forEach(n=>TREE_MAP[n.id]=n);
 // 根っこ系(root/root2/root3)は上部にチェーン表示。下に5系統を並べる（全表示・折りたたみなし）
@@ -375,10 +381,10 @@ function lerpVal(n, r){ if(r<=0) return 0; if(n.vals) return n.vals[Math.min(r, 
 function nodeVal(id){ const n=TREE_MAP[id]; if(!n) return 0; return lerpVal(n, skR(id)); }
 function maxDur(){ return DUR_START; }   // 耐久最大値は固定100
 function totalStageNow(){ return ((g.cycle||1)-1)*100 + g.stage; }
-// v1.05 根っこ系：凝縮(root2)がrank連動×2〜6・無欠(root3)は据え置き×3で積み上げ＝最大×18（root2 Lv5＋root3）。root2なし→1。
+// v1.07 根っこ系：凝縮(root2)がrank連動×1.5〜3.5・無欠(root3)は据え置き×3で積み上げ＝最大×10.5（root2 Lv5＋root3）。root2なし→1。
 function rootScale(){ const base=skR('root2')>0?nodeVal('root2'):1; return skR('root3')>0 ? base*3 : base; }
-function rootFireMult(){ if(skR('root')<=0) return 1; return TREE_MAP.root.fireVals[skR('root')-1] * rootScale(); }   // 火力倍率寄与（最大1.5×18=27）
-function rootRateBonus(){ if(skR('root')<=0) return 0; return TREE_MAP.root.rateVals[skR('root')-1] * rootScale(); }  // 成功率寄与（最大2.5%×18=45%）
+// v1.07 社長指示：rootFireMult()（ブラックストーンの火力/爆発値寄与）を撤去。rootは成功率のみに寄与＝rootRateBonus()のみ残す。
+function rootRateBonus(){ if(skR('root')<=0) return 0; return TREE_MAP.root.rateVals[skR('root')-1] * rootScale(); }  // 成功率寄与（最大2.5%×10.5=約26%）
 // v0.82 失敗ティア：現在段のグレードgi・ローマ位riで段戻り幅（＝耐久ダメ倍率）を決める。
 //   無印(gi0)=1／真以上(gi≥1)：Ⅰ〜Ⅳ(ri0-3)=1・Ⅴ〜Ⅷ(ri4-7)=2・Ⅸ・Ⅹ(ri8-9)=3
 function failTier(){ const gi=Math.floor((g.stage-1)/10), ri=(g.stage-1)%10;
@@ -399,9 +405,11 @@ function stackGain(){ return skR('stack')>0 ? Math.round(nodeVal('stack')) : 0; 
 function perStackBonus(){ return skR('stack_mult')>0 ? nodeVal('stack_mult') : PERSTACK_BASE; }
 function stackRateBonus(){ if(skR('stack')<=0) return 0; return Math.min(STACK_RATE_CAP, (g.stack||0)*perStackBonus()); }
 // v0.96 decayReliefTotal/ceilBoost(旧・爆発値モデル用)はデッドコードとして撤去。生きた減衰対抗はdecayReliefFrac(下記)。
-// v0.93 保護系（確率式）：クロン石の発動確率＝lerp(10〜50%)×(詫びクロンで×2)。上限100%。Ｊハンで保護量2。
+// v0.93 保護系（確率式）：クロン石の発動確率＝lerp(10〜50%)×(詫びクロンで×2)。上限100%。
 function protRate(){ if(skR('kuronishi')<=0) return 0; return Math.min(1, nodeVal('kuronishi')*(skR('wabi')>0?2:1)); }
-function protGuard(){ return skR('jhan')>0 ? 2 : 1; }
+// v1.07 社長指示：Ｊハンは「保護量2」ではなく「発動時 段の下落を完全に防ぐ」に変更＝Infinityを返しMath.max(0,tier-guard)が常に0になる（drop=0）ようにする。
+function protGuard(){ return skR('jhan')>0 ? Infinity : 1; }
+function protGuardText(){ return skR('jhan')>0 ? '完全に' : (protGuard()+''); }   // v1.07 表示用：Infinityをそのまま文字列化しないためのテキスト版
 function reqMet(id){ const n=TREE_MAP[id]; if(!n) return false; return (n.reqs||[]).every(rq=>skR(rq.id) >= rq.rank); }   // v0.72 複数前提：全reqsを満たすか
 function canOpen(id){ const n=TREE_MAP[id]; if(!n) return false; return reqMet(id) && skR(id)<n.maxRank && g.sp>=n.cost; }
 function openNode(id){ if(!canOpen(id)) return;
@@ -431,8 +439,9 @@ function rateBreakdown(){
   let ex = Kv<=0 ? 0 : Kv*EX_BASE_MULT;
   const pushFire=(exVal,label)=>{ const nr=up(baseRateStage()+fireBonusOf(exVal)); const d=nr-r; steps.push({kind:'fire',label:label,exVal:exVal,delta:d,rate:nr}); r=nr; };
   pushFire(ex,'基礎火力');
-  if(skR('root')>0){ const m=rootFireMult(); ex*=m; pushFire(ex,'🖤 ブラックストーン ×'+m.toFixed(2)+(rootScale()>1?'（×'+rootScale()+'）':'')); }
-  const exBaseFire=ex;   // v0.91 root反映後の基礎＝ヴォルクス合成の土台（加算/乗算をこの上に効かせる）
+  // v1.07 社長指示：ブラックストーン(root)は火力/爆発値に一切寄与しない（旧・rootFireMult()によるex乗算ステップを撤去）。
+  //   爆発値の伸びはヴォルクス系(voice/book/yami)＋失敗スタックのみが担う＝exBaseFireはroot非依存の基礎火力そのもの。
+  const exBaseFire=ex;   // v1.07 root反映なし＝ヴォルクス合成の土台（加算/乗算をこの上に効かせる）
   const hasV=skR('voice')>0, hasB=skR('book')>0, hasY=skR('yami')>0;
   const vM=hasV?nodeVal('voice'):1, bM=hasB?nodeVal('book'):1;
   if(hasV){ ex=exBaseFire*vM; pushFire(ex,'📣 ヴォルクスの叫び ×'+vM.toFixed(0)); }
@@ -478,8 +487,8 @@ function onSuccess(ex){
   const capped = wall>0 && ex>=wall;
   const ri=(g.stage-1)%10;   // クリアした段（増加前）のローマ数字位＝SP獲得量を決める
   const spGain = SP_GAIN_BY_RI[ri];   // v0.92 Ⅰ〜Ⅹ＝1,1,1,1,1,2,2,2,3,5（社長指示・難易度緩和）
-  // v0.81 折れない心：成功でスタック50%残す（端数切り上げ）。無ければ0リセット
-  g.stack = skR('orenai')>0 ? Math.ceil((g.stack||0)*0.5) : 0;
+  // v1.07 社長指示：折れない心＝成功でスタックが 1/4,1/3,1/2,2/3（rank連動・端数切り捨て）残る。無ければ0リセット
+  g.stack = skR('orenai')>0 ? Math.floor((g.stack||0)*nodeVal('orenai')) : 0;
   g.lastFailed=false; g.failStreak=0;
   g.stage++; g.sp+=spGain;
   g.succCount=(g.succCount||0)+1; if(capped) g.feverCount=(g.feverCount||0)+1;   // plog用カウンタ
@@ -504,8 +513,8 @@ function onFail(ex){
   // v0.93 段戻りはティアぶん。保護系（クロン石）は確率で段の下がり幅だけ軽減（耐久は軽減しない＝生存タイマー）。
   let drop=tier, note='';
   if(skR('kuronishi')>0 && Math.random()<protRate()){
-    const guard=protGuard(); drop=Math.max(0, tier-guard);
-    note="\n🪙 クロン石：段の下落を"+guard+"防いだ！（耐久は食らう）";
+    const guard=protGuard(); drop=Math.max(0, tier-guard);   // v1.07 Ｊハン所持時はguard=Infinityでdropが常に0（完全防御）
+    note="\n🪙 クロン石：段の下落を"+protGuardText()+"防いだ！（耐久は食らう）";
   }
   if(g.stage<=STAGE_START) drop=0;   // 開始段では段は下がらない（耐久は上のとおり食らう）
   if(drop>0){ g.stage=Math.max(STAGE_START, g.stage-drop); g.fallbackCount=(g.fallbackCount||0)+1; }
@@ -833,6 +842,7 @@ function render(){ if(!g) return;
     es.textContent=g.elianUsed?'💧使用済':'💧涙'; es.style.opacity=g.elianUsed?'0.4':'1'; }
   const wb=el('wbar'); if(wb){ const pct=Math.max(0,Math.min(100,g.dur/maxDur()*100));
     wb.style.width=pct+'%'; wb.className='bar'+(pct<=20?' dang':pct<=45?' warn':''); }
+  const skc=el('skipFxChkHdr'); if(skc) skc.checked=fxSkipOn();   // v1.07 常設トグル（ヘッダ）の状態をlocalStorageと同期・全画面共通
   updateTheme();
 }
 // v0.85 段のテーマ色（社長FB「色演出が見えない・帯を拡張」）：Ⅰ〜Ⅲ=通常／Ⅳ〜Ⅷ=温色→赤の5段グラデ／Ⅸ・Ⅹ=最も濃い赤。
@@ -902,7 +912,13 @@ function lsSet(k,v){ try{ if(typeof localStorage!=="undefined") localStorage.set
 // ===== v0.98 画面演出（限界突破の光/震え/破片・強度3段階：0控えめ/1標準/2派手）=====
 function fxLevel(){ const v=parseInt(lsGet('kyoka_fx')||'1',10); return isNaN(v)?1:Math.max(0,Math.min(2,v)); }
 function fxSkipOn(){ return lsGet('kyoka_skipfx')==='1'; }   // v1.05 演出スキップ・常時トグル（localStorage維持）。判定/乱数には一切関与しない表示専用フラグ
-function toggleSkipFx(cb){ lsSet('kyoka_skipfx', cb && cb.checked ? '1':'0'); }
+// v1.07 社長指示：切替をどのチェックボックス（スタート画面/ヘッダ常設）から操作しても即座に全箇所へ反映されるよう、
+//   localStorage保存後にintro画面のチェックボックス(id=skipFxChk・#screen内で存在する場合のみ)とrender()（ヘッダのskipFxChkHdrを同期）を明示的に呼ぶ。
+//   判定(tryEnh/rateBreakdown)には一切触れない＝表示専用の同期処理。
+function toggleSkipFx(cb){ lsSet('kyoka_skipfx', cb && cb.checked ? '1':'0');
+  try{ const introChk=document.getElementById('skipFxChk'); if(introChk) introChk.checked=fxSkipOn(); }catch(e){}
+  try{ if(typeof render==='function') render(); }catch(e){}
+}
 let _fxCv=null,_fxCx=null,_ps=[],_fxRAF=null;
 function fxInit(){ try{ _fxCv=document.getElementById('fxcanvas'); if(!_fxCv)return; _fxCx=_fxCv.getContext('2d'); fxResize(); }catch(e){} }
 function fxResize(){ try{ if(!_fxCv)_fxCv=document.getElementById('fxcanvas'); if(!_fxCv)return; _fxCv.width=(window.innerWidth||360); _fxCv.height=(window.innerHeight||640); }catch(e){} }
@@ -970,14 +986,14 @@ function buildPlaylogData(reason){
     const totalStage = ((g.maxCycle||1)-1)*100 + (((g.maxStage-1)%100)+1);   // 通算到達段（周回込み）
     const skills={}; TREE.forEach(n=>{ skills[n.id]=skR(n.id); });   // v0.72 最終スキル振り（全ノードid→rank）
     return JSON.stringify({
-      ver:'v1.06', reason:(reason||'manual'), ts:new Date().toISOString(),
+      ver:'v1.07', reason:(reason||'manual'), ts:new Date().toISOString(),
       house:(lsGet('kyoka_house')||'noname'),   // v0.97 家名（プレイヤー識別・解析のグループ化用）
       maxStage: totalStage, cycle:(g.maxCycle||1), turn:(g.turn||0), score:(g.score||0),
       fallback:(g.fallbackCount||0),   // v0.96 未使用のcloneフィールドをplogから撤去
       success:(g.succCount||0), fail:(g.failCount||0), fever:(g.feverCount||0),
       skills: skills
     });
-  }catch(e){ return JSON.stringify({ver:'v1.06', reason:(reason||'manual'), err:String(e)}); }
+  }catch(e){ return JSON.stringify({ver:'v1.07', reason:(reason||'manual'), err:String(e)}); }
 }
 function uploadPlaylog(reason){
   try{
