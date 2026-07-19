@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>強化脳汁ゲー（仮）— ブラウザ試作 v1.07（スキル調整＋演出スキップの常設化）</title>
+<title>強化脳汁ゲー（仮）— ブラウザ試作 v1.08（スキルコストの累進化）</title>
 <style>
   :root{ --navy:#000a5a; --navy2:#001080; --gold:#ffd24a; --edge:#6b7bd6; --panel:#00104a; --track:#00003a; }
   *{ box-sizing:border-box; }
@@ -182,7 +182,7 @@
 <canvas id="fxcanvas"></canvas>
 <div id="fxflash"></div>
 <div id="app">
-  <h1>◆ 強化脳汁ゲー（仮）◆ ブラウザ試作 v1.07 — スキル調整＋演出スキップの常設化</h1>
+  <h1>◆ 強化脳汁ゲー（仮）◆ ブラウザ試作 v1.08 — スキルコストの累進化</h1>
   <div id="heatbar"></div><!-- v0.85 段のテーマ色アクセント帯 -->
 
   <div class="win">
@@ -212,6 +212,7 @@
   <div class="win"><div id="screen"></div></div>
 
   <div class="sub" style="opacity:.7;margin-top:2px">本作は『黒い砂漠』(Pearl Abyss)の非公式ファンメイド作品です。権利者とは一切関係ありません。非営利。</div>
+  <details style="margin-top:6px;font-size:11px;opacity:.6"><summary>開発メモ</summary>v1.08：スキルの強化コストを固定制→累進制に変更（同じスキルでもレベルが上がるほど1回あたりの必要SPが上昇＝1つを極める一極集中が割高になり、複数スキルへ浅く広く投資する方が相対的に有利になる）。判定式(rateBreakdown/baseRateStage/weaponResistRaw等)・武器抵抗の立ち上がり(RESIST_KNEE)・深さ連動の耐久ダメ(DUR_DEPTH)・各スキルの効果値(vals/rateVals)は無変更＝コストのみの調整。</details>
 </div>
 
 <script>
@@ -411,9 +412,15 @@ function protRate(){ if(skR('kuronishi')<=0) return 0; return Math.min(1, nodeVa
 function protGuard(){ return skR('jhan')>0 ? Infinity : 1; }
 function protGuardText(){ return skR('jhan')>0 ? '完全に' : (protGuard()+''); }   // v1.07 表示用：Infinityをそのまま文字列化しないためのテキスト版
 function reqMet(id){ const n=TREE_MAP[id]; if(!n) return false; return (n.reqs||[]).every(rq=>skR(rq.id) >= rq.rank); }   // v0.72 複数前提：全reqsを満たすか
-function canOpen(id){ const n=TREE_MAP[id]; if(!n) return false; return reqMet(id) && skR(id)<n.maxRank && g.sp>=n.cost; }
+// v1.08 社長指示：SPコストを累進化（Lvが上がるほど高くなる）。単発スキル(maxRank1＝yami/root3/shokunin/kiai/wabi/jhan)は据え置きでnode.costを使用。
+// 段階数(maxRank)ごとにテーブルを引く：10段=[1,2,2,3,3,3,4,4,4,5]／5段=[1,3,4,5,5]／4段=[1,3,4,5]。テーブル無し(maxRank1)はnode.cost。
+const COST_TABLE_BY_MAXRANK = { 10:[1,2,2,3,3,3,4,4,4,5], 5:[1,3,4,5,5], 4:[1,3,4,5] };
+function nextCost(id){ const n=TREE_MAP[id]; if(!n) return 0;
+  const tbl=COST_TABLE_BY_MAXRANK[n.maxRank]; if(!tbl) return n.cost;   // maxRank1は従来どおりnode.cost
+  const r=skR(id); return tbl[Math.min(r, tbl.length-1)]; }
+function canOpen(id){ const n=TREE_MAP[id]; if(!n) return false; return reqMet(id) && skR(id)<n.maxRank && g.sp>=nextCost(id); }
 function openNode(id){ if(!canOpen(id)) return;
-  const n=TREE_MAP[id]; g.sp-=n.cost; g.skills[id]=(g.skills[id]||0)+1;
+  const c=nextCost(id); g.sp-=c; g.skills[id]=(g.skills[id]||0)+1;
   beep(700,.1); render(); if(g.phase==='tree') showTree();
 }
 
@@ -724,7 +731,7 @@ function renderDetail(id){
   h+='<div class="nd-act">';
   if(maxed) h+='<div class="nd-max">★ 最大レベル</div>';
   else if(locked) h+='<button class="btn center" disabled>前提が未達</button>';
-  else h+='<button class="btn center" '+(can?'':'disabled')+' onclick="levelUp(\''+id+'\')">⚔ 強化する（'+n.cost+'SP）'+(can?'':'　※SP不足')+'</button>';
+  else h+='<button class="btn center" '+(can?'':'disabled')+' onclick="levelUp(\''+id+'\')">⚔ 強化する（'+nextCost(id)+'SP）'+(can?'':'　※SP不足')+'</button>';
   h+='</div><div class="nd-sp">SP残 '+g.sp+'</div>';
   box.innerHTML=h;
 }
@@ -986,14 +993,14 @@ function buildPlaylogData(reason){
     const totalStage = ((g.maxCycle||1)-1)*100 + (((g.maxStage-1)%100)+1);   // 通算到達段（周回込み）
     const skills={}; TREE.forEach(n=>{ skills[n.id]=skR(n.id); });   // v0.72 最終スキル振り（全ノードid→rank）
     return JSON.stringify({
-      ver:'v1.07', reason:(reason||'manual'), ts:new Date().toISOString(),
+      ver:'v1.08', reason:(reason||'manual'), ts:new Date().toISOString(),
       house:(lsGet('kyoka_house')||'noname'),   // v0.97 家名（プレイヤー識別・解析のグループ化用）
       maxStage: totalStage, cycle:(g.maxCycle||1), turn:(g.turn||0), score:(g.score||0),
       fallback:(g.fallbackCount||0),   // v0.96 未使用のcloneフィールドをplogから撤去
       success:(g.succCount||0), fail:(g.failCount||0), fever:(g.feverCount||0),
       skills: skills
     });
-  }catch(e){ return JSON.stringify({ver:'v1.07', reason:(reason||'manual'), err:String(e)}); }
+  }catch(e){ return JSON.stringify({ver:'v1.08', reason:(reason||'manual'), err:String(e)}); }
 }
 function uploadPlaylog(reason){
   try{
