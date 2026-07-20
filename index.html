@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>強化脳汁ゲー（仮）— ブラウザ試作 v1.11（記憶の欠片を成功時のみ回復に）</title>
+<title>強化脳汁ゲー（仮）— ブラウザ試作 v1.12（耐久回復系ツリー再編＋復活2段）</title>
 <style>
   :root{ --navy:#000a5a; --navy2:#001080; --gold:#ffd24a; --edge:#6b7bd6; --panel:#00104a; --track:#00003a; }
   *{ box-sizing:border-box; }
@@ -189,7 +189,7 @@
 <canvas id="fxcanvas"></canvas>
 <div id="fxflash"></div>
 <div id="app">
-  <h1>◆ 強化脳汁ゲー（仮）◆ ブラウザ試作 v1.11 — 記憶の欠片を成功時のみ回復に</h1>
+  <h1>◆ 強化脳汁ゲー（仮）◆ ブラウザ試作 v1.12 — 耐久回復系ツリー再編＋復活2段</h1>
   <div id="heatbar"></div><!-- v0.85 段のテーマ色アクセント帯 -->
 
   <div class="win">
@@ -202,6 +202,7 @@
       <div class="barwrap"><div class="bar" id="wbar" style="width:100%"></div></div>
       <span class="stat"><b id="wdur">100</b>/<span id="wdurmax">100</span></span>
       <span class="stat" id="elian" style="display:none">💧涙</span>
+      <span class="stat" id="onchou" style="display:none">🌟恩寵</span>
     </div>
     <div class="row">
       <span class="stat">🌳SP残<b id="sp">5</b></span>
@@ -219,7 +220,7 @@
   <div class="win"><div id="screen"></div></div>
 
   <div class="sub" style="opacity:.7;margin-top:2px">本作は『黒い砂漠』(Pearl Abyss)の非公式ファンメイド作品です。権利者とは一切関係ありません。非営利。</div>
-  <details style="margin-top:6px;font-size:11px;opacity:.6"><summary>開発メモ</summary>v1.10：社長指摘「死判定のタイミングがおかしい」に対応＝tryEnh()内の処理順を修正。旧v1.09は「失敗ダメで耐久0クランプ→記憶の欠片が無条件回復→死判定(checkDead)」の順で、回復が0からの即死を毎回もみ消し無敵化していた。v1.10は「耐久0クランプ→死判定(checkDead。エリアンの涙の1回蘇生はここで先に効く)→生き残っていれば記憶の欠片が回復」に順序を入れ替え＝記憶の欠片は「生き残っている時だけ」回復するようになる（毎強化確定・回復量rank連動+1〜+5・不発なしの手触りは維持）。判定式・効果値・DUR_DEPTH・successCap・コスト/前提は無変更＝順序のみ。ヘッドレスsim(vm実コード)で無敵化解消（フル装備 死亡段中央90台・cap到達0%）とエリアンの涙の正常動作（1度だけ蘇生→2度目の耐久0で死亡）を確認。v1.09：中盤の生存をスキル側で補強。(1)記憶の欠片＝確率発動(10〜50%)→確定発動に変更、回復量はrank連動+1〜+5（「理不尽に上がらない時がある」対応）。(2)ブラックストーンのSP累進コストを個別カーブ[1,1,2,2,3]に軽量化。(3)新系統「特殊系」を追加＝吸血(強化成功時 確率で耐久+5)／助手テクトン(強化失敗時 確率で耐久減半減)／天元突破(限界突破時のオーバーキル効果を×2〜4)。3ノードは専用アイコン未作成のため丸の仮アイコンで表示。(4)スキルLv表示に●○のドットを追加（テキスト併記）。判定式(rateBreakdown/baseRateStage/weaponResistRaw)・武器抵抗の立ち上がり(RESIST_KNEE)・深さ連動の耐久ダメ(DUR_DEPTH)・successCap・既存スキルの効果値は上記(1)(2)以外無変更。v1.08：スキルの強化コストを固定制→累進制に変更（1つを極める一極集中が割高になり、複数スキルへ浅く広く投資する方が相対的に有利になる）。</details>
+  <details style="margin-top:6px;font-size:11px;opacity:.6"><summary>開発メモ</summary>v1.12：社長指示で耐久回復系のスキルツリーを再編＋復活を2段構えに。(1)チェーン順を「記憶の欠片→トラナン→エリアンの涙」に入れ替え（旧＝トラナン→記憶の欠片→涙）。(2)記憶の欠片＝SP累進5/10/15・maxRank3・回復を「毎強化」→「強化成功時のみ」に変更・回復量+1/2/3（チェーン入口＝前提root1）。(3)トラナン＝SP累進2/3/4/5/5・前提を記憶の欠片Lv1に（効果値10〜50%軽減は不変）。(4)エリアンの涙＝前提をトラナンLv5に・蘇生量をフル→耐久50%に。(5)新系統「条件系」＝エリアンの恩寵（SP20・前提エリアンの涙取得・耐久0で1度だけ耐久フル蘇生）。涙と恩寵の両方を持つ場合は涙(50%)が先に発動し、次の耐久0で恩寵(100%)＝復活は最大2回。いずれも各ラン1回限りで無限化しない。ヘッドレスsim(vm実コード・全ビルド)で例外0・無限0・到達分布を確認。v1.11：記憶の欠片の回復を「毎強化」→「強化成功時のみ」に（失敗時は回復なし・確定発動/回復量rank連動+1〜+5は維持）。判定式・他効果・コスト/前提は無変更。※このv1.11は別セッションが本日公開・v1.12はその上に社長の詳細仕様を積んだ版。v1.10：社長指摘「死判定のタイミングがおかしい」に対応＝tryEnh()内の処理順を修正。旧v1.09は「失敗ダメで耐久0クランプ→記憶の欠片が無条件回復→死判定(checkDead)」の順で、回復が0からの即死を毎回もみ消し無敵化していた。v1.10は「耐久0クランプ→死判定(checkDead。エリアンの涙の1回蘇生はここで先に効く)→生き残っていれば記憶の欠片が回復」に順序を入れ替え＝記憶の欠片は「生き残っている時だけ」回復するようになる（毎強化確定・回復量rank連動+1〜+5・不発なしの手触りは維持）。判定式・効果値・DUR_DEPTH・successCap・コスト/前提は無変更＝順序のみ。ヘッドレスsim(vm実コード)で無敵化解消（フル装備 死亡段中央90台・cap到達0%）とエリアンの涙の正常動作（1度だけ蘇生→2度目の耐久0で死亡）を確認。v1.09：中盤の生存をスキル側で補強。(1)記憶の欠片＝確率発動(10〜50%)→確定発動に変更、回復量はrank連動+1〜+5（「理不尽に上がらない時がある」対応）。(2)ブラックストーンのSP累進コストを個別カーブ[1,1,2,2,3]に軽量化。(3)新系統「特殊系」を追加＝吸血(強化成功時 確率で耐久+5)／助手テクトン(強化失敗時 確率で耐久減半減)／天元突破(限界突破時のオーバーキル効果を×2〜4)。3ノードは専用アイコン未作成のため丸の仮アイコンで表示。(4)スキルLv表示に●○のドットを追加（テキスト併記）。判定式(rateBreakdown/baseRateStage/weaponResistRaw)・武器抵抗の立ち上がり(RESIST_KNEE)・深さ連動の耐久ダメ(DUR_DEPTH)・successCap・既存スキルの効果値は上記(1)(2)以外無変更。v1.08：スキルの強化コストを固定制→累進制に変更（1つを極める一極集中が割高になり、複数スキルへ浅く広く投資する方が相対的に有利になる）。</details>
 </div>
 
 <script>
@@ -302,13 +303,13 @@ const TREE=[
    vals:[5,10,15,20,25], desc:(r,v)=>'爆発値倍率 ×'+v.toFixed(0)+'（叫びと加算：叫び×2＋助言×10＝12倍）'},   // v0.91 社長指示：乗算→加算に変更（跳ね上がりすぎ対策）
  {id:'yami', branch:'強化系', name:'闇捕食', cost:20, maxRank:1, reqs:[{id:'book',rank:3}],
    desc:()=>'叫びと助言が加算ではなく乗算になる（叫び×2×助言×10＝20倍）'},   // v1.03 社長指示：デバフ（失敗耐久ダメ2倍）を撤去＝純攻撃択に
- // 耐久回復系（v1.03 社長指示：トラナン→記憶の欠片の順に入れ替え）
- {id:'toranan', branch:'耐久回復系', name:'トラナンの秘訣', cost:3, maxRank:5, reqs:[{id:'root',rank:1}],
-   vals:[0.10,0.20,0.30,0.40,0.50], desc:(r,v)=>'失敗時の耐久減を '+Math.round(v*100)+'% 軽減'},   // v1.03 系統の入口に（旧＝記憶の欠片の後）
- {id:'kakera', branch:'耐久回復系', name:'記憶の欠片', cost:4, maxRank:5, reqs:[{id:'toranan',rank:5}],
-   vals:[1,2,3,4,5], desc:(r,v)=>'強化成功のたび 確定で耐久+'+Math.round(v)},   // v1.09 確率→確定。v1.11 社長指示：発動を「強化成功時のみ」に（失敗時は回復なし）。回復量rank連動+1〜+5・cost/前提は不変
- {id:'shokunin', branch:'耐久回復系', name:'エリアンの涙', cost:15, maxRank:1, reqs:[{id:'kakera',rank:3}],
-   desc:()=>'耐久が0になった時、1度だけ耐久フルで蘇る'},   // v0.99 効果＝耐久0の1回限りフル回復蘇生。v1.03 前提を記憶の欠片rank3へ（順序入れ替えに追従）
+ // 耐久回復系（v1.11 社長指示：チェーンを 記憶の欠片→トラナン→エリアンの涙 の順に再編）
+ {id:'kakera', branch:'耐久回復系', name:'記憶の欠片', cost:5, maxRank:3, costTable:[5,10,15], reqs:[{id:'root',rank:1}],
+   vals:[1,2,3], desc:(r,v)=>'強化成功時 確定で耐久+'+Math.round(v)},   // v1.11 社長指示：チェーン入口に（前提root1）・回復を「毎強化」→「成功時のみ」に・maxRank5→3・SP累進5/10/15
+ {id:'toranan', branch:'耐久回復系', name:'トラナンの秘訣', cost:2, maxRank:5, costTable:[2,3,4,5,5], reqs:[{id:'kakera',rank:1}],
+   vals:[0.10,0.20,0.30,0.40,0.50], desc:(r,v)=>'失敗時の耐久減を '+Math.round(v*100)+'% 軽減'},   // v1.11 社長指示：前提を記憶の欠片Lv1に（順序入れ替え）・SP累進2/3/4/5/5。効果値は不変
+ {id:'shokunin', branch:'耐久回復系', name:'エリアンの涙', cost:15, maxRank:1, reqs:[{id:'toranan',rank:5}],
+   desc:()=>'耐久が0になった時、1度だけ耐久50%で蘇る'},   // v1.11 社長指示：前提をトラナンLv5に・蘇生量をフル→50%に（恩寵より先に発動）
  // 失敗系
  {id:'stack', branch:'失敗系', name:'スタック', cost:2, maxRank:10, reqs:[{id:'root',rank:1}],
    vals:[1,2,3,4,5,6,7,8,9,10], desc:(r,v)=>'失敗のたびスタック+'+(STACK_BASE_GAIN+Math.round(v))+'（基本+'+STACK_BASE_GAIN+'＋この技+'+Math.round(v)+'）。スタック1につき成功率+'+Math.round(perStackBonus()*100)+'%（上限+'+Math.round(STACK_RATE_CAP*100)+'%・%はこの技を取ると有効）'},
@@ -340,21 +341,26 @@ const TREE=[
  {id:'tengen', branch:'特殊系', name:'天元突破', cost:2, maxRank:5, costTable:[2,2,3,4,5], iconColor:'#ffb347',
    reqs:[{id:'root3',rank:1}],
    vals:[2,2.5,3,3.5,4], desc:(r,v)=>'限界突破時のオーバーキル効果を ×'+v.toFixed(1)},
+ // 条件系（v1.11 新設・社長指示：復活の2枚目。専用アイコン未作成＝丸(●)の仮アイコンで代用）
+ {id:'onchou', branch:'条件系', name:'エリアンの恩寵', cost:20, maxRank:1, iconColor:'#ffe66b',
+   reqs:[{id:'shokunin',rank:1}],
+   desc:()=>'耐久が0になった時、1度だけ耐久フルで蘇る（エリアンの涙を持つ場合は涙が先に発動・恩寵は2枚目の保険）'},
 ];
 const TREE_MAP={}; TREE.forEach(n=>TREE_MAP[n.id]=n);
 // 根っこ系(root/root2/root3)は上部にチェーン表示。下に5系統を並べる（全表示・折りたたみなし）
 const ROOTCHAIN=['root','root2','root3'];
-const BRANCHES=['強化系','耐久回復系','失敗系','減衰対抗系','保護系','特殊系'];   // v1.09 社長指示：特殊系(吸血/助手テクトン/天元突破)を追加
+const BRANCHES=['強化系','耐久回復系','失敗系','減衰対抗系','保護系','特殊系','条件系'];   // v1.09 特殊系(吸血/助手テクトン/天元突破)／v1.11 条件系(エリアンの恩寵)を追加
 // v1.01 スキルツリー＝傘型：ブラックストーン(root)が頂点、そこから7系統が枝分かれ。   // v1.09：6系統→7系統（特殊系を追加）
 //   系統の並び（左→右／PC縦・スマホ横）＝[根チェーン(凝縮/無欠), 強化, 耐久回復, 失敗, 減衰対抗, 保護, 特殊]。各系統は手前→奥の順。
 const TCHAINS=[
   ['root2','root3'],
   ['voice','book','yami'],
-  ['toranan','kakera','shokunin'],
+  ['kakera','toranan','shokunin'],   // v1.11 チェーン再編：記憶の欠片→トラナン→エリアンの涙
   ['stack','stack_mult','orenai'],
   ['waru','madaikeru','kiai'],
   ['kuronishi','wabi','jhan'],
   ['kyuketsu','tekton','tengen'],   // v1.09 新設・特殊系
+  ['onchou'],   // v1.11 新設・条件系（エリアンの恩寵）
 ];
 const CELLW=116, CELLH=128, NODEW=104, NODEH=116;   // v1.01 アイコン1.5倍に伴いノード/セルを拡大
 // v1.00 スキルアイコン（透過PNG・data URI埋め込み）。id→dataURL。ビルドスクリプトが下行を実データに差し替える。
@@ -384,7 +390,7 @@ let g;
 function newGame(){
   g={ stage:STAGE_START, cycle:1, maxCycle:1, sp:SP_START, dur:DUR_START, stack:0,   // v0.96 未使用のclone/comboを撤去
       turn:0, score:0, maxStage:STAGE_START, lastFailed:false, ended:false, phase:'intro',
-      succCount:0, failCount:0, feverCount:0, fallbackCount:0, failStreak:0, elianUsed:false,   // v0.99 elianUsed＝エリアンの涙の蘇生をこのランで使ったか（ラン1回限り）
+      succCount:0, failCount:0, feverCount:0, fallbackCount:0, failStreak:0, elianUsed:false, onchouUsed:false,   // v0.99 elianUsed＝エリアンの涙／v1.11 onchouUsed＝エリアンの恩寵の蘇生を使ったか（各ラン1回限り）
 
       skills:{}, _animating:false, _deferAdvance:false, _animTimers:[] };
   TREE.forEach(n=>g.skills[n.id]=0);
@@ -504,15 +510,10 @@ function tryEnh(){
   if(ok) onSuccess(ex); else onFail(ex);
   if(g.ended) return;
   render();
-  // v1.10 社長指摘：死判定の順序修正＝耐久0の判定(checkDead)を記憶の欠片の回復より先に行う。
-  //   旧v1.09は「耐久0クランプ→記憶の欠片が無条件回復→checkDead」の順で、回復が0からの即死を毎回もみ消していた（無敵化の真因）。
-  //   新順序＝「耐久0クランプ→checkDead（0ならエリアンの涙が先に効く／無ければここで死亡）→生き残っていれば記憶の欠片が回復」。
-  //   記憶の欠片自体の発動条件（毎強化確定）・回復量(rank連動+1〜+5)・不発なしは変更なし＝「生き残っている時だけ」回復するようになるだけ。
+  // v1.11 社長指示：記憶の欠片の回復を「毎強化」→「強化成功時のみ」に変更＝onSuccess()内で回復するよう移動（下記）。
+  //   これで失敗で耐久0まで削られたら回復では救えず、checkDead（エリアンの涙50%→恩寵100%の順で最大2回蘇生／無ければ死亡）が正しく効く。
+  //   （v1.10の死判定順序修正の趣旨＝「回復が0からの即死をもみ消さない」を、成功時のみ回復にすることで構造的にさらに担保）
   if(checkDead()) return;
-  // v1.11 社長指示：記憶の欠片＝「強化のたび」→「強化成功するたび」＝ok(成功)の時だけ回復（失敗時は回復なし）。確定発動・回復量rank連動+1〜+5・不発なしは成功時に限り維持。
-  if(ok && skR('kakera')>0){
-    const h=kakeraHeal(); if(h>0) g.dur=Math.min(maxDur(), g.dur+h);
-  }
   if(g._deferAdvance) return;
   startTurn();
 }
@@ -526,6 +527,7 @@ function onSuccess(ex){
   g.lastFailed=false; g.failStreak=0;
   g.stage++; g.sp+=spGain;
   if(skR('kyuketsu')>0 && Math.random()<nodeVal('kyuketsu')){ g.dur=Math.min(maxDur(), g.dur+5); }   // v1.09 社長追加：吸血＝強化成功時、確率で耐久+5（固定）
+  if(skR('kakera')>0){ const h=kakeraHeal(); if(h>0) g.dur=Math.min(maxDur(), g.dur+h); }   // v1.11 社長指示：記憶の欠片＝強化成功時のみ確定で耐久回復(+1/2/3・rank連動)
   g.succCount=(g.succCount||0)+1; if(capped) g.feverCount=(g.feverCount||0)+1;   // plog用カウンタ
   g.score += Math.round(wall>0?Math.min(ex,wall):ex);
   g.maxStage=Math.max(g.maxStage, g.stage+(g.cycle-1)*100);
@@ -560,10 +562,18 @@ function onFail(ex){
 }
 function checkDead(){
   if(g.dur<=0){
-    // v0.99 エリアンの涙：耐久0で1度だけ耐久フル蘇生（ラン1回限り）。死亡ゲートの手前で発動。
+    // v1.11 エリアンの涙：耐久0で1度だけ耐久50%で蘇生（ラン1回限り）。恩寵より先に発動。
     if(skR('shokunin')>0 && !g.elianUsed){
-      g.elianUsed=true; g.dur=maxDur();
-      setMsg("💧 エリアンの涙 ─ 砕けかけた武器が耐久フルで蘇った！（このランで1度きり）");
+      g.elianUsed=true; g.dur=Math.max(1, Math.round(maxDur()*0.5));
+      setMsg("💧 エリアンの涙 ─ 砕けかけた武器が耐久50%で蘇った！（このランで1度きり）");
+      try{ sfx('fever'); fx('fever'); }catch(e){}
+      render();
+      return false;
+    }
+    // v1.11 エリアンの恩寵：涙を使い切った後、耐久0で1度だけ耐久フルで蘇生（ラン1回限り）。
+    if(skR('onchou')>0 && !g.onchouUsed){
+      g.onchouUsed=true; g.dur=maxDur();
+      setMsg("🌟 エリアンの恩寵 ─ 武器が耐久フルで蘇った！（このランで1度きり）");
       try{ sfx('fever'); fx('fever'); }catch(e){}
       render();
       return false;
@@ -675,7 +685,7 @@ function showEnhance(){
 // レイアウト計算：各ノードの中心座標(cx,cy)とキャンバスサイズ(W,H)、縦/横フラグを返す。
 function treeLayout(){
   const vertical = (typeof window!=='undefined' && window.innerWidth) ? (window.innerWidth>560) : true;
-  const NB=TCHAINS.length, DEPTH=3;   // v1.09：7系統（特殊系追加）・最大深さ3。NBはTCHAINS.length依存のため自動追随
+  const NB=TCHAINS.length, DEPTH=3;   // v1.11：8系統（特殊系＋条件系）・最大深さ3。NBはTCHAINS.length依存のため自動追随
   const pos={}; let W,H;
   if(vertical){   // rootが中央上、系統は左→右に並び下へ伸びる
     W=NB*CELLW; H=(DEPTH+1)*CELLH;
@@ -887,6 +897,8 @@ function render(){ if(!g) return;
   if(el('wdurmax')) el('wdurmax').textContent=maxDur();
   const es=el('elian'); if(es){ const has=skR('shokunin')>0; es.style.display=has?'':'none';   // v0.99 エリアンの涙の蘇生ストック表示
     es.textContent=g.elianUsed?'💧使用済':'💧涙'; es.style.opacity=g.elianUsed?'0.4':'1'; }
+  const os=el('onchou'); if(os){ const has=skR('onchou')>0; os.style.display=has?'':'none';   // v1.11 エリアンの恩寵の蘇生ストック表示
+    os.textContent=g.onchouUsed?'🌟使用済':'🌟恩寵'; os.style.opacity=g.onchouUsed?'0.4':'1'; }
   const wb=el('wbar'); if(wb){ const pct=Math.max(0,Math.min(100,g.dur/maxDur()*100));
     wb.style.width=pct+'%'; wb.className='bar'+(pct<=20?' dang':pct<=45?' warn':''); }
   const skc=el('skipFxChkHdr'); if(skc) skc.checked=fxSkipOn();   // v1.07 常設トグル（ヘッダ）の状態をlocalStorageと同期・全画面共通
@@ -1033,14 +1045,14 @@ function buildPlaylogData(reason){
     const totalStage = ((g.maxCycle||1)-1)*100 + (((g.maxStage-1)%100)+1);   // 通算到達段（周回込み）
     const skills={}; TREE.forEach(n=>{ skills[n.id]=skR(n.id); });   // v0.72 最終スキル振り（全ノードid→rank）
     return JSON.stringify({
-      ver:'v1.11', reason:(reason||'manual'), ts:new Date().toISOString(),
+      ver:'v1.12', reason:(reason||'manual'), ts:new Date().toISOString(),
       house:(lsGet('kyoka_house')||'noname'),   // v0.97 家名（プレイヤー識別・解析のグループ化用）
       maxStage: totalStage, cycle:(g.maxCycle||1), turn:(g.turn||0), score:(g.score||0),
       fallback:(g.fallbackCount||0),   // v0.96 未使用のcloneフィールドをplogから撤去
       success:(g.succCount||0), fail:(g.failCount||0), fever:(g.feverCount||0),
       skills: skills
     });
-  }catch(e){ return JSON.stringify({ver:'v1.11', reason:(reason||'manual'), err:String(e)}); }
+  }catch(e){ return JSON.stringify({ver:'v1.12', reason:(reason||'manual'), err:String(e)}); }
 }
 function uploadPlaylog(reason){
   try{
