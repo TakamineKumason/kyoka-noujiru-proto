@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>強化脳汁ゲー（仮）— ブラウザ試作 v1.14（演出調整：1つずつ吸い込み・帯復帰・フェーズ横並び）</title>
+<title>強化脳汁ゲー（仮）— ブラウザ試作 v1.15（吸い込みを各0.5秒しっかり見せる・SP残ボタン更新）</title>
 <style>
   :root{ --navy:#000a5a; --navy2:#001080; --gold:#ffd24a; --edge:#6b7bd6; --panel:#00104a; --track:#00003a; }
   *{ box-sizing:border-box; }
@@ -225,7 +225,7 @@
 <div id="fxflash"></div>
 <button id="logbtn" onclick="exportPlaylog()" title="プレイログをドライブに保存">📋 ログ保存</button><!-- v1.13 社長指示：ゲームと直接関係ないので右下の小ボタンに -->
 <div id="app">
-  <h1>◆ 強化脳汁ゲー（仮）◆ ブラウザ試作 v1.14 — 演出調整（1つずつ吸い込み・帯復帰・フェーズ横並び）</h1>
+  <h1>◆ 強化脳汁ゲー（仮）◆ ブラウザ試作 v1.15 — 吸い込みを各0.5秒しっかり見せる・SP残ボタン更新</h1>
   <div id="heatbar"></div><!-- v0.85 段のテーマ色アクセント帯 -->
 
   <div class="win">
@@ -256,7 +256,7 @@
   <div class="win"><div id="screen"></div></div>
 
   <div class="sub" style="opacity:.7;margin-top:2px">本作は『黒い砂漠』(Pearl Abyss)の非公式ファンメイド作品です。権利者とは一切関係ありません。非営利。</div>
-  <details style="margin-top:6px;font-size:11px;opacity:.6"><summary>開発メモ</summary>v1.14：社長FBで強化演出を微調整（判定・バランス不変＝表示のみ）。(1)吸い込みを「1つずつ」に＝スキルアイコンを武器と同じくらいの大きさ(68px)で武器の前に1枚ずつ出し→武器へ収束(240ms間隔・最大5枚)。全部吸い込んでから判定。(2)数値効果フロートを武器の右・武器の真ん中の高さ(top:50%)→上端へ ゆっくり(1.6s) 上がって消えるように・複数は300ms間隔で順に。(3)武器背景の黒帯をv1.13で正方形化していたのを横帯に戻す＝.wpnband width:100%の帯の中に[フェーズ｜武器｜数値効果]を中央寄せで配置。(4)フェーズ表示(真Ⅶ→真Ⅷ)を両方同じ大きさ・横並びに。v1.13：社長指示のUI変更6件（判定・バランスは一切不変＝表示/演出のみ）。(1)ゲーム画面の横幅を720→980pxに拡大＝スキルツリー(8系統)が横スクロールなしで収まるように。(2)強化演出を刷新＝従来のスキル毎のステップ表示をやめ、武器に取得スキルのアイコンが吸い込まれる→武器の右側に数値効果(段/爆発値/SP/耐久/スタック/復活/限界突破)が下から出て上へスーッと消えるフロート表示に。(3)強化フローから「次へ」を廃止＝強化するを押すとメイン画面のまま強化が完結し、そのまま連打で登り続けられる(判定はtryEnhのみ・不変)。(4)武器の左にフェーズ表示(真Ⅰ↑真Ⅱのように今の段と成功時の次の段)。(5)プレイログ保存ボタンを右下の小さな固定ボタンに移動。(6)強化するボタンとスキルツリーボタンを横並びに。v1.12：社長指示で耐久回復系のスキルツリーを再編＋復活を2段構えに。(1)チェーン順を「記憶の欠片→トラナン→エリアンの涙」に入れ替え（旧＝トラナン→記憶の欠片→涙）。(2)記憶の欠片＝SP累進5/10/15・maxRank3・回復を「毎強化」→「強化成功時のみ」に変更・回復量+1/2/3（チェーン入口＝前提root1）。(3)トラナン＝SP累進2/3/4/5/5・前提を記憶の欠片Lv1に（効果値10〜50%軽減は不変）。(4)エリアンの涙＝前提をトラナンLv5に・蘇生量をフル→耐久50%に。(5)新系統「条件系」＝エリアンの恩寵（SP20・前提エリアンの涙取得・耐久0で1度だけ耐久フル蘇生）。涙と恩寵の両方を持つ場合は涙(50%)が先に発動し、次の耐久0で恩寵(100%)＝復活は最大2回。いずれも各ラン1回限りで無限化しない。ヘッドレスsim(vm実コード・全ビルド)で例外0・無限0・到達分布を確認。v1.11：記憶の欠片の回復を「毎強化」→「強化成功時のみ」に（失敗時は回復なし・確定発動/回復量rank連動+1〜+5は維持）。判定式・他効果・コスト/前提は無変更。※このv1.11は別セッションが本日公開・v1.12はその上に社長の詳細仕様を積んだ版。v1.10：社長指摘「死判定のタイミングがおかしい」に対応＝tryEnh()内の処理順を修正。旧v1.09は「失敗ダメで耐久0クランプ→記憶の欠片が無条件回復→死判定(checkDead)」の順で、回復が0からの即死を毎回もみ消し無敵化していた。v1.10は「耐久0クランプ→死判定(checkDead。エリアンの涙の1回蘇生はここで先に効く)→生き残っていれば記憶の欠片が回復」に順序を入れ替え＝記憶の欠片は「生き残っている時だけ」回復するようになる（毎強化確定・回復量rank連動+1〜+5・不発なしの手触りは維持）。判定式・効果値・DUR_DEPTH・successCap・コスト/前提は無変更＝順序のみ。ヘッドレスsim(vm実コード)で無敵化解消（フル装備 死亡段中央90台・cap到達0%）とエリアンの涙の正常動作（1度だけ蘇生→2度目の耐久0で死亡）を確認。v1.09：中盤の生存をスキル側で補強。(1)記憶の欠片＝確率発動(10〜50%)→確定発動に変更、回復量はrank連動+1〜+5（「理不尽に上がらない時がある」対応）。(2)ブラックストーンのSP累進コストを個別カーブ[1,1,2,2,3]に軽量化。(3)新系統「特殊系」を追加＝吸血(強化成功時 確率で耐久+5)／助手テクトン(強化失敗時 確率で耐久減半減)／天元突破(限界突破時のオーバーキル効果を×2〜4)。3ノードは専用アイコン未作成のため丸の仮アイコンで表示。(4)スキルLv表示に●○のドットを追加（テキスト併記）。判定式(rateBreakdown/baseRateStage/weaponResistRaw)・武器抵抗の立ち上がり(RESIST_KNEE)・深さ連動の耐久ダメ(DUR_DEPTH)・successCap・既存スキルの効果値は上記(1)(2)以外無変更。v1.08：スキルの強化コストを固定制→累進制に変更（1つを極める一極集中が割高になり、複数スキルへ浅く広く投資する方が相対的に有利になる）。</details>
+  <details style="margin-top:6px;font-size:11px;opacity:.6"><summary>開発メモ</summary>v1.15：社長FB2件（判定・バランス不変＝表示のみ）。(1)吸い込みが速すぎて見えなかった（各≒0.15秒）→各アイコンをポップイン(0.15s)→フル表示で約0.5秒静止→武器へ収束(0.34s)と、しっかり見せてから吸い込むように（社長「0.5秒くらい欲しい」・スキップ機能があるので演出はちゃんと見せる方針）。判定は最後のアイコンを吸い込み始める頃に実行。(2)強化パネルの「スキルツリー（SP残 X）」ボタンの数値が連打強化で更新されなかった（「次へ」廃止でパネル非再描画のため）→ボタンにid付与しrefreshEnhanceInfoで毎回更新。v1.14：社長FBで強化演出を微調整（判定・バランス不変＝表示のみ）。(1)吸い込みを「1つずつ」に＝スキルアイコンを武器と同じくらいの大きさ(68px)で武器の前に1枚ずつ出し→武器へ収束(240ms間隔・最大5枚)。全部吸い込んでから判定。(2)数値効果フロートを武器の右・武器の真ん中の高さ(top:50%)→上端へ ゆっくり(1.6s) 上がって消えるように・複数は300ms間隔で順に。(3)武器背景の黒帯をv1.13で正方形化していたのを横帯に戻す＝.wpnband width:100%の帯の中に[フェーズ｜武器｜数値効果]を中央寄せで配置。(4)フェーズ表示(真Ⅶ→真Ⅷ)を両方同じ大きさ・横並びに。v1.13：社長指示のUI変更6件（判定・バランスは一切不変＝表示/演出のみ）。(1)ゲーム画面の横幅を720→980pxに拡大＝スキルツリー(8系統)が横スクロールなしで収まるように。(2)強化演出を刷新＝従来のスキル毎のステップ表示をやめ、武器に取得スキルのアイコンが吸い込まれる→武器の右側に数値効果(段/爆発値/SP/耐久/スタック/復活/限界突破)が下から出て上へスーッと消えるフロート表示に。(3)強化フローから「次へ」を廃止＝強化するを押すとメイン画面のまま強化が完結し、そのまま連打で登り続けられる(判定はtryEnhのみ・不変)。(4)武器の左にフェーズ表示(真Ⅰ↑真Ⅱのように今の段と成功時の次の段)。(5)プレイログ保存ボタンを右下の小さな固定ボタンに移動。(6)強化するボタンとスキルツリーボタンを横並びに。v1.12：社長指示で耐久回復系のスキルツリーを再編＋復活を2段構えに。(1)チェーン順を「記憶の欠片→トラナン→エリアンの涙」に入れ替え（旧＝トラナン→記憶の欠片→涙）。(2)記憶の欠片＝SP累進5/10/15・maxRank3・回復を「毎強化」→「強化成功時のみ」に変更・回復量+1/2/3（チェーン入口＝前提root1）。(3)トラナン＝SP累進2/3/4/5/5・前提を記憶の欠片Lv1に（効果値10〜50%軽減は不変）。(4)エリアンの涙＝前提をトラナンLv5に・蘇生量をフル→耐久50%に。(5)新系統「条件系」＝エリアンの恩寵（SP20・前提エリアンの涙取得・耐久0で1度だけ耐久フル蘇生）。涙と恩寵の両方を持つ場合は涙(50%)が先に発動し、次の耐久0で恩寵(100%)＝復活は最大2回。いずれも各ラン1回限りで無限化しない。ヘッドレスsim(vm実コード・全ビルド)で例外0・無限0・到達分布を確認。v1.11：記憶の欠片の回復を「毎強化」→「強化成功時のみ」に（失敗時は回復なし・確定発動/回復量rank連動+1〜+5は維持）。判定式・他効果・コスト/前提は無変更。※このv1.11は別セッションが本日公開・v1.12はその上に社長の詳細仕様を積んだ版。v1.10：社長指摘「死判定のタイミングがおかしい」に対応＝tryEnh()内の処理順を修正。旧v1.09は「失敗ダメで耐久0クランプ→記憶の欠片が無条件回復→死判定(checkDead)」の順で、回復が0からの即死を毎回もみ消し無敵化していた。v1.10は「耐久0クランプ→死判定(checkDead。エリアンの涙の1回蘇生はここで先に効く)→生き残っていれば記憶の欠片が回復」に順序を入れ替え＝記憶の欠片は「生き残っている時だけ」回復するようになる（毎強化確定・回復量rank連動+1〜+5・不発なしの手触りは維持）。判定式・効果値・DUR_DEPTH・successCap・コスト/前提は無変更＝順序のみ。ヘッドレスsim(vm実コード)で無敵化解消（フル装備 死亡段中央90台・cap到達0%）とエリアンの涙の正常動作（1度だけ蘇生→2度目の耐久0で死亡）を確認。v1.09：中盤の生存をスキル側で補強。(1)記憶の欠片＝確率発動(10〜50%)→確定発動に変更、回復量はrank連動+1〜+5（「理不尽に上がらない時がある」対応）。(2)ブラックストーンのSP累進コストを個別カーブ[1,1,2,2,3]に軽量化。(3)新系統「特殊系」を追加＝吸血(強化成功時 確率で耐久+5)／助手テクトン(強化失敗時 確率で耐久減半減)／天元突破(限界突破時のオーバーキル効果を×2〜4)。3ノードは専用アイコン未作成のため丸の仮アイコンで表示。(4)スキルLv表示に●○のドットを追加（テキスト併記）。判定式(rateBreakdown/baseRateStage/weaponResistRaw)・武器抵抗の立ち上がり(RESIST_KNEE)・深さ連動の耐久ダメ(DUR_DEPTH)・successCap・既存スキルの効果値は上記(1)(2)以外無変更。v1.08：スキルの強化コストを固定制→累進制に変更（1つを極める一極集中が割高になり、複数スキルへ浅く広く投資する方が相対的に有利になる）。</details>
 </div>
 
 <script>
@@ -713,7 +713,7 @@ function showEnhance(){
   s+='<div class="animex2 center" id="animex">爆発値 <b id="exnum">'+Math.round(bd.exFinal).toLocaleString()+'</b>'+(wall>0?' ／ 限界突破の壁 '+Math.round(wall).toLocaleString():'（助走・壁なし）')+'</div>';
   s+='<div class="menu enhbtns" id="animctl" style="margin-top:8px">';   // v1.13 横並び（項目6）
   s+='<button class="btn center" id="enhbtn" onclick="playEnhance()">⚔ 強化する</button>';
-  s+='<button class="btn center" onclick="showTree()">🌳 スキルツリー（SP残 '+g.sp+'）</button>';
+  s+='<button class="btn center" id="treebtn" onclick="showTree()">🌳 スキルツリー（SP残 '+g.sp+'）</button>';
   s+='</div>';
   s+='<div id="msg"></div>';   // 合流したメッセージ行（lastMsgを復元表示）
   s+='</div>';
@@ -736,6 +736,7 @@ function refreshEnhanceInfo(){
   const f=document.getElementById('gaugefill'); if(f){ f.style.width=(baseRate*100).toFixed(1)+'%'; f.style.background='#ffd24a'; }
   const ax=document.getElementById('animex'); if(ax){ ax.innerHTML='爆発値 <b id="exnum">'+Math.round(bd.exFinal).toLocaleString()+'</b>'+(wall>0?' ／ 限界突破の壁 '+Math.round(wall).toLocaleString():'（助走・壁なし）'); }
   const fp=document.getElementById('failprev'); if(fp) fp.innerHTML=failPreviewHtml();
+  const tb=document.getElementById('treebtn'); if(tb) tb.textContent='🌳 スキルツリー（SP残 '+g.sp+'）';   // v1.15 社長FB：連打強化でSP残ボタン表示が古いままだったので毎回更新
   drawWeapon();
 }
 // v0.72.1 1ノードのカードHTML（root/枝共通）。desc は「その時（次のLv）上がる数値」を表示（MAXは現在値）。複数前提を全表示。
@@ -865,13 +866,14 @@ function playEnhance(){
   const dur=playAbsorb();   // アイコンを1つずつ吸い込む→終わってから判定
   g._animTimers.push(setTimeout(doReveal, dur));
 }
-// v1.14 社長FB：スキルアイコンを「1つずつ」吸い込む。各アイコンは武器と同じくらいの大きさで武器の前に出現→武器へ収束。戻り値＝全部吸い込み終わるおおよその所要ms。
+// v1.15 社長FB「吸い込みが速すぎて見えない・0.3秒くらいはそれぞれ見せて」＝各アイコンをしっかり見せてから吸い込む。
+//   1枚ごと：ポップイン(APPEAR)→フル表示で静止(HOLD≒0.3s)→武器へ収束(ABSORB)。次のアイコンはSTEP間隔で。戻り値＝最後のアイコンを吸い込み始める頃の所要ms（そこで判定doReveal）。
 function playAbsorb(){
-  const host=document.getElementById('absorb'); if(!host) return 300; host.innerHTML='';
+  const host=document.getElementById('absorb'); if(!host) return 700; host.innerHTML='';
   let ids=[]; try{ ids=TREE.filter(n=>skR(n.id)>0).map(n=>n.id); }catch(e){}
   if(ids.length===0) ids=['root','root'];   // 序盤（スキル未取得）は金の粒で代用
   ids=ids.slice(0,5);   // 1つずつ見せるので数は絞る
-  const STEP=240;
+  const APPEAR=150, HOLD=500, ABSORB=340, STEP=APPEAR+HOLD+60;   // 社長FB「0.5秒くらい欲しい」＝フル表示で約0.5s静止してから吸い込む
   ids.forEach((id,i)=>{
     const n=TREE_MAP[id]; const src=ICON[id];
     g._animTimers.push(setTimeout(function(){
@@ -879,15 +881,17 @@ function playAbsorb(){
       const e=document.createElement(src?'img':'span');
       if(src){ e.src=src; e.className='absorbico'; }
       else { e.className='absorbico spark'; e.style.background=(n&&n.iconColor)||'#ffd24a'; }
-      e.style.transform='translate(0px,0px) scale(1.08)'; e.style.opacity='0';   // 武器の前に同じくらいの大きさで出現
+      e.style.transition='none'; e.style.transform='translate(0px,0px) scale(0.6)'; e.style.opacity='0';
       h.appendChild(e);
-      g._animTimers.push(setTimeout(function(){ if(e){ e.style.opacity='1'; e.style.transform='translate(0px,0px) scale(1)'; } }, 16));   // くっきり出す
-      g._animTimers.push(setTimeout(function(){ if(e){ e.style.opacity='0'; e.style.transform='translate(0px,0px) scale(0.12)'; } }, 150));   // 武器へ吸い込まれる
-      g._animTimers.push(setTimeout(function(){ if(e&&e.parentNode) e.parentNode.removeChild(e); }, 540));
+      // ① ポップイン（武器の前に同じくらいの大きさで くっきり出す）
+      g._animTimers.push(setTimeout(function(){ if(e){ e.style.transition='transform '+APPEAR+'ms ease-out, opacity '+Math.round(APPEAR*0.7)+'ms ease-out'; e.style.opacity='1'; e.style.transform='translate(0px,0px) scale(1)'; } }, 20));
+      // ② フル表示で静止（HOLD）→ ③ 武器へ吸い込まれる
+      g._animTimers.push(setTimeout(function(){ if(e){ e.style.transition='transform '+ABSORB+'ms ease-in, opacity '+ABSORB+'ms ease-in'; e.style.opacity='0'; e.style.transform='translate(0px,0px) scale(0.1)'; } }, 20+APPEAR+HOLD));
+      g._animTimers.push(setTimeout(function(){ if(e&&e.parentNode) e.parentNode.removeChild(e); }, 20+APPEAR+HOLD+ABSORB+80));
       try{ beep(560+i*45,.05); }catch(e2){}
     }, i*STEP));
   });
-  return ids.length*STEP + 120;
+  return (ids.length-1)*STEP + 20+APPEAR+HOLD + 90;   // 最後のアイコンが吸い込まれ始める頃に判定
 }
 function doReveal(){
   if(!g._animating) return;
@@ -1147,14 +1151,14 @@ function buildPlaylogData(reason){
     const totalStage = ((g.maxCycle||1)-1)*100 + (((g.maxStage-1)%100)+1);   // 通算到達段（周回込み）
     const skills={}; TREE.forEach(n=>{ skills[n.id]=skR(n.id); });   // v0.72 最終スキル振り（全ノードid→rank）
     return JSON.stringify({
-      ver:'v1.14', reason:(reason||'manual'), ts:new Date().toISOString(),
+      ver:'v1.15', reason:(reason||'manual'), ts:new Date().toISOString(),
       house:(lsGet('kyoka_house')||'noname'),   // v0.97 家名（プレイヤー識別・解析のグループ化用）
       maxStage: totalStage, cycle:(g.maxCycle||1), turn:(g.turn||0), score:(g.score||0),
       fallback:(g.fallbackCount||0),   // v0.96 未使用のcloneフィールドをplogから撤去
       success:(g.succCount||0), fail:(g.failCount||0), fever:(g.feverCount||0),
       skills: skills
     });
-  }catch(e){ return JSON.stringify({ver:'v1.14', reason:(reason||'manual'), err:String(e)}); }
+  }catch(e){ return JSON.stringify({ver:'v1.15', reason:(reason||'manual'), err:String(e)}); }
 }
 function uploadPlaylog(reason){
   try{
