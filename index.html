@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>強化脳汁ゲー（仮）— ブラウザ試作 v1.10（死判定の順序修正）</title>
+<title>強化脳汁ゲー（仮）— ブラウザ試作 v1.11（記憶の欠片を成功時のみ回復に）</title>
 <style>
   :root{ --navy:#000a5a; --navy2:#001080; --gold:#ffd24a; --edge:#6b7bd6; --panel:#00104a; --track:#00003a; }
   *{ box-sizing:border-box; }
@@ -189,7 +189,7 @@
 <canvas id="fxcanvas"></canvas>
 <div id="fxflash"></div>
 <div id="app">
-  <h1>◆ 強化脳汁ゲー（仮）◆ ブラウザ試作 v1.10 — 死判定の順序修正</h1>
+  <h1>◆ 強化脳汁ゲー（仮）◆ ブラウザ試作 v1.11 — 記憶の欠片を成功時のみ回復に</h1>
   <div id="heatbar"></div><!-- v0.85 段のテーマ色アクセント帯 -->
 
   <div class="win">
@@ -306,7 +306,7 @@ const TREE=[
  {id:'toranan', branch:'耐久回復系', name:'トラナンの秘訣', cost:3, maxRank:5, reqs:[{id:'root',rank:1}],
    vals:[0.10,0.20,0.30,0.40,0.50], desc:(r,v)=>'失敗時の耐久減を '+Math.round(v*100)+'% 軽減'},   // v1.03 系統の入口に（旧＝記憶の欠片の後）
  {id:'kakera', branch:'耐久回復系', name:'記憶の欠片', cost:4, maxRank:5, reqs:[{id:'toranan',rank:5}],
-   vals:[1,2,3,4,5], desc:(r,v)=>'強化のたび 確定で耐久+'+Math.round(v)},   // v1.09 社長指示：確率発動(10〜50%)→確定発動に変更（「理不尽に上がらない時がある」対応）。回復量はrank連動+1〜+5。cost/前提は不変
+   vals:[1,2,3,4,5], desc:(r,v)=>'強化成功のたび 確定で耐久+'+Math.round(v)},   // v1.09 確率→確定。v1.11 社長指示：発動を「強化成功時のみ」に（失敗時は回復なし）。回復量rank連動+1〜+5・cost/前提は不変
  {id:'shokunin', branch:'耐久回復系', name:'エリアンの涙', cost:15, maxRank:1, reqs:[{id:'kakera',rank:3}],
    desc:()=>'耐久が0になった時、1度だけ耐久フルで蘇る'},   // v0.99 効果＝耐久0の1回限りフル回復蘇生。v1.03 前提を記憶の欠片rank3へ（順序入れ替えに追従）
  // 失敗系
@@ -509,8 +509,8 @@ function tryEnh(){
   //   新順序＝「耐久0クランプ→checkDead（0ならエリアンの涙が先に効く／無ければここで死亡）→生き残っていれば記憶の欠片が回復」。
   //   記憶の欠片自体の発動条件（毎強化確定）・回復量(rank連動+1〜+5)・不発なしは変更なし＝「生き残っている時だけ」回復するようになるだけ。
   if(checkDead()) return;
-  // v1.09 社長指示：記憶の欠片＝確率発動→確定発動（毎強化ごと必ず回復・回復量はrank連動+1〜+5）。v1.10でcheckDeadの後に移動（上記コメント参照）。
-  if(skR('kakera')>0){
+  // v1.11 社長指示：記憶の欠片＝「強化のたび」→「強化成功するたび」＝ok(成功)の時だけ回復（失敗時は回復なし）。確定発動・回復量rank連動+1〜+5・不発なしは成功時に限り維持。
+  if(ok && skR('kakera')>0){
     const h=kakeraHeal(); if(h>0) g.dur=Math.min(maxDur(), g.dur+h);
   }
   if(g._deferAdvance) return;
@@ -1033,14 +1033,14 @@ function buildPlaylogData(reason){
     const totalStage = ((g.maxCycle||1)-1)*100 + (((g.maxStage-1)%100)+1);   // 通算到達段（周回込み）
     const skills={}; TREE.forEach(n=>{ skills[n.id]=skR(n.id); });   // v0.72 最終スキル振り（全ノードid→rank）
     return JSON.stringify({
-      ver:'v1.10', reason:(reason||'manual'), ts:new Date().toISOString(),
+      ver:'v1.11', reason:(reason||'manual'), ts:new Date().toISOString(),
       house:(lsGet('kyoka_house')||'noname'),   // v0.97 家名（プレイヤー識別・解析のグループ化用）
       maxStage: totalStage, cycle:(g.maxCycle||1), turn:(g.turn||0), score:(g.score||0),
       fallback:(g.fallbackCount||0),   // v0.96 未使用のcloneフィールドをplogから撤去
       success:(g.succCount||0), fail:(g.failCount||0), fever:(g.feverCount||0),
       skills: skills
     });
-  }catch(e){ return JSON.stringify({ver:'v1.10', reason:(reason||'manual'), err:String(e)}); }
+  }catch(e){ return JSON.stringify({ver:'v1.11', reason:(reason||'manual'), err:String(e)}); }
 }
 function uploadPlaylog(reason){
   try{
