@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>強化脳汁ゲー（仮）— ブラウザ試作 v1.18（渦の溜め+0.2s・吸血/記憶の欠片 調整）</title>
+<title>強化脳汁ゲー（仮）— ブラウザ試作 v1.19（右チップを重ねず順番に・上端だけでフェード）</title>
 <style>
   :root{ --navy:#000a5a; --navy2:#001080; --gold:#ffd24a; --edge:#6b7bd6; --panel:#00104a; --track:#00003a; }
   *{ box-sizing:border-box; }
@@ -194,12 +194,13 @@
   .wpnphase .pl-next{ color:#9fb0ce; }
   /* v1.14 数値効果は武器右・武器の真ん中の高さ→上端へゆっくり上がって消える。v1.16 囲みチップ(名前＋効果)に。 */
   .wpnfx{ flex:0 0 auto; position:relative; width:186px; height:132px; }
-  @keyframes floatup{ 0%{opacity:0; transform:translateY(8px) scale(.85)} 14%{opacity:1; transform:translateY(0) scale(1.06)}
-    32%{transform:translateY(-6px) scale(1)} 100%{opacity:0; transform:translateY(-70px) scale(1)} }
-  /* v1.16 社長FB：右側は以前のような囲み文字チップ（アイコン＋名前＋効果）で */
-  .floatchip{ position:absolute; left:0; top:46%; display:inline-flex; align-items:center; gap:5px; white-space:nowrap;
-    background:rgba(2,10,44,.92); border:2px solid var(--gold); border-radius:7px; padding:3px 8px; font-size:12px; font-weight:bold;
-    box-shadow:0 2px 7px rgba(0,0,0,.55); opacity:0; animation:floatup 1.85s ease-out forwards; }
+  /* v1.19 社長FB：消えるのは上端のあたりだけ＝上昇中はopacity1のまま、最後の20%(上端)でだけフェードアウト */
+  @keyframes floatup{ 0%{opacity:0; transform:translateY(6px) scale(.9)} 9%{opacity:1; transform:translateY(0) scale(1.04)}
+    16%{transform:scale(1)} 80%{opacity:1; transform:translateY(-56px) scale(1)} 100%{opacity:0; transform:translateY(-74px) scale(1)} }
+  /* v1.16 社長FB：右側は以前のような囲み文字チップ（アイコン＋名前＋効果）で。v1.19 開始位置を下げ上端まで上がる */
+  .floatchip{ position:absolute; left:0; top:60%; display:inline-flex; align-items:center; gap:5px; white-space:nowrap;
+    background:rgba(2,10,44,.94); border:2px solid var(--gold); border-radius:7px; padding:3px 8px; font-size:12px; font-weight:bold;
+    box-shadow:0 2px 7px rgba(0,0,0,.55); opacity:0; animation:floatup 2s ease-out forwards; }
   .floatchip img{ width:20px; height:20px; object-fit:contain; }
   .floatchip .fc-dot{ width:14px; height:14px; border-radius:50%; box-shadow:inset 0 0 0 1px rgba(255,255,255,.3); }
   .floatchip .fc-emoji{ font-size:13px; }
@@ -231,7 +232,7 @@
 <div id="fxflash"></div>
 <button id="logbtn" onclick="exportPlaylog()" title="プレイログをドライブに保存">📋 ログ保存</button><!-- v1.13 社長指示：ゲームと直接関係ないので右下の小ボタンに -->
 <div id="app">
-  <h1>◆ 強化脳汁ゲー（仮）◆ ブラウザ試作 v1.18 — 渦の溜め+0.2s・吸血/記憶の欠片 調整</h1>
+  <h1>◆ 強化脳汁ゲー（仮）◆ ブラウザ試作 v1.19 — 右チップを重ねず順番に・上端だけでフェード</h1>
   <div id="heatbar"></div><!-- v0.85 段のテーマ色アクセント帯 -->
 
   <div class="win">
@@ -262,7 +263,7 @@
   <div class="win"><div id="screen"></div></div>
 
   <div class="sub" style="opacity:.7;margin-top:2px">本作は『黒い砂漠』(Pearl Abyss)の非公式ファンメイド作品です。権利者とは一切関係ありません。非営利。</div>
-  <details style="margin-top:6px;font-size:11px;opacity:.6"><summary>開発メモ</summary>v1.18：社長FB。(1)渦で回り始める前にアイコンを+0.2sほど見せる＝absorbSpinにPREHOLD(220ms)を追加＝現れる(APPEAR190)→じわっと漂う(PREHOLD220・わずかに膨らみ/呼吸/回り始める兆し)→加速して渦で吸収。(2)スキル調整（★バランス変更）＝吸血の前提を記憶の欠片Lv3に(旧Lv2)・回復量を耐久+5→+3に／記憶の欠片の必要SPを5/10/15→3/6/9に。判定式・他スキルは無変更。v1.17：社長FB6件（判定・バランス不変＝表示/音のみ）。(1)吸い込みに「吸収されてる感」＝rAF駆動の渦アニメabsorbSpin()に刷新＝現れて→ゆっくり回り始め→半径を最初ゆっくり後で急に縮め(u³)→角度を加速(u²)→武器の周りを回りながら小さく吸い込まれる。CSS一律transitionを廃しwill-changeで毎フレーム更新。(2)効果音をポコッ→上昇インフューズ音sfxAbsorb()に（吸い込むたび音程が上がって高揚）。(3)スキル未取得時に出ていた金の丸を撤去（効くスキルが無ければ吸い込み演出なし）。(4)回復系も演出＝成功時に記憶の欠片/吸血、失敗時にトラナン(被害軽減)/エリアンの涙・恩寵(復活)を囲みチップで表示（spawnResultChips）。(5)ゲージの上下を復活＝animateGauge()がrateBreakdown各ステップの成功率を順にゲージへ反映（素→火力↑→武器抵抗↓→減衰対抗↑→…→最終・判定/乱数には無関与）。v1.16：社長FB3件（判定・バランス不変＝表示のみ）。(1)吸い込みに「回転」を追加＝表示→フル表示のあと小さく回りながら(rotate540deg＋scale0.08)武器に吸収＝「ただ消える」感を解消。(2)右側の数値表示を以前のような囲み文字チップ(アイコン＋名前＋効果／例：📣ヴォルクスの叫び 爆発値+xx・🖤ブラックストーン 成功率+x%)に＝enhanceItems()が判定内訳rateBreakdownから“効いているスキル”を抽出し、吸い込まれたら該当チップを右にゆっくり上げる。結果(段到達/失敗/耐久/復活)も囲みチップで。(3)ブラックストーンが2回出ていた問題＝旧・吸い込みは「取得済みスキル羅列」でroot(ブラックストーン)とroot2(凝縮された魔力のブラックストーン)が別々に出ていた→内訳ベースに変えたことで内訳の🖤ブラックストーン成功率は1ステップ＝自動的に1回だけに。v1.15：社長FB2件（判定・バランス不変＝表示のみ）。(1)吸い込みが速すぎて見えなかった（各≒0.15秒）→各アイコンをポップイン(0.15s)→フル表示で約0.5秒静止→武器へ収束(0.34s)と、しっかり見せてから吸い込むように（社長「0.5秒くらい欲しい」・スキップ機能があるので演出はちゃんと見せる方針）。判定は最後のアイコンを吸い込み始める頃に実行。(2)強化パネルの「スキルツリー（SP残 X）」ボタンの数値が連打強化で更新されなかった（「次へ」廃止でパネル非再描画のため）→ボタンにid付与しrefreshEnhanceInfoで毎回更新。v1.14：社長FBで強化演出を微調整（判定・バランス不変＝表示のみ）。(1)吸い込みを「1つずつ」に＝スキルアイコンを武器と同じくらいの大きさ(68px)で武器の前に1枚ずつ出し→武器へ収束(240ms間隔・最大5枚)。全部吸い込んでから判定。(2)数値効果フロートを武器の右・武器の真ん中の高さ(top:50%)→上端へ ゆっくり(1.6s) 上がって消えるように・複数は300ms間隔で順に。(3)武器背景の黒帯をv1.13で正方形化していたのを横帯に戻す＝.wpnband width:100%の帯の中に[フェーズ｜武器｜数値効果]を中央寄せで配置。(4)フェーズ表示(真Ⅶ→真Ⅷ)を両方同じ大きさ・横並びに。v1.13：社長指示のUI変更6件（判定・バランスは一切不変＝表示/演出のみ）。(1)ゲーム画面の横幅を720→980pxに拡大＝スキルツリー(8系統)が横スクロールなしで収まるように。(2)強化演出を刷新＝従来のスキル毎のステップ表示をやめ、武器に取得スキルのアイコンが吸い込まれる→武器の右側に数値効果(段/爆発値/SP/耐久/スタック/復活/限界突破)が下から出て上へスーッと消えるフロート表示に。(3)強化フローから「次へ」を廃止＝強化するを押すとメイン画面のまま強化が完結し、そのまま連打で登り続けられる(判定はtryEnhのみ・不変)。(4)武器の左にフェーズ表示(真Ⅰ↑真Ⅱのように今の段と成功時の次の段)。(5)プレイログ保存ボタンを右下の小さな固定ボタンに移動。(6)強化するボタンとスキルツリーボタンを横並びに。v1.12：社長指示で耐久回復系のスキルツリーを再編＋復活を2段構えに。(1)チェーン順を「記憶の欠片→トラナン→エリアンの涙」に入れ替え（旧＝トラナン→記憶の欠片→涙）。(2)記憶の欠片＝SP累進5/10/15・maxRank3・回復を「毎強化」→「強化成功時のみ」に変更・回復量+1/2/3（チェーン入口＝前提root1）。(3)トラナン＝SP累進2/3/4/5/5・前提を記憶の欠片Lv1に（効果値10〜50%軽減は不変）。(4)エリアンの涙＝前提をトラナンLv5に・蘇生量をフル→耐久50%に。(5)新系統「条件系」＝エリアンの恩寵（SP20・前提エリアンの涙取得・耐久0で1度だけ耐久フル蘇生）。涙と恩寵の両方を持つ場合は涙(50%)が先に発動し、次の耐久0で恩寵(100%)＝復活は最大2回。いずれも各ラン1回限りで無限化しない。ヘッドレスsim(vm実コード・全ビルド)で例外0・無限0・到達分布を確認。v1.11：記憶の欠片の回復を「毎強化」→「強化成功時のみ」に（失敗時は回復なし・確定発動/回復量rank連動+1〜+5は維持）。判定式・他効果・コスト/前提は無変更。※このv1.11は別セッションが本日公開・v1.12はその上に社長の詳細仕様を積んだ版。v1.10：社長指摘「死判定のタイミングがおかしい」に対応＝tryEnh()内の処理順を修正。旧v1.09は「失敗ダメで耐久0クランプ→記憶の欠片が無条件回復→死判定(checkDead)」の順で、回復が0からの即死を毎回もみ消し無敵化していた。v1.10は「耐久0クランプ→死判定(checkDead。エリアンの涙の1回蘇生はここで先に効く)→生き残っていれば記憶の欠片が回復」に順序を入れ替え＝記憶の欠片は「生き残っている時だけ」回復するようになる（毎強化確定・回復量rank連動+1〜+5・不発なしの手触りは維持）。判定式・効果値・DUR_DEPTH・successCap・コスト/前提は無変更＝順序のみ。ヘッドレスsim(vm実コード)で無敵化解消（フル装備 死亡段中央90台・cap到達0%）とエリアンの涙の正常動作（1度だけ蘇生→2度目の耐久0で死亡）を確認。v1.09：中盤の生存をスキル側で補強。(1)記憶の欠片＝確率発動(10〜50%)→確定発動に変更、回復量はrank連動+1〜+5（「理不尽に上がらない時がある」対応）。(2)ブラックストーンのSP累進コストを個別カーブ[1,1,2,2,3]に軽量化。(3)新系統「特殊系」を追加＝吸血(強化成功時 確率で耐久+5)／助手テクトン(強化失敗時 確率で耐久減半減)／天元突破(限界突破時のオーバーキル効果を×2〜4)。3ノードは専用アイコン未作成のため丸の仮アイコンで表示。(4)スキルLv表示に●○のドットを追加（テキスト併記）。判定式(rateBreakdown/baseRateStage/weaponResistRaw)・武器抵抗の立ち上がり(RESIST_KNEE)・深さ連動の耐久ダメ(DUR_DEPTH)・successCap・既存スキルの効果値は上記(1)(2)以外無変更。v1.08：スキルの強化コストを固定制→累進制に変更（1つを極める一極集中が割高になり、複数スキルへ浅く広く投資する方が相対的に有利になる）。</details>
+  <details style="margin-top:6px;font-size:11px;opacity:.6"><summary>開発メモ</summary>v1.19：社長FB（表示のみ）。武器右の数値チップを(1)かぶらないように＝「順番待ちキュー」で最小680ms間隔ずつ出す（queueChip/pumpChips・contribution/result両方をキュー経由に・強化開始でclearChipQueue）(2)消えるのは上端付近だけ＝floatupを「上昇中はopacity1のまま、最後の20%(上端)でだけフェードアウト」に変更＋開始位置を下げ(top60%)上端まで上げる。v1.18：社長FB。(1)渦で回り始める前にアイコンを+0.2sほど見せる＝absorbSpinにPREHOLD(220ms)を追加＝現れる(APPEAR190)→じわっと漂う(PREHOLD220・わずかに膨らみ/呼吸/回り始める兆し)→加速して渦で吸収。(2)スキル調整（★バランス変更）＝吸血の前提を記憶の欠片Lv3に(旧Lv2)・回復量を耐久+5→+3に／記憶の欠片の必要SPを5/10/15→3/6/9に。判定式・他スキルは無変更。v1.17：社長FB6件（判定・バランス不変＝表示/音のみ）。(1)吸い込みに「吸収されてる感」＝rAF駆動の渦アニメabsorbSpin()に刷新＝現れて→ゆっくり回り始め→半径を最初ゆっくり後で急に縮め(u³)→角度を加速(u²)→武器の周りを回りながら小さく吸い込まれる。CSS一律transitionを廃しwill-changeで毎フレーム更新。(2)効果音をポコッ→上昇インフューズ音sfxAbsorb()に（吸い込むたび音程が上がって高揚）。(3)スキル未取得時に出ていた金の丸を撤去（効くスキルが無ければ吸い込み演出なし）。(4)回復系も演出＝成功時に記憶の欠片/吸血、失敗時にトラナン(被害軽減)/エリアンの涙・恩寵(復活)を囲みチップで表示（spawnResultChips）。(5)ゲージの上下を復活＝animateGauge()がrateBreakdown各ステップの成功率を順にゲージへ反映（素→火力↑→武器抵抗↓→減衰対抗↑→…→最終・判定/乱数には無関与）。v1.16：社長FB3件（判定・バランス不変＝表示のみ）。(1)吸い込みに「回転」を追加＝表示→フル表示のあと小さく回りながら(rotate540deg＋scale0.08)武器に吸収＝「ただ消える」感を解消。(2)右側の数値表示を以前のような囲み文字チップ(アイコン＋名前＋効果／例：📣ヴォルクスの叫び 爆発値+xx・🖤ブラックストーン 成功率+x%)に＝enhanceItems()が判定内訳rateBreakdownから“効いているスキル”を抽出し、吸い込まれたら該当チップを右にゆっくり上げる。結果(段到達/失敗/耐久/復活)も囲みチップで。(3)ブラックストーンが2回出ていた問題＝旧・吸い込みは「取得済みスキル羅列」でroot(ブラックストーン)とroot2(凝縮された魔力のブラックストーン)が別々に出ていた→内訳ベースに変えたことで内訳の🖤ブラックストーン成功率は1ステップ＝自動的に1回だけに。v1.15：社長FB2件（判定・バランス不変＝表示のみ）。(1)吸い込みが速すぎて見えなかった（各≒0.15秒）→各アイコンをポップイン(0.15s)→フル表示で約0.5秒静止→武器へ収束(0.34s)と、しっかり見せてから吸い込むように（社長「0.5秒くらい欲しい」・スキップ機能があるので演出はちゃんと見せる方針）。判定は最後のアイコンを吸い込み始める頃に実行。(2)強化パネルの「スキルツリー（SP残 X）」ボタンの数値が連打強化で更新されなかった（「次へ」廃止でパネル非再描画のため）→ボタンにid付与しrefreshEnhanceInfoで毎回更新。v1.14：社長FBで強化演出を微調整（判定・バランス不変＝表示のみ）。(1)吸い込みを「1つずつ」に＝スキルアイコンを武器と同じくらいの大きさ(68px)で武器の前に1枚ずつ出し→武器へ収束(240ms間隔・最大5枚)。全部吸い込んでから判定。(2)数値効果フロートを武器の右・武器の真ん中の高さ(top:50%)→上端へ ゆっくり(1.6s) 上がって消えるように・複数は300ms間隔で順に。(3)武器背景の黒帯をv1.13で正方形化していたのを横帯に戻す＝.wpnband width:100%の帯の中に[フェーズ｜武器｜数値効果]を中央寄せで配置。(4)フェーズ表示(真Ⅶ→真Ⅷ)を両方同じ大きさ・横並びに。v1.13：社長指示のUI変更6件（判定・バランスは一切不変＝表示/演出のみ）。(1)ゲーム画面の横幅を720→980pxに拡大＝スキルツリー(8系統)が横スクロールなしで収まるように。(2)強化演出を刷新＝従来のスキル毎のステップ表示をやめ、武器に取得スキルのアイコンが吸い込まれる→武器の右側に数値効果(段/爆発値/SP/耐久/スタック/復活/限界突破)が下から出て上へスーッと消えるフロート表示に。(3)強化フローから「次へ」を廃止＝強化するを押すとメイン画面のまま強化が完結し、そのまま連打で登り続けられる(判定はtryEnhのみ・不変)。(4)武器の左にフェーズ表示(真Ⅰ↑真Ⅱのように今の段と成功時の次の段)。(5)プレイログ保存ボタンを右下の小さな固定ボタンに移動。(6)強化するボタンとスキルツリーボタンを横並びに。v1.12：社長指示で耐久回復系のスキルツリーを再編＋復活を2段構えに。(1)チェーン順を「記憶の欠片→トラナン→エリアンの涙」に入れ替え（旧＝トラナン→記憶の欠片→涙）。(2)記憶の欠片＝SP累進5/10/15・maxRank3・回復を「毎強化」→「強化成功時のみ」に変更・回復量+1/2/3（チェーン入口＝前提root1）。(3)トラナン＝SP累進2/3/4/5/5・前提を記憶の欠片Lv1に（効果値10〜50%軽減は不変）。(4)エリアンの涙＝前提をトラナンLv5に・蘇生量をフル→耐久50%に。(5)新系統「条件系」＝エリアンの恩寵（SP20・前提エリアンの涙取得・耐久0で1度だけ耐久フル蘇生）。涙と恩寵の両方を持つ場合は涙(50%)が先に発動し、次の耐久0で恩寵(100%)＝復活は最大2回。いずれも各ラン1回限りで無限化しない。ヘッドレスsim(vm実コード・全ビルド)で例外0・無限0・到達分布を確認。v1.11：記憶の欠片の回復を「毎強化」→「強化成功時のみ」に（失敗時は回復なし・確定発動/回復量rank連動+1〜+5は維持）。判定式・他効果・コスト/前提は無変更。※このv1.11は別セッションが本日公開・v1.12はその上に社長の詳細仕様を積んだ版。v1.10：社長指摘「死判定のタイミングがおかしい」に対応＝tryEnh()内の処理順を修正。旧v1.09は「失敗ダメで耐久0クランプ→記憶の欠片が無条件回復→死判定(checkDead)」の順で、回復が0からの即死を毎回もみ消し無敵化していた。v1.10は「耐久0クランプ→死判定(checkDead。エリアンの涙の1回蘇生はここで先に効く)→生き残っていれば記憶の欠片が回復」に順序を入れ替え＝記憶の欠片は「生き残っている時だけ」回復するようになる（毎強化確定・回復量rank連動+1〜+5・不発なしの手触りは維持）。判定式・効果値・DUR_DEPTH・successCap・コスト/前提は無変更＝順序のみ。ヘッドレスsim(vm実コード)で無敵化解消（フル装備 死亡段中央90台・cap到達0%）とエリアンの涙の正常動作（1度だけ蘇生→2度目の耐久0で死亡）を確認。v1.09：中盤の生存をスキル側で補強。(1)記憶の欠片＝確率発動(10〜50%)→確定発動に変更、回復量はrank連動+1〜+5（「理不尽に上がらない時がある」対応）。(2)ブラックストーンのSP累進コストを個別カーブ[1,1,2,2,3]に軽量化。(3)新系統「特殊系」を追加＝吸血(強化成功時 確率で耐久+5)／助手テクトン(強化失敗時 確率で耐久減半減)／天元突破(限界突破時のオーバーキル効果を×2〜4)。3ノードは専用アイコン未作成のため丸の仮アイコンで表示。(4)スキルLv表示に●○のドットを追加（テキスト併記）。判定式(rateBreakdown/baseRateStage/weaponResistRaw)・武器抵抗の立ち上がり(RESIST_KNEE)・深さ連動の耐久ダメ(DUR_DEPTH)・successCap・既存スキルの効果値は上記(1)(2)以外無変更。v1.08：スキルの強化コストを固定制→累進制に変更（1つを極める一極集中が割高になり、複数スキルへ浅く広く投資する方が相対的に有利になる）。</details>
 </div>
 
 <script>
@@ -867,7 +868,7 @@ function buildRevealSteps(){
 function playEnhance(){
   if(g._animating || g.ended) return;
   const btn=document.getElementById('enhbtn'); if(btn) btn.disabled=true;
-  g._animating=true; g._animTimers=[];
+  g._animating=true; g._animTimers=[]; clearChipQueue();   // v1.19 前回の残りチップ待ちをクリア（連打時のたまり防止）
   if(fxSkipOn()){ doReveal(); return; }   // 演出スキップ＝吸い込み無しで即判定（結果チップは出す）
   const items=enhanceItems();   // v1.16 この強化に効いているスキルの内訳（rateBreakdown由来＝ブラックストーンは1回だけ）
   const dur=playAbsorb(items);  // アイコンを1つずつ吸い込む（渦）→吸い込まれたら効果を右に囲みチップで
@@ -906,7 +907,7 @@ function playAbsorb(items){
         h.appendChild(e);
         absorbSpin(e, i*2.399, SPIRAL);   // 渦：開始角を黄金角でずらす
       }
-      g._animTimers.push(setTimeout(function(){ spawnChip(it); }, LEAD+Math.round(SPIRAL*0.72)));   // 吸い込まれ切る頃に効果チップ
+      g._animTimers.push(setTimeout(function(){ queueChip(it); }, LEAD+Math.round(SPIRAL*0.72)));   // 吸い込まれ切る頃に効果チップ（順番待ちで重ならず）
       try{ sfxAbsorb(i); }catch(e2){}
     }, i*STEP));
   });
@@ -975,7 +976,17 @@ function enhanceItems(){
   });
   return items.slice(0,6);
 }
-// v1.16 囲みチップ（アイコン＋名前＋効果）を武器右に。武器の真ん中の高さ→上端へゆっくり上がって消える。（v1.17：旧playAbsorbはここにあったが、渦版[上部]に置き換え・重複定義を撤去）
+// v1.19 社長FB：右のチップがかぶらないよう「順番待ち」で一定間隔ずつ出す（重なり防止）。消えるのは上端付近だけ＝CSS floatup。
+let _chipQ=[], _chipTimer=null, _lastChipT=0;
+function _chipNow(){ return (typeof performance!=='undefined'&&performance.now)?performance.now():Date.now(); }
+function queueChip(it){ if(!it) return; _chipQ.push(it); pumpChips(); }
+function pumpChips(){
+  if(_chipTimer) return;
+  const wait=Math.max(0, 680-(_chipNow()-_lastChipT));   // チップ間の最小間隔＝重ならない
+  _chipTimer=setTimeout(function(){ _chipTimer=null; const it=_chipQ.shift(); if(it){ _lastChipT=_chipNow(); spawnChip(it); } if(_chipQ.length) pumpChips(); }, wait);
+}
+function clearChipQueue(){ _chipQ=[]; if(_chipTimer){ clearTimeout(_chipTimer); _chipTimer=null; } }
+// v1.16 囲みチップ（アイコン＋名前＋効果）を武器右に。武器の下の方の高さ→上端へゆっくり上がり、上端付近でだけ消える。
 function spawnChip(it){
   const host=document.getElementById('wpnfx'); if(!host||!it) return;
   const d=document.createElement('div'); d.className='floatchip'; if(it.c) d.style.borderColor=it.c;
@@ -983,7 +994,7 @@ function spawnChip(it){
   let ic = src ? '<img src="'+src+'" alt="">' : (n&&n.iconColor ? '<span class="fc-dot" style="background:'+n.iconColor+'"></span>' : (it.emoji?'<span class="fc-emoji">'+it.emoji+'</span>':''));
   d.innerHTML=ic+'<span class="fc-name">'+it.name+'</span>'+(it.effect?'<span class="fc-val" style="color:'+(it.c||'#ffd24a')+'">'+it.effect+'</span>':'');
   host.appendChild(d);
-  setTimeout(function(){ if(d&&d.parentNode) d.parentNode.removeChild(d); }, 1950);
+  setTimeout(function(){ if(d&&d.parentNode) d.parentNode.removeChild(d); }, 2100);
 }
 function doReveal(){
   if(!g._animating) return;
@@ -1020,7 +1031,7 @@ function spawnResultChips(before, success, wasFever){
     if(skR('toranan')>0) arr.push({icon:'toranan', name:'トラナンの秘訣', effect:'被害-'+Math.round(nodeVal('toranan')*100)+'%', c:'#9ff3e8'});
     if(g.cycle===before.cycle && g.stage<before.stage) arr.push({icon:null, name:'段', effect:'-'+(before.stage-g.stage), c:'#ff9c6b', emoji:'⬇'});
   }
-  arr.forEach((it,i)=>{ g._animTimers.push(setTimeout(function(){ spawnChip(it); }, i*300)); });
+  arr.forEach(function(it){ queueChip(it); });   // v1.19 順番待ちで一定間隔ずつ（重なり防止）
 }
 function advanceAfterEnh(){ g._animating=false; g._deferAdvance=false;
   if(g._animTimers){ g._animTimers.forEach(clearTimeout); g._animTimers=[]; }
@@ -1232,14 +1243,14 @@ function buildPlaylogData(reason){
     const totalStage = ((g.maxCycle||1)-1)*100 + (((g.maxStage-1)%100)+1);   // 通算到達段（周回込み）
     const skills={}; TREE.forEach(n=>{ skills[n.id]=skR(n.id); });   // v0.72 最終スキル振り（全ノードid→rank）
     return JSON.stringify({
-      ver:'v1.18', reason:(reason||'manual'), ts:new Date().toISOString(),
+      ver:'v1.19', reason:(reason||'manual'), ts:new Date().toISOString(),
       house:(lsGet('kyoka_house')||'noname'),   // v0.97 家名（プレイヤー識別・解析のグループ化用）
       maxStage: totalStage, cycle:(g.maxCycle||1), turn:(g.turn||0), score:(g.score||0),
       fallback:(g.fallbackCount||0),   // v0.96 未使用のcloneフィールドをplogから撤去
       success:(g.succCount||0), fail:(g.failCount||0), fever:(g.feverCount||0),
       skills: skills
     });
-  }catch(e){ return JSON.stringify({ver:'v1.18', reason:(reason||'manual'), err:String(e)}); }
+  }catch(e){ return JSON.stringify({ver:'v1.19', reason:(reason||'manual'), err:String(e)}); }
 }
 function uploadPlaylog(reason){
   try{
