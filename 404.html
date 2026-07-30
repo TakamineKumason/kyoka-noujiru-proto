@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>沼い砂漠 — 引っ越しました</title>
+<link rel="canonical" href="https://takaminekumason.github.io/numai-sabaku/">
+<!-- JS を切っていても飛ぶように meta refresh を先に置く。1秒だけ待つのは、
+     0秒だと下の案内が一瞬も見えず「なぜURLが変わったか」が伝わらないため。 -->
+<meta http-equiv="refresh" content="1; url=https://takaminekumason.github.io/numai-sabaku/">
+<style>
+  html,body{height:100%;margin:0}
+  body{display:flex;align-items:center;justify-content:center;
+       background:#1a1712;color:#e8e2d2;
+       font-family:"Hiragino Sans","Meiryo",system-ui,sans-serif;text-align:center;padding:24px}
+  .box{max-width:32rem}
+  h1{font-size:1.6rem;margin:0 0 .6rem;color:#f0be46;letter-spacing:.06em}
+  p{margin:.5rem 0;line-height:1.7;font-size:1rem}
+  a{color:#ffe9a0;font-weight:bold;word-break:break-all}
+  .small{font-size:.85rem;color:#9a927e;margin-top:1.4rem}
+</style>
+</head>
+<body>
+  <div class="box">
+    <h1>沼い砂漠</h1>
+    <p>このページは新しいURLに引っ越しました。<br>自動で移動します。</p>
+    <p><a href="https://takaminekumason.github.io/numai-sabaku/">https://takaminekumason.github.io/numai-sabaku/</a></p>
+    <p class="small">移動しない場合は上のリンクを押してください。<br>ブックマークの張り替えをおすすめします。</p>
+  </div>
+  <script>
+    // クエリとハッシュは引き継ぐ（将来リンクに付ける可能性があるため）。パスは引き継がない＝
+    // 旧リポジトリにはこの1枚しか無いので、付けても新側で 404 になるだけ。
+    location.replace("https://takaminekumason.github.io/numai-sabaku/" + location.search + location.hash);
+  </script>
+</body>
+</html>
